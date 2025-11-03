@@ -1,0 +1,278 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f7f9fc;
+    color: #333;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .container {
+    max-width: 800px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .invoice-form label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+  }
+  
+  .invoice-form input,
+  .invoice-form select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+  
+  button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    border: none;
+    background: #007bff;
+    color: white;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background: #0056b3;
+  }
+  
+  .invoice-preview {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px dashed #aaa;
+    border-radius: 8px;
+    background: #fafafa;
+  }
+  
+  .app-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .logo-ringnet {
+    height: 60px;
+    width: auto;
+  }
+
+  /* Tombol utama di bawah preview */
+.btn-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+/* Gaya tombol umum */
+.btn-group button {
+  padding: 10px 22px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  font-size: 14px;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Warna tombol sesuai fungsi */
+.btn-group button:nth-child(1) {
+  background: #28a745; /* Hijau: Cetak PDF */
+}
+
+.btn-group button:nth-child(2) {
+  background: #25d366; /* Hijau muda: Kirim WhatsApp */
+}
+
+.btn-group button:nth-child(3) {
+  background: #6c757d; /* Abu: Buat Ulang */
+}
+
+/* Efek hover & click */
+.btn-group button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-group button:active {
+  transform: scale(0.98);
+}
+
+
+
+/* Modal WhatsApp */
+.wa-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.wa-modal {
+  background: white;
+  border-radius: 10px;
+  padding: 25px;
+  width: 320px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  animation: slideIn 0.25s ease;
+}
+
+.wa-modal h3 {
+  margin-top: 0;
+  color: #007bff;
+}
+
+.wa-modal p {
+  font-size: 14px;
+  color: #555;
+}
+
+.wa-modal input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.wa-modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.wa-modal-buttons button {
+  flex: 1;
+  margin: 0 5px;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  transition: all 0.2s;
+}
+
+.wa-modal-buttons button.cancel {
+  background: #6c757d;
+}
+
+.wa-modal-buttons button.send {
+  background: #25d366;
+}
+
+.wa-modal-buttons button:hover {
+  opacity: 0.9;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+
+/* Modal alert validation */
+.alert-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  animation: fadeIn 0.2s ease;
+}
+
+.alert-modal {
+  background: #fff;
+  padding: 25px 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  width: 300px;
+  text-align: center;
+  animation: slideIn 0.25s ease;
+}
+
+.alert-modal h3 {
+  margin-top: 0;
+  color: #dc3545;
+}
+
+.alert-modal p {
+  color: #333;
+  font-size: 14px;
+  margin: 10px 0 20px 0;
+}
+
+.alert-modal button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.alert-modal button:hover {
+  background: #0056b3;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+
+/* Highlight input error */
+.input-error {
+  border: 2px solid #dc3545 !important;
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-4px); }
+  100% { transform: translateX(0); }
+}
+

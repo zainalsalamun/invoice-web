@@ -7,23 +7,23 @@ Dibuat menggunakan **React.js** dan menghasilkan file **PDF invoice profesional*
 
 ## 🚀 Fitur Utama
 
-✅ **Input Data Pelanggan Manual**
+✅ **Input Data Pelanggan Manual**  
 - Nama pelanggan, alamat, layanan, periode, dan harga paket  
 - Validasi otomatis: wajib isi nama & harga paket  
 
-✅ **Preview Invoice**
+✅ **Preview Invoice**  
 - Tampilkan pratinjau sebelum cetak  
 - Status pembayaran: *Belum Lunas* / *Lunas*  
 
-✅ **Cetak PDF Profesional**
+✅ **Cetak PDF Profesional**  
 - Generate file PDF dengan logo Ringnet  
 - QR Code otomatis (isi: nama, nomor invoice, total tagihan)  
 - Stempel “LUNAS” otomatis bila status pembayaran = Lunas  
 
-✅ **Kirim ke WhatsApp (Link Ready)**
+✅ **Kirim ke WhatsApp (Link Ready)**  
 - Otomatis generate pesan tagihan dan link PDF  
 
-✅ **Tampilan Modern & Responsive**
+✅ **Tampilan Modern & Responsive**  
 - UI bersih dengan form validasi interaktif  
 - Dialog validasi modern (bukan alert bawaan browser)  
 - Highlight + animasi shake di field kosong  
@@ -31,7 +31,7 @@ Dibuat menggunakan **React.js** dan menghasilkan file **PDF invoice profesional*
 
 ---
 
-## 🧩 **Tech Stack**
+## 🧩 Tech Stack
 
 | Bagian | Teknologi |
 |--------|------------|
@@ -44,24 +44,26 @@ Dibuat menggunakan **React.js** dan menghasilkan file **PDF invoice profesional*
 
 ---
 
-## 🛠️ **Instalasi & Menjalankan Proyek**
+## 🛠️ Instalasi & Menjalankan Proyek
 
 ### 1️⃣ Clone Repository
 ```bash
 git clone https://github.com/yourusername/invoice-web.git
 cd invoice-web
-
 2️⃣ Install Dependencies
+bash
+Copy code
 npm install
-
 3️⃣ Jalankan Aplikasi
+bash
+Copy code
 npm start
-
-
 Aplikasi akan berjalan di:
 👉 http://localhost:3000
 
 🧾 Struktur Folder
+graphql
+Copy code
 src/
 │
 ├── assets/
@@ -82,7 +84,6 @@ src/
 │
 ├── styles.css                 # Styling utama aplikasi
 └── index.js                   # Routing dan inisialisasi React
-
 🔗 Routing Utama
 Route	Fungsi
 /	Halaman utama untuk input & preview invoice
@@ -92,12 +93,11 @@ Contoh:
 👉 http://localhost:3000/invoices/INV-1762147835889.pdf
 
 📤 Build & Deploy
-
 Untuk membuat versi produksi:
 
+bash
+Copy code
 npm run build
-
-
 Folder hasil build akan berada di /build dan bisa langsung di-deploy ke:
 
 Vercel
@@ -109,34 +109,64 @@ GitHub Pages
 Nginx / Apache server
 
 🧠 Konfigurasi Environment
-
 Buat file .env di root project:
 
+bash
+Copy code
 REACT_APP_COMPANY_NAME=Ringnet
 REACT_APP_COMPANY_ADDRESS="Jl. Telekomunikasi No. 45, Yogyakarta"
 REACT_APP_COMPANY_PHONE="(0274) 123-456"
-
-
 Variabel ini digunakan otomatis di header invoice.
 
 🧑‍💻 Dibuat Oleh
-
 Zainal Salamun (Bang Jay)
 💼 Senior Mobile & Web Developer
 🌐 https://github.com/yourusername
-
 📧 ringnet.support@gmail.com
 
 💙 Lisensi
-
 Proyek ini dibuat untuk kebutuhan internal Ringnet ISP.
 Distribusi atau modifikasi untuk penggunaan komersial memerlukan izin tertulis.
 
 📸 Tampilan Aplikasi
 Form Input Invoice	Preview & Cetak PDF
 
-	
 🔥 Catatan Developer
-
 Proyek ini masih tahap awal — mendukung input manual.
 Tahap berikutnya: integrasi API pelanggan & otomatisasi penagihan via WhatsApp Cloud API.
+
+yaml
+Copy code
+
+---
+
+## ⚙️ **.gitignore**
+```bash
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# editor
+.vscode/
+.idea/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

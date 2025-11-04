@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.4",
+    "@mui/material": "^7.3.4",
+    "@mui/x-data-grid": "^8.16.0",
     "cra-template-pwa": "2.0.0",
     "dayjs": "^1.11.19",
     "html2canvas": "^1.4.1",

@@ -109,8 +109,6 @@ body {
   transform: scale(0.98);
 }
 
-
-
 /* Modal WhatsApp */
 .wa-modal-backdrop {
   position: fixed;
@@ -274,5 +272,21 @@ body {
   50% { transform: translateX(4px); }
   75% { transform: translateX(-4px); }
   100% { transform: translateX(0); }
+}
+
+
+body {
+  font-family: "Inter", Arial, sans-serif;
+  background: #f4f6f9;
+  margin: 0;
+}
+
+h2 {
+  font-weight: 600;
+  color: #333;
+}
+
+.MuiDrawer-paper::-webkit-scrollbar {
+  display: none;
 }
 

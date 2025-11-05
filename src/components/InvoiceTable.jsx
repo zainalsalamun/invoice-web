@@ -12,7 +12,7 @@ import {
   Chip,
 } from "@mui/material";
 
-const InvoiceTable = ({ data }) => {
+const InvoiceTable = ({ data, onView, onPrint }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -22,7 +22,10 @@ const InvoiceTable = ({ data }) => {
     setPage(0);
   };
 
-  const paginatedData = data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedData = data.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   return (
     <Paper sx={{ boxShadow: 3, borderRadius: 2 }}>
@@ -30,14 +33,27 @@ const InvoiceTable = ({ data }) => {
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: "#f4f6f8" }}>
-              <TableCell><b>Nomor Invoice</b></TableCell>
-              <TableCell><b>Nama Pelanggan</b></TableCell>
-              <TableCell><b>Periode</b></TableCell>
-              <TableCell><b>Total</b></TableCell>
-              <TableCell><b>Status</b></TableCell>
-              <TableCell align="center"><b>Aksi</b></TableCell>
+              <TableCell>
+                <b>Nomor Invoice</b>
+              </TableCell>
+              <TableCell>
+                <b>Nama Pelanggan</b>
+              </TableCell>
+              <TableCell>
+                <b>Periode</b>
+              </TableCell>
+              <TableCell>
+                <b>Total</b>
+              </TableCell>
+              <TableCell>
+                <b>Status</b>
+              </TableCell>
+              <TableCell align="center">
+                <b>Aksi</b>
+              </TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
             {paginatedData.map((row, i) => (
               <TableRow
@@ -57,7 +73,9 @@ const InvoiceTable = ({ data }) => {
                 <TableCell>
                   <Chip
                     label={row.statusPembayaran}
-                    color={row.statusPembayaran === "Lunas" ? "success" : "warning"}
+                    color={
+                      row.statusPembayaran === "Lunas" ? "success" : "warning"
+                    }
                     size="small"
                   />
                 </TableCell>
@@ -66,19 +84,36 @@ const InvoiceTable = ({ data }) => {
                     size="small"
                     variant="outlined"
                     color="primary"
-                    sx={{ mr: 1 }}
-                    onClick={() =>
-                      window.open(`/invoices/${row.nomorInvoice}.pdf`, "_blank")
-                    }
+                    sx={{
+                      mr: 1,
+                      textTransform: "none",
+                    }}
+                    onClick={() => onView(row)}
                   >
                     Lihat
                   </Button>
-                  <Button size="small" variant="contained" color="success">
+                  <Button
+                    size="small"
+                    variant="contained"
+                    color="success"
+                    sx={{
+                      textTransform: "none",
+                    }}
+                    onClick={() => onPrint(row)}
+                  >
                     Cetak
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
+
+            {data.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  Tidak ada data invoice.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>

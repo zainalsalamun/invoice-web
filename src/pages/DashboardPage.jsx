@@ -13,11 +13,16 @@ import {
   Slide,
   Skeleton,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import InvoiceTable from "../components/InvoiceTable";
 import { invoiceService } from "../services/invoiceService";
+import { generatePDF } from "../utils/pdfGenerator";
+import { sendWhatsApp } from "../utils/sendWhatsApp";
+import WhatsAppDialog from "../components/WhatsAppDialog";
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const currentMonth = new Date().toISOString().slice(0, 7);
 
   const [filters, setFilters] = useState({
@@ -34,6 +39,10 @@ const DashboardPage = () => {
     message: "",
     severity: "info",
   });
+
+  // 🔹 State tambahan untuk modal WhatsApp
+  const [openWaDialog, setOpenWaDialog] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   // 🧩 Ambil data dari backend
   const fetchInvoices = async () => {
@@ -112,7 +121,7 @@ const DashboardPage = () => {
     });
   };
 
-  // 🔹 Refresh animasi setiap filter berubah
+  // 🔹 Animasi refresh setiap filter berubah
   useEffect(() => {
     setLoading(true);
     const timeout = setTimeout(() => {
@@ -137,6 +146,24 @@ const DashboardPage = () => {
     const totalNominal = filtered.reduce((sum, i) => sum + (i.total || 0), 0);
     return { totalInvoice, totalLunas, totalBelum, totalNominal };
   }, [filtered]);
+
+  // 🔹 Handler tombol Lihat, Cetak, dan Kirim WA
+  const handleView = (invoice) => {
+    navigate(`/invoices/${invoice.id}.pdf`, { state: { data: invoice } });
+  };
+
+  const handlePrint = (invoice) => {
+    generatePDF(invoice);
+  };
+
+  const handleSendWhatsApp = (invoice) => {
+    setSelectedInvoice(invoice);
+    setOpenWaDialog(true);
+  };
+
+  const handleSend = (phone) => {
+    if (selectedInvoice) sendWhatsApp(selectedInvoice, phone);
+  };
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
@@ -219,19 +246,7 @@ const DashboardPage = () => {
         </header>
 
         {/* Summary Cards */}
-        <Grid
-          container
-          spacing={2}
-          sx={{
-            mb: 3,
-            opacity: 0,
-            animation: "fadeIn 0.8s ease forwards",
-            "@keyframes fadeIn": {
-              from: { opacity: 0, transform: "translateY(10px)" },
-              to: { opacity: 1, transform: "translateY(0)" },
-            },
-          }}
-        >
+        <Grid container spacing={2} sx={{ mb: 3 }}>
           {[
             {
               title: "Total Invoice",
@@ -281,7 +296,7 @@ const DashboardPage = () => {
           ))}
         </Grid>
 
-        {/* Loading & Table */}
+        {/* Table */}
         {loading ? (
           <Box sx={{ p: 2 }}>
             {[1, 2, 3].map((i) => (
@@ -297,12 +312,24 @@ const DashboardPage = () => {
         ) : (
           <Slide key={animateKey} direction="up" in mountOnEnter unmountOnExit>
             <div>
-              <InvoiceTable data={filtered} />
+              <InvoiceTable
+                data={filtered}
+                onView={handleView}
+                onPrint={handlePrint}
+                onSendWhatsApp={handleSendWhatsApp}
+              />
             </div>
           </Slide>
         )}
 
-        {/* Snackbar Notification */}
+        {/* Modal WhatsApp */}
+        <WhatsAppDialog
+          isOpen={openWaDialog}
+          onClose={() => setOpenWaDialog(false)}
+          onSend={handleSend}
+        />
+
+        {/* Snackbar */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={3000}

@@ -25,6 +25,7 @@ const WhatsAppDialog = ({ isOpen, onClose, onSend }) => {
             onClick={() => {
               if (!phone.trim()) return alert("Nomor tidak boleh kosong!");
               onSend(phone);
+              setPhone("");
               onClose();
             }}
           >

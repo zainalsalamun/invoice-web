@@ -12,7 +12,7 @@ import {
   Chip,
 } from "@mui/material";
 
-const InvoiceTable = ({ data, onView, onPrint }) => {
+const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -84,10 +84,7 @@ const InvoiceTable = ({ data, onView, onPrint }) => {
                     size="small"
                     variant="outlined"
                     color="primary"
-                    sx={{
-                      mr: 1,
-                      textTransform: "none",
-                    }}
+                    sx={{ mr: 1, textTransform: "none" }}
                     onClick={() => onView(row)}
                   >
                     Lihat
@@ -96,12 +93,19 @@ const InvoiceTable = ({ data, onView, onPrint }) => {
                     size="small"
                     variant="contained"
                     color="success"
-                    sx={{
-                      textTransform: "none",
-                    }}
+                    sx={{ mr: 1, textTransform: "none" }}
                     onClick={() => onPrint(row)}
                   >
                     Cetak
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    color="secondary"
+                    sx={{ textTransform: "none" }}
+                    onClick={() => onSendWhatsApp(row)}
+                  >
+                    Kirim WA
                   </Button>
                 </TableCell>
               </TableRow>

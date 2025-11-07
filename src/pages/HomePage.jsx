@@ -71,7 +71,7 @@ const HomePage = () => {
       </div>
 
       {!invoiceData ? (
-        <InvoiceForm onSubmit={(data) => setInvoiceData(data)} />
+        <InvoiceForm onPreview={(data) => setInvoiceData(data)} />
       ) : (
         <InvoicePreview
           data={invoiceData}

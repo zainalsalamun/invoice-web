@@ -7,8 +7,7 @@ export const invoiceService = {
   async getAll() {
     try {
       const res = await axios.get(`${BASE_URL}/invoices`);
-      // ✅ backend kirim { success: true, data: [...] }
-      return res.data?.data || []; 
+      return res.data?.data || [];
     } catch (err) {
       console.error("❌ Gagal ambil data invoice:", err);
       return [];
@@ -19,7 +18,6 @@ export const invoiceService = {
   async getById(id) {
     try {
       const res = await axios.get(`${BASE_URL}/invoices/${id}`);
-      // ✅ backend kirim { success: true, data: {...} }
       return res.data?.data || null;
     } catch (err) {
       console.error("❌ Gagal ambil detail invoice:", err);
@@ -44,12 +42,15 @@ export const invoiceService = {
   async create(data) {
     try {
       const res = await axios.post(`${BASE_URL}/invoices`, data);
-      return res.data?.data || null;
+  
+      // ✅ Pastikan balikin objek { success, data }
+      return res.data;
     } catch (err) {
       console.error("❌ Gagal buat invoice:", err);
       return null;
     }
   },
+  
 
   // 🔹 Hapus invoice
   async delete(id) {

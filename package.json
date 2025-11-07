@@ -8,6 +8,7 @@
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
     "@mui/x-data-grid": "^8.16.0",
+    "axios": "^1.13.2",
     "cra-template-pwa": "2.0.0",
     "dayjs": "^1.11.19",
     "html2canvas": "^1.4.1",

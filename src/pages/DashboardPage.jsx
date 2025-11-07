@@ -15,9 +15,9 @@ import {
 } from "@mui/material";
 import Sidebar from "../components/Sidebar";
 import InvoiceTable from "../components/InvoiceTable";
+import { invoiceService } from "../services/invoiceService";
 
 const DashboardPage = () => {
-  // 🔹 Default bulan sekarang
   const currentMonth = new Date().toISOString().slice(0, 7);
 
   const [filters, setFilters] = useState({
@@ -26,80 +26,93 @@ const DashboardPage = () => {
     search: "",
   });
 
+  const [invoices, setInvoices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [animateKey, setAnimateKey] = useState(0);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "info",
   });
 
-  const [animateKey, setAnimateKey] = useState(0);
-  const [loading, setLoading] = useState(false);
+  // 🧩 Ambil data dari backend
+  const fetchInvoices = async () => {
+    setLoading(true);
+    try {
+      const data = await invoiceService.getAll();
 
-  const [invoices] = useState([
-    {
-      nomorInvoice: "INV-1762147835889",
-      namaPelanggan: "Zainal Salamun",
-      periode: "November 2025",
-      total: 166500,
-      statusPembayaran: "Belum Lunas",
-    },
-    {
-      nomorInvoice: "INV-1762147835890",
-      namaPelanggan: "Fadhil Rahman",
-      periode: "November 2025",
-      total: 266500,
-      statusPembayaran: "Lunas",
-    },
-    {
-      nomorInvoice: "INV-1762147835891",
-      namaPelanggan: "Siti Aminah",
-      periode: "Oktober 2025",
-      total: 196500,
-      statusPembayaran: "Belum Lunas",
-    },
-  ]);
+      const mapped = data.map((item) => ({
+        id: item.id,
+        nomorInvoice: item.nomor_invoice,
+        namaPelanggan: item.nama_pelanggan,
+        alamat: item.alamat,
+        layanan: item.layanan,
+        hargaPaket: item.harga_paket,
+        ppn: item.ppn,
+        total: item.total,
+        periode: item.periode,
+        statusPembayaran: item.status_pembayaran,
+        tanggalInvoice: item.tanggal_invoice,
+        tanggalJatuhTempo: item.tanggal_jatuh_tempo,
+      }));
 
-  // Konversi format bulan ke “November 2025”
+      setInvoices(mapped);
+    } catch (err) {
+      console.error("❌ Gagal ambil data invoice:", err);
+      setSnackbar({
+        open: true,
+        message: "Gagal memuat data dari server.",
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ⏱️ Load pertama kali
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
+
+  // 🔹 Konversi format bulan (2025-11 → November 2025)
   const convertMonth = (value) => {
     if (!value) return "";
     const date = new Date(value);
     return date.toLocaleString("id-ID", { month: "long", year: "numeric" });
   };
 
-  // Filter data
+  // 🔹 Filter data
   const filtered = invoices.filter((i) => {
     const byMonth = filters.month
-      ? i.periode
-          .toLowerCase()
-          .includes(convertMonth(filters.month).toLowerCase())
+      ? i.periode?.toLowerCase().includes(
+          convertMonth(filters.month).toLowerCase()
+        )
       : true;
     const byStatus = filters.status
-      ? i.statusPembayaran.toLowerCase() === filters.status.toLowerCase()
+      ? i.statusPembayaran?.toLowerCase() === filters.status.toLowerCase()
       : true;
     const bySearch = filters.search
-      ? i.namaPelanggan.toLowerCase().includes(filters.search.toLowerCase()) ||
-        i.nomorInvoice.toLowerCase().includes(filters.search.toLowerCase())
+      ? i.namaPelanggan?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        i.nomorInvoice?.toLowerCase().includes(filters.search.toLowerCase())
       : true;
-
     return byMonth && byStatus && bySearch;
   });
 
-  // Reset filter ke bulan sekarang
+  // 🔹 Reset filter
   const handleReset = () => {
     setFilters({
       month: currentMonth,
       status: "",
       search: "",
     });
-
     setSnackbar({
       open: true,
-      message: `Filter berhasil direset ke ${convertMonth(currentMonth)}`,
+      message: `Filter direset ke ${convertMonth(currentMonth)}`,
       severity: "success",
     });
   };
 
-  // Trigger animasi & loading shimmer setiap filter berubah
+  // 🔹 Refresh animasi setiap filter berubah
   useEffect(() => {
     setLoading(true);
     const timeout = setTimeout(() => {
@@ -112,18 +125,23 @@ const DashboardPage = () => {
   const handleCloseSnackbar = () =>
     setSnackbar((prev) => ({ ...prev, open: false }));
 
-  // Summary data
+  // 🔹 Summary data
   const summary = useMemo(() => {
     const totalInvoice = filtered.length;
-    const totalLunas = filtered.filter((i) => i.statusPembayaran === "Lunas").length;
-    const totalBelum = filtered.filter((i) => i.statusPembayaran === "Belum Lunas").length;
-    const totalNominal = filtered.reduce((sum, i) => sum + i.total, 0);
+    const totalLunas = filtered.filter(
+      (i) => i.statusPembayaran === "Lunas"
+    ).length;
+    const totalBelum = filtered.filter(
+      (i) => i.statusPembayaran === "Belum Lunas"
+    ).length;
+    const totalNominal = filtered.reduce((sum, i) => sum + (i.total || 0), 0);
     return { totalInvoice, totalLunas, totalBelum, totalNominal };
   }, [filtered]);
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar active="dashboard" />
+
       <Box sx={{ flexGrow: 1, p: 4 }}>
         {/* Header */}
         <header
@@ -200,7 +218,7 @@ const DashboardPage = () => {
           </Box>
         </header>
 
-        {/* Summary Card */}
+        {/* Summary Cards */}
         <Grid
           container
           spacing={2}
@@ -246,7 +264,6 @@ const DashboardPage = () => {
                   bgcolor: card.color,
                   color: card.textColor,
                   transition: "all 0.3s ease",
-                  transform: "scale(1)",
                   "&:hover": {
                     transform: "scale(1.05)",
                     boxShadow: "0 6px 16px rgba(0,0,0,0.2)",
@@ -264,7 +281,7 @@ const DashboardPage = () => {
           ))}
         </Grid>
 
-        {/* Shimmer Loading */}
+        {/* Loading & Table */}
         {loading ? (
           <Box sx={{ p: 2 }}>
             {[1, 2, 3].map((i) => (
@@ -278,21 +295,14 @@ const DashboardPage = () => {
             ))}
           </Box>
         ) : (
-          <Slide
-            key={animateKey}
-            direction="up"
-            in={true}
-            mountOnEnter
-            unmountOnExit
-            timeout={500}
-          >
+          <Slide key={animateKey} direction="up" in mountOnEnter unmountOnExit>
             <div>
               <InvoiceTable data={filtered} />
             </div>
           </Slide>
         )}
 
-        {/* Snackbar Notifikasi */}
+        {/* Snackbar Notification */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={3000}

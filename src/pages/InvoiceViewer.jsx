@@ -1,32 +1,63 @@
 import React, { useEffect, useState } from "react";
-import {  useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Button, Box, Typography, Divider } from "@mui/material";
 import { QRCodeCanvas } from "qrcode.react";
 import logoRingnet from "../assets/logoringnet.png";
 import { generatePDF } from "../utils/pdfGenerator";
+import { invoiceService } from "../services/invoiceService";
 
 const InvoiceViewer = () => {
-  // const { invoiceId } = useParams();
+  const { invoiceId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const [invoice, setInvoice] = useState(null);
 
   useEffect(() => {
-    // Ambil dari state (jika dikirim dari InvoicePreview)
-    if (location.state?.data) {
-      setInvoice(location.state.data);
-      localStorage.setItem("lastInvoice", JSON.stringify(location.state.data));
-    } else {
-      // Fallback: ambil dari localStorage
-      const stored = localStorage.getItem("lastInvoice");
-      if (stored) {
-        setInvoice(JSON.parse(stored));
+    const loadInvoice = async () => {
+      // 🟢 Jika data dikirim dari InvoicePreview
+      if (location.state?.data) {
+        const data = normalizeInvoice(location.state.data);
+        setInvoice(data);
+        localStorage.setItem("lastInvoice", JSON.stringify(data));
       } else {
-        // Jika tidak ada data sama sekali, redirect balik ke halaman utama
-        navigate("/");
+        // 🟡 Fallback: ambil dari localStorage
+        const stored = localStorage.getItem("lastInvoice");
+        if (stored) {
+          setInvoice(JSON.parse(stored));
+        } else if (invoiceId) {
+          // 🔵 Jika tidak ada state/localStorage → ambil dari API
+          try {
+            const res = await invoiceService.getById(invoiceId);
+            if (res) setInvoice(normalizeInvoice(res));
+            else navigate("/");
+          } catch {
+            navigate("/");
+          }
+        } else {
+          // 🚫 Tidak ada data sama sekali
+          navigate("/");
+        }
       }
-    }
-  }, [location.state, navigate]);
+    };
+
+    loadInvoice();
+  }, [location.state, invoiceId, navigate]);
+
+  // 🔧 Normalisasi field agar kompatibel (snake_case → camelCase)
+  const normalizeInvoice = (data) => ({
+    nomorInvoice: data.nomorInvoice || data.nomor_invoice || "-",
+    namaPelanggan: data.namaPelanggan || data.nama_pelanggan || "-",
+    alamat: data.alamat || "-",
+    layanan: data.layanan || "-",
+    hargaPaket: data.hargaPaket || data.harga_paket || 0,
+    ppn: data.ppn || 0,
+    total: data.total || 0,
+    periode: data.periode || "-",
+    statusPembayaran: data.statusPembayaran || data.status_pembayaran || "-",
+    tanggalInvoice: data.tanggalInvoice || data.tanggal_invoice || "-",
+    tanggalJatuhTempo:
+      data.tanggalJatuhTempo || data.tanggal_jatuh_tempo || "-",
+  });
 
   if (!invoice)
     return <p style={{ textAlign: "center" }}>Memuat data invoice...</p>;
@@ -186,13 +217,13 @@ const InvoiceViewer = () => {
             <tr>
               <td style={{ padding: "8px" }}>{invoice.layanan}</td>
               <td style={{ textAlign: "right", padding: "8px" }}>
-                Rp {invoice.hargaPaket.toLocaleString("id-ID")}
+                Rp {invoice.hargaPaket?.toLocaleString("id-ID")}
               </td>
             </tr>
             <tr>
               <td style={{ padding: "8px" }}>PPN 11%</td>
               <td style={{ textAlign: "right", padding: "8px" }}>
-                Rp {invoice.ppn.toLocaleString("id-ID")}
+                Rp {invoice.ppn?.toLocaleString("id-ID")}
               </td>
             </tr>
             <tr style={{ borderTop: "2px solid #ddd" }}>
@@ -204,7 +235,7 @@ const InvoiceViewer = () => {
                   padding: "8px",
                 }}
               >
-                Rp {invoice.total.toLocaleString("id-ID")}
+                Rp {invoice.total?.toLocaleString("id-ID")}
               </td>
             </tr>
           </tbody>

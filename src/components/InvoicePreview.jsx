@@ -9,30 +9,35 @@ const InvoicePreview = ({ data, onReset }) => {
 
   if (!data) return null;
 
+  const nomor = data.nomor_invoice || data.nomorInvoice;
+  const nama = data.nama_pelanggan || data.namaPelanggan;
+  const alamat = data.alamat;
+  const layanan = data.layanan;
+  const harga = data.harga_paket || data.hargaPaket;
+  const ppn = data.ppn;
+  const total = data.total;
+  const periode = data.periode;
+  const status = data.status_pembayaran || data.statusPembayaran;
+  const jatuhTempo = data.tanggal_jatuh_tempo || data.tanggalJatuhTempo;
+  const tanggalInvoice = data.tanggal_invoice || data.tanggalInvoice;
+
   return (
     <div className="invoice-preview">
       <h2>Preview Invoice</h2>
 
-      <p><strong>Nomor Invoice:</strong> {data.nomorInvoice}</p>
-      <p><strong>Tanggal Invoice:</strong> {data.tanggalInvoice}</p>
-      <p><strong>Nama Pelanggan:</strong> {data.namaPelanggan}</p>
-      <p><strong>Alamat:</strong> {data.alamat}</p>
-      <p><strong>Layanan:</strong> {data.layanan}</p>
-      <p><strong>Harga Paket:</strong> Rp {data.hargaPaket.toLocaleString()}</p>
-      <p><strong>PPN 11%:</strong> Rp {data.ppn.toLocaleString()}</p>
-      <p><strong>Total:</strong> Rp {data.total.toLocaleString()}</p>
-      <p><strong>Status:</strong> {data.statusPembayaran}</p>
-      <p><strong>Jatuh Tempo:</strong> {data.tanggalJatuhTempo}</p>
+      <p><strong>Nomor Invoice:</strong> {nomor}</p>
+      <p><strong>Tanggal Invoice:</strong> {tanggalInvoice}</p>
+      <p><strong>Nama Pelanggan:</strong> {nama}</p>
+      <p><strong>Alamat:</strong> {alamat}</p>
+      <p><strong>Layanan:</strong> {layanan}</p>
+      <p><strong>Harga Paket:</strong> Rp {harga?.toLocaleString()}</p>
+      <p><strong>PPN 11%:</strong> Rp {ppn?.toLocaleString()}</p>
+      <p><strong>Total:</strong> Rp {total?.toLocaleString()}</p>
+      <p><strong>Status:</strong> {status}</p>
+      <p><strong>Periode:</strong> {periode}</p>
+      <p><strong>Jatuh Tempo:</strong> {jatuhTempo}</p>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-          justifyContent: "center",
-          marginTop: "20px",
-        }}
-      >
-        {/* Tombol Preview PDF */}
+      <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginTop: "20px" }}>
         <button
           style={{
             background: "#007bff",
@@ -43,15 +48,14 @@ const InvoicePreview = ({ data, onReset }) => {
             cursor: "pointer",
           }}
           onClick={() =>
-            navigate(`/invoices/${data.nomorInvoice}.pdf`, {
-              state: { data }, // kirim semua data dari form ke viewer
+            navigate(`/invoices/${nomor}.pdf`, {
+              state: { data },
             })
           }
         >
           Preview PDF
         </button>
 
-        {/* Tombol Kirim ke WhatsApp */}
         <button
           style={{
             background: "#28a745",
@@ -66,7 +70,6 @@ const InvoicePreview = ({ data, onReset }) => {
           Kirim ke WhatsApp
         </button>
 
-        {/* Tombol Buat Ulang */}
         <button
           style={{
             background: "#6c757d",
@@ -82,7 +85,6 @@ const InvoicePreview = ({ data, onReset }) => {
         </button>
       </div>
 
-      {/* Modal Input Nomor WhatsApp */}
       <WhatsAppDialog
         isOpen={isWaOpen}
         onClose={() => setIsWaOpen(false)}

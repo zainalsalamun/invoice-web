@@ -1,46 +1,47 @@
-// src/services/customerService.js
-import axios from "axios";
-
-const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:2002/api";
+import apiClient from "../utils/apiClient";
 
 export const customerService = {
   async getAll() {
     try {
-      const res = await axios.get(`${BASE_URL}/customers`);
+      const res = await apiClient.get("/customers");
       return res.data?.data || [];
     } catch (err) {
-      console.error("❌ Gagal ambil data pelanggan:", err);
+      console.error(" Gagal ambil data pelanggan:", err);
       return [];
     }
   },
 
+  // 🔹 Tambah pelanggan baru
   async create(data) {
     try {
-      const res = await axios.post(`${BASE_URL}/customers`, data);
+      const res = await apiClient.post("/customers", data);
       return res.data?.data || null;
     } catch (err) {
-      console.error("❌ Gagal tambah pelanggan:", err);
+      console.error(" Gagal tambah pelanggan:", err);
       return null;
     }
   },
 
+  // 🔹 Update pelanggan
   async update(id, data) {
     try {
-      const res = await axios.put(`${BASE_URL}/customers/${id}`, data);
+      const res = await apiClient.put(`/customers/${id}`, data);
       return res.data?.data || null;
     } catch (err) {
-      console.error("❌ Gagal update pelanggan:", err);
+      console.error(" Gagal update pelanggan:", err);
       return null;
     }
   },
 
+  // 🔹 Hapus pelanggan
   async remove(id) {
     try {
-      const res = await axios.delete(`${BASE_URL}/customers/${id}`);
+      const res = await apiClient.delete(`/customers/${id}`);
       return res.data?.message || null;
     } catch (err) {
-      console.error("❌ Gagal hapus pelanggan:", err);
+      console.error(" Gagal hapus pelanggan:", err);
       return null;
     }
   },
 };
+

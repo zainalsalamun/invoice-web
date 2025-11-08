@@ -26,19 +26,16 @@ import DashboardPage from "./pages/DashboardPage";
 import CreateInvoicePage from "./pages/CreateInvoicePage";
 import InvoiceViewer from "./pages/InvoiceViewer";
 import "./styles.css";
+import CustomerPage from "./pages/CustomerPage";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <BrowserRouter>
     <Routes>
-      {/* 🏠 Dashboard utama */}
       <Route path="/" element={<DashboardPage />} />
-
-      {/* 🧾 Buat Invoice Baru */}
       <Route path="/invoices/new" element={<CreateInvoicePage />} />
-
-      {/* 📄 Viewer PDF */}
       <Route path="/invoices/:invoiceId.pdf" element={<InvoiceViewer />} />
+      <Route path="/customers" element={<CustomerPage />} />
     </Routes>
   </BrowserRouter>
 );

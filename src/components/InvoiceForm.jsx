@@ -30,6 +30,9 @@ const InvoiceForm = ({ onPreview }) => {
     statusPembayaran: "Belum Lunas",
   });
 
+  const [buktiFile, setBuktiFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
   const [customers, setCustomers] = useState([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
@@ -86,6 +89,14 @@ const InvoiceForm = ({ onPreview }) => {
     setErrorFields((prev) => prev.filter((f) => f !== name));
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setBuktiFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -123,17 +134,22 @@ const InvoiceForm = ({ onPreview }) => {
     setLoading(true);
     try {
       const result = await invoiceService.create(payload);
-      setLoading(false);
 
       if (result?.success && result.data) {
+        // 🔹 Kalau status = Lunas dan ada bukti, upload file
+        if (formData.statusPembayaran === "Lunas" && buktiFile) {
+          await invoiceService.uploadProof(result.data.id, buktiFile);
+        }
+
         onPreview(result.data);
       } else {
         alert("Gagal menyimpan invoice ke server");
       }
     } catch (error) {
       console.error("Error saat kirim data:", error);
-      setLoading(false);
       alert("Gagal menyimpan invoice, periksa koneksi server");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -173,153 +189,175 @@ const InvoiceForm = ({ onPreview }) => {
             boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
           }}
         >
-          <Typography
-            variant="h5"
-            sx={{
-              textAlign: "left",
-              mb: 3,
-              fontWeight: 700,
-              color: "#2f2f2f",
-            }}
-          >
+          <Typography variant="h5" sx={{ mb: 3, fontWeight: 700 }}>
             🧾 Form Input Invoice
           </Typography>
 
-          <Autocomplete
-            options={customers}
-            getOptionLabel={(option) =>
-              `${option.nama} (${option.paket || "Tanpa Paket"})`
-            }
-            loading={loadingCustomers}
-            value={
-              customers.find((c) => c.id === formData.customerId) || null
-            }
-            onChange={handleSelectCustomer}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Pilih Pelanggan"
-                placeholder="Cari nama pelanggan..."
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {loadingCustomers ? (
-                        <CircularProgress color="inherit" size={20} />
-                      ) : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  ),
-                }}
-              />
+          <form onSubmit={handleSubmit}>
+            <Autocomplete
+              options={customers}
+              getOptionLabel={(option) =>
+                `${option.nama} (${option.paket || "Tanpa Paket"})`
+              }
+              loading={loadingCustomers}
+              value={
+                customers.find((c) => c.id === formData.customerId) || null
+              }
+              onChange={handleSelectCustomer}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Pilih Pelanggan"
+                  placeholder="Cari nama pelanggan..."
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {loadingCustomers ? (
+                          <CircularProgress color="inherit" size={20} />
+                        ) : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              sx={{ mb: 2 }}
+            />
+
+            <Button
+              variant="outlined"
+              fullWidth
+              sx={{ mb: 3 }}
+              onClick={() => setShowNewCustomerModal(true)}
+            >
+              ➕ Tambah Pelanggan Baru
+            </Button>
+
+            <TextField
+              label="Nama Pelanggan"
+              name="namaPelanggan"
+              fullWidth
+              inputRef={refs.namaPelanggan}
+              value={formData.namaPelanggan}
+              onChange={handleChange}
+              error={errorFields.includes("namaPelanggan")}
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              label="Alamat"
+              name="alamat"
+              fullWidth
+              value={formData.alamat}
+              onChange={handleChange}
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              label="Layanan Internet"
+              name="layanan"
+              fullWidth
+              value={formData.layanan}
+              onChange={handleChange}
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              label="Harga Paket (Rp)"
+              type="number"
+              name="hargaPaket"
+              fullWidth
+              inputRef={refs.hargaPaket}
+              value={formData.hargaPaket}
+              onChange={handleChange}
+              error={errorFields.includes("hargaPaket")}
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              label="Periode Tagihan"
+              type="month"
+              name="periode"
+              fullWidth
+              value={formData.periode}
+              onChange={handleChange}
+              InputLabelProps={{ shrink: true }}
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              label="Tanggal Jatuh Tempo"
+              type="date"
+              name="tanggalJatuhTempo"
+              fullWidth
+              value={formData.tanggalJatuhTempo}
+              onChange={handleChange}
+              InputLabelProps={{ shrink: true }}
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              select
+              label="Status Pembayaran"
+              name="statusPembayaran"
+              fullWidth
+              value={formData.statusPembayaran}
+              onChange={handleChange}
+              sx={{ mb: 3 }}
+            >
+              <MenuItem value="Belum Lunas">Belum Lunas</MenuItem>
+              <MenuItem value="Lunas">Lunas</MenuItem>
+            </TextField>
+
+            {/* ✅ Hanya tampil kalau status = Lunas */}
+            {formData.statusPembayaran === "Lunas" && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  Bukti Pembayaran:
+                </Typography>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+                {previewUrl && (
+                  <Box sx={{ mt: 2 }}>
+                    <img
+                      src={previewUrl}
+                      alt="Preview Bukti"
+                      style={{
+                        width: "100%",
+                        maxWidth: 250,
+                        borderRadius: 8,
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  </Box>
+                )}
+              </Box>
             )}
-            sx={{ mb: 2 }}
-          />
 
-          <Button
-            variant="outlined"
-            fullWidth
-            sx={{ mb: 3 }}
-            onClick={() => setShowNewCustomerModal(true)}
-          >
-            ➕ Tambah Pelanggan Baru
-          </Button>
-
-          <TextField
-            label="Nama Pelanggan"
-            name="namaPelanggan"
-            fullWidth
-            inputRef={refs.namaPelanggan}
-            value={formData.namaPelanggan}
-            onChange={handleChange}
-            error={errorFields.includes("namaPelanggan")}
-            sx={{ mb: 2 }}
-          />
-
-          <TextField
-            label="Alamat"
-            name="alamat"
-            fullWidth
-            value={formData.alamat}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-
-          <TextField
-            label="Layanan Internet"
-            name="layanan"
-            fullWidth
-            value={formData.layanan}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-          />
-
-          <TextField
-            label="Harga Paket (Rp)"
-            type="number"
-            name="hargaPaket"
-            fullWidth
-            inputRef={refs.hargaPaket}
-            value={formData.hargaPaket}
-            onChange={handleChange}
-            error={errorFields.includes("hargaPaket")}
-            sx={{ mb: 2 }}
-          />
-
-          <TextField
-            label="Periode Tagihan"
-            type="month"
-            name="periode"
-            fullWidth
-            value={formData.periode}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-            sx={{ mb: 2 }}
-          />
-
-          <TextField
-            label="Tanggal Jatuh Tempo"
-            type="date"
-            name="tanggalJatuhTempo"
-            fullWidth
-            value={formData.tanggalJatuhTempo}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-            sx={{ mb: 2 }}
-          />
-
-          <TextField
-            select
-            label="Status Pembayaran"
-            name="statusPembayaran"
-            fullWidth
-            value={formData.statusPembayaran}
-            onChange={handleChange}
-            sx={{ mb: 3 }}
-          >
-            <MenuItem value="Belum Lunas">Belum Lunas</MenuItem>
-            <MenuItem value="Lunas">Lunas</MenuItem>
-          </TextField>
-
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            color="primary"
-            disabled={loading}
-            sx={{
-              mt: 1,
-              fontWeight: "bold",
-              padding: "10px",
-              textTransform: "none",
-            }}
-            onClick={handleSubmit}
-          >
-            {loading ? "💾 Menyimpan..." : "📄 Preview Invoice"}
-          </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              color="primary"
+              disabled={loading}
+              sx={{
+                mt: 1,
+                fontWeight: "bold",
+                padding: "10px",
+                textTransform: "none",
+              }}
+            >
+              {loading ? "💾 Menyimpan..." : "📄 Preview Invoice"}
+            </Button>
+          </form>
         </Paper>
       </Box>
 
+      {/* Modal tambah pelanggan */}
       <Dialog
         open={showNewCustomerModal}
         onClose={() => setShowNewCustomerModal(false)}

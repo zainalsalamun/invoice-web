@@ -165,7 +165,6 @@ const Sidebar = ({ active }) => {
     teknisi: "#2196F3",
   };
 
-  // 🔹 Menu yang muncul sesuai role
   const menuByRole = {
     admin: [
       { label: "Dashboard", icon: <Dashboard />, path: "/" },
@@ -202,7 +201,6 @@ const Sidebar = ({ active }) => {
         minHeight: "100vh",
       }}
     >
-      {/* 🔹 Logo & User Info */}
       <div
         style={{
           textAlign: "center",
@@ -226,7 +224,6 @@ const Sidebar = ({ active }) => {
           Ringnet Admin
         </h3>
 
-        {/* 🔸 Info User */}
         <div style={{ marginTop: 12 }}>
           <p
             style={{
@@ -254,7 +251,6 @@ const Sidebar = ({ active }) => {
         </div>
       </div>
 
-      {/* 🔹 Navigation Menu */}
       <div style={{ flexGrow: 1, width: "100%" }}>
         {menu.map((item, i) => (
           <div

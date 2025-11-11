@@ -14,18 +14,15 @@ const InvoiceViewer = () => {
 
   useEffect(() => {
     const loadInvoice = async () => {
-      // 🟢 Jika data dikirim dari InvoicePreview
       if (location.state?.data) {
         const data = normalizeInvoice(location.state.data);
         setInvoice(data);
         localStorage.setItem("lastInvoice", JSON.stringify(data));
       } else {
-        // 🟡 Fallback: ambil dari localStorage
         const stored = localStorage.getItem("lastInvoice");
         if (stored) {
           setInvoice(JSON.parse(stored));
         } else if (invoiceId) {
-          // 🔵 Jika tidak ada state/localStorage → ambil dari API
           try {
             const res = await invoiceService.getById(invoiceId);
             if (res) setInvoice(normalizeInvoice(res));
@@ -34,7 +31,6 @@ const InvoiceViewer = () => {
             navigate("/");
           }
         } else {
-          // 🚫 Tidak ada data sama sekali
           navigate("/");
         }
       }
@@ -43,7 +39,6 @@ const InvoiceViewer = () => {
     loadInvoice();
   }, [location.state, invoiceId, navigate]);
 
-  // 🔧 Normalisasi field agar kompatibel (snake_case → camelCase)
   const normalizeInvoice = (data) => ({
     nomorInvoice: data.nomorInvoice || data.nomor_invoice || "-",
     namaPelanggan: data.namaPelanggan || data.nama_pelanggan || "-",
@@ -90,7 +85,6 @@ const InvoiceViewer = () => {
           overflow: "hidden",
         }}
       >
-        {/* Watermark */}
         <Typography
           sx={{
             position: "absolute",
@@ -110,7 +104,6 @@ const InvoiceViewer = () => {
           {watermarkText}
         </Typography>
 
-        {/* Header */}
         <Box
           sx={{
             display: "flex",
@@ -150,7 +143,6 @@ const InvoiceViewer = () => {
 
         <Divider sx={{ mb: 3 }} />
 
-        {/* Title */}
         <Typography
           variant="h6"
           sx={{
@@ -164,7 +156,6 @@ const InvoiceViewer = () => {
           INVOICE PEMBAYARAN INTERNET
         </Typography>
 
-        {/* Detail Pelanggan */}
         <Box
           sx={{
             mb: 3,
@@ -241,7 +232,6 @@ const InvoiceViewer = () => {
           </tbody>
         </table>
 
-        {/* Status */}
         <Box sx={{ textAlign: "left", mb: 3 }}>
           <Typography>
             <b>Status Pembayaran:</b> {invoice.statusPembayaran}
@@ -253,7 +243,6 @@ const InvoiceViewer = () => {
 
         <Divider sx={{ my: 3 }} />
 
-        {/* Footer */}
         <Box
           sx={{
             display: "flex",
@@ -281,7 +270,6 @@ const InvoiceViewer = () => {
           </Box>
         </Box>
 
-        {/* Tombol Aksi */}
         <Box
           sx={{
             display: "flex",

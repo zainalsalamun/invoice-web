@@ -40,11 +40,9 @@ const DashboardPage = () => {
     severity: "info",
   });
 
-  // 🔹 State tambahan untuk modal WhatsApp
   const [openWaDialog, setOpenWaDialog] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
-  // 🧩 Ambil data dari backend
   const fetchInvoices = async () => {
     setLoading(true);
     try {
@@ -78,19 +76,16 @@ const DashboardPage = () => {
     }
   };
 
-  // ⏱️ Load pertama kali
   useEffect(() => {
     fetchInvoices();
   }, []);
 
-  // 🔹 Konversi format bulan (2025-11 → November 2025)
   const convertMonth = (value) => {
     if (!value) return "";
     const date = new Date(value);
     return date.toLocaleString("id-ID", { month: "long", year: "numeric" });
   };
 
-  // 🔹 Filter data
   const filtered = invoices.filter((i) => {
     const byMonth = filters.month
       ? i.periode?.toLowerCase().includes(
@@ -107,7 +102,6 @@ const DashboardPage = () => {
     return byMonth && byStatus && bySearch;
   });
 
-  // 🔹 Reset filter
   const handleReset = () => {
     setFilters({
       month: currentMonth,
@@ -121,7 +115,6 @@ const DashboardPage = () => {
     });
   };
 
-  // 🔹 Animasi refresh setiap filter berubah
   useEffect(() => {
     setLoading(true);
     const timeout = setTimeout(() => {
@@ -134,7 +127,6 @@ const DashboardPage = () => {
   const handleCloseSnackbar = () =>
     setSnackbar((prev) => ({ ...prev, open: false }));
 
-  // 🔹 Summary data
   const summary = useMemo(() => {
     const totalInvoice = filtered.length;
     const totalLunas = filtered.filter(
@@ -147,7 +139,6 @@ const DashboardPage = () => {
     return { totalInvoice, totalLunas, totalBelum, totalNominal };
   }, [filtered]);
 
-  // 🔹 Handler tombol Lihat, Cetak, dan Kirim WA
   const handleView = (invoice) => {
     navigate(`/invoices/${invoice.id}.pdf`, { state: { data: invoice } });
   };
@@ -170,7 +161,6 @@ const DashboardPage = () => {
       <Sidebar active="dashboard" />
 
       <Box sx={{ flexGrow: 1, p: 4 }}>
-        {/* Header */}
         <header
           style={{
             display: "flex",
@@ -183,7 +173,6 @@ const DashboardPage = () => {
         >
           <h2 style={{ margin: 0 }}>📊 Daftar Invoice Pelanggan</h2>
 
-          {/* Filter Section */}
           <Box
             sx={{
               display: "flex",
@@ -245,7 +234,6 @@ const DashboardPage = () => {
           </Box>
         </header>
 
-        {/* Summary Cards */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
           {[
             {
@@ -296,7 +284,6 @@ const DashboardPage = () => {
           ))}
         </Grid>
 
-        {/* Table */}
         {loading ? (
           <Box sx={{ p: 2 }}>
             {[1, 2, 3].map((i) => (
@@ -322,14 +309,12 @@ const DashboardPage = () => {
           </Slide>
         )}
 
-        {/* Modal WhatsApp */}
         <WhatsAppDialog
           isOpen={openWaDialog}
           onClose={() => setOpenWaDialog(false)}
           onSend={handleSend}
         />
 
-        {/* Snackbar */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={3000}

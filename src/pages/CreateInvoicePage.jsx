@@ -8,10 +8,8 @@ const CreateInvoicePage = () => {
 
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
-      {/* Sidebar */}
       <Sidebar active="invoices" />
 
-      {/* Konten Utama */}
       <div
         style={{
           flex: 1,

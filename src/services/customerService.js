@@ -11,7 +11,6 @@ export const customerService = {
     }
   },
 
-  // 🔹 Tambah pelanggan baru
   async create(data) {
     try {
       const res = await apiClient.post("/customers", data);
@@ -22,7 +21,6 @@ export const customerService = {
     }
   },
 
-  // 🔹 Update pelanggan
   async update(id, data) {
     try {
       const res = await apiClient.put(`/customers/${id}`, data);
@@ -33,7 +31,6 @@ export const customerService = {
     }
   },
 
-  // 🔹 Hapus pelanggan
   async remove(id) {
     try {
       const res = await apiClient.delete(`/customers/${id}`);

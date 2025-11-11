@@ -162,7 +162,7 @@ export const generatePDF = async (data, returnBlob = false) => {
       pdf.save(`${data.nomorInvoice}.pdf`);
     }
   } catch (error) {
-    console.error("❌ Gagal generate PDF:", error);
+    console.error(" Gagal generate PDF:", error);
     alert("Terjadi kesalahan saat membuat PDF.");
   }
 };

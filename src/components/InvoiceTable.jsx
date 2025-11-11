@@ -10,6 +10,7 @@ import {
   Button,
   TablePagination,
   Chip,
+  Stack,
 } from "@mui/material";
 
 const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp }) => {
@@ -33,24 +34,12 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp }) => {
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: "#f4f6f8" }}>
-              <TableCell>
-                <b>Nomor Invoice</b>
-              </TableCell>
-              <TableCell>
-                <b>Nama Pelanggan</b>
-              </TableCell>
-              <TableCell>
-                <b>Periode</b>
-              </TableCell>
-              <TableCell>
-                <b>Total</b>
-              </TableCell>
-              <TableCell>
-                <b>Status</b>
-              </TableCell>
-              <TableCell align="center">
-                <b>Aksi</b>
-              </TableCell>
+              <TableCell><b>Nomor Invoice</b></TableCell>
+              <TableCell><b>Nama Pelanggan</b></TableCell>
+              <TableCell><b>Periode</b></TableCell>
+              <TableCell><b>Total</b></TableCell>
+              <TableCell><b>Status</b></TableCell>
+              <TableCell align="center"><b>Aksi</b></TableCell>
             </TableRow>
           </TableHead>
 
@@ -64,6 +53,11 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp }) => {
                     row.statusPembayaran === "Lunas"
                       ? "rgba(76, 175, 80, 0.05)"
                       : "rgba(255, 193, 7, 0.05)",
+                  transition: "0.2s ease",
+                  "&:hover": {
+                    boxShadow: "0 3px 10px rgba(0,0,0,0.08)",
+                    transform: "scale(1.002)",
+                  },
                 }}
               >
                 <TableCell>{row.nomorInvoice}</TableCell>
@@ -79,34 +73,48 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp }) => {
                     size="small"
                   />
                 </TableCell>
+
                 <TableCell align="center">
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                    sx={{ mr: 1, textTransform: "none" }}
-                    onClick={() => onView(row)}
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    justifyContent="center"
+                    alignItems="center"
+                    sx={{ flexWrap: "wrap" }}
                   >
-                    Lihat
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    color="success"
-                    sx={{ mr: 1, textTransform: "none" }}
-                    onClick={() => onPrint(row)}
-                  >
-                    Cetak
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    color="secondary"
-                    sx={{ textTransform: "none" }}
-                    onClick={() => onSendWhatsApp(row)}
-                  >
-                    Kirim WA
-                  </Button>
+                    {/* 🔹 Detail */}
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="info"
+                      sx={{ textTransform: "none", height: 32 }}
+                      onClick={() => onView(row)}
+                    >
+                      Detail
+                    </Button>
+
+                    {/* 🔹 Cetak */}
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="success"
+                      sx={{ textTransform: "none", height: 32 }}
+                      onClick={() => onPrint(row)}
+                    >
+                      Cetak
+                    </Button>
+
+                    {/* 🔹 Kirim WA */}
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="secondary"
+                      sx={{ textTransform: "none", height: 32 }}
+                      onClick={() => onSendWhatsApp(row)}
+                    >
+                      Kirim WA
+                    </Button>
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}

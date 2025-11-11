@@ -5,12 +5,14 @@ import { QRCodeCanvas } from "qrcode.react";
 import logoRingnet from "../assets/logoringnet.png";
 import { generatePDF } from "../utils/pdfGenerator";
 import { invoiceService } from "../services/invoiceService";
+import { authService } from "../services/authService";
 
 const InvoiceViewer = () => {
   const { invoiceId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const [invoice, setInvoice] = useState(null);
+  const user = authService.getCurrentUser();
 
   useEffect(() => {
     const loadInvoice = async () => {
@@ -35,11 +37,11 @@ const InvoiceViewer = () => {
         }
       }
     };
-
     loadInvoice();
   }, [location.state, invoiceId, navigate]);
 
   const normalizeInvoice = (data) => ({
+    id: data.id || data._id,
     nomorInvoice: data.nomorInvoice || data.nomor_invoice || "-",
     namaPelanggan: data.namaPelanggan || data.nama_pelanggan || "-",
     alamat: data.alamat || "-",
@@ -52,6 +54,7 @@ const InvoiceViewer = () => {
     tanggalInvoice: data.tanggalInvoice || data.tanggal_invoice || "-",
     tanggalJatuhTempo:
       data.tanggalJatuhTempo || data.tanggal_jatuh_tempo || "-",
+    buktiTransfer: data.buktiTransfer || data.bukti_transfer || null,
   });
 
   if (!invoice)
@@ -85,6 +88,7 @@ const InvoiceViewer = () => {
           overflow: "hidden",
         }}
       >
+        {/* 💧 Watermark */}
         <Typography
           sx={{
             position: "absolute",
@@ -104,6 +108,7 @@ const InvoiceViewer = () => {
           {watermarkText}
         </Typography>
 
+        {/* Header */}
         <Box
           sx={{
             display: "flex",
@@ -156,6 +161,7 @@ const InvoiceViewer = () => {
           INVOICE PEMBAYARAN INTERNET
         </Typography>
 
+        {/* Informasi Pelanggan */}
         <Box
           sx={{
             mb: 3,
@@ -243,6 +249,7 @@ const InvoiceViewer = () => {
 
         <Divider sx={{ my: 3 }} />
 
+        {/* Footer */}
         <Box
           sx={{
             display: "flex",
@@ -270,6 +277,7 @@ const InvoiceViewer = () => {
           </Box>
         </Box>
 
+        {/* 🔘 Tombol bawah */}
         <Box
           sx={{
             display: "flex",
@@ -286,6 +294,26 @@ const InvoiceViewer = () => {
           >
             📄 Generate PDF
           </Button>
+
+          {user?.role === "kasir" ? (
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => navigate(`/invoices/${invoice.id}/proof`)}
+            >
+              🧾 {invoice.buktiTransfer ? "Lihat Bukti" : "Upload Bukti"}
+            </Button>
+          ) : invoice.buktiTransfer ? (
+            <Button
+              variant="outlined"
+              color="success"
+              href={`http://localhost:2002${invoice.buktiTransfer}`}
+              target="_blank"
+            >
+              🧾 Lihat Bukti
+            </Button>
+          ) : null}
+
           <Button variant="outlined" onClick={() => navigate(-1)}>
             ⬅️ Kembali
           </Button>

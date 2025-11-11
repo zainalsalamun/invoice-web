@@ -9,6 +9,8 @@ import SettingsPage from "./pages/SettingsPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import LoginPage from "./pages/LoginPage"; 
 import ProtectedRoute from "./components/ProtectedRoute";
+import InvoiceDetailPage from "./pages/InvoiceDetailPage";
+import InvoiceProofPage from "./pages/InvoiceProofPage";
 
 const App = () => {
   return (
@@ -70,7 +72,22 @@ const App = () => {
       />
 
       <Route path="*" element={<NotFoundPage />} />
+
+      <Route
+        path="/invoices/detail/:id"
+        element={
+        <ProtectedRoute allowedRoles={["admin", "kasir"]}>
+        <InvoiceDetailPage />
+        </ProtectedRoute>
+       }
+      />
+
+    <Route path="/invoices/:id/proof" element={<InvoiceProofPage />} />
+
+
     </Routes>
+
+    
   );
 };
 

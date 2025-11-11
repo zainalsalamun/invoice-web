@@ -1,3 +1,377 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+// import React, { useState, useMemo, useEffect } from "react";
+// import {
+//   Box,
+//   TextField,
+//   MenuItem,
+//   Button,
+//   Card,
+//   CardContent,
+//   Typography,
+//   Grid,
+//   Snackbar,
+//   Alert,
+//   Slide,
+//   Skeleton,
+// } from "@mui/material";
+// import { useNavigate } from "react-router-dom";
+// import Sidebar from "../components/Sidebar";
+// import InvoiceTable from "../components/InvoiceTable";
+// import { invoiceService } from "../services/invoiceService";
+// import { generatePDF } from "../utils/pdfGenerator";
+// import { sendWhatsApp } from "../utils/sendWhatsApp";
+// import WhatsAppDialog from "../components/WhatsAppDialog";
+// import { authService } from "../services/authService";
+
+// const DashboardPage = () => {
+//   const navigate = useNavigate();
+//   const user = authService.getCurrentUser();
+//   const currentMonth = new Date().toISOString().slice(0, 7);
+
+//   const [filters, setFilters] = useState({
+//     month: currentMonth,
+//     status: "",
+//     search: "",
+//   });
+
+//   const [invoices, setInvoices] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [animateKey, setAnimateKey] = useState(0);
+//   const [snackbar, setSnackbar] = useState({
+//     open: false,
+//     message: "",
+//     severity: "info",
+//   });
+
+//   const [openWaDialog, setOpenWaDialog] = useState(false);
+//   const [selectedInvoice, setSelectedInvoice] = useState(null);
+
+//   // 🔹 Ambil data invoice
+//   const fetchInvoices = async () => {
+//     setLoading(true);
+//     try {
+//       const data = await invoiceService.getAll();
+
+//       const mapped = data.map((item) => ({
+//         id: item.id,
+//         nomorInvoice: item.nomor_invoice,
+//         namaPelanggan: item.nama_pelanggan,
+//         alamat: item.alamat,
+//         layanan: item.layanan,
+//         hargaPaket: item.harga_paket,
+//         ppn: item.ppn,
+//         total: item.total,
+//         periode: item.periode,
+//         statusPembayaran: item.status_pembayaran,
+//         tanggalInvoice: item.tanggal_invoice,
+//         tanggalJatuhTempo: item.tanggal_jatuh_tempo,
+//         buktiTransfer: item.bukti_transfer,
+//       }));
+
+//       setInvoices(mapped);
+//     } catch (err) {
+//       console.error("❌ Gagal ambil data invoice:", err);
+//       setSnackbar({
+//         open: true,
+//         message: "Gagal memuat data dari server.",
+//         severity: "error",
+//       });
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchInvoices();
+//   }, []);
+
+//   // 🔹 Helper
+//   const convertMonth = (value) => {
+//     if (!value) return "";
+//     const date = new Date(value);
+//     return date.toLocaleString("id-ID", { month: "long", year: "numeric" });
+//   };
+
+//   const filtered = invoices.filter((i) => {
+//     const byMonth = filters.month
+//       ? i.periode?.toLowerCase().includes(
+//           convertMonth(filters.month).toLowerCase()
+//         )
+//       : true;
+//     const byStatus = filters.status
+//       ? i.statusPembayaran?.toLowerCase() === filters.status.toLowerCase()
+//       : true;
+//     const bySearch = filters.search
+//       ? i.namaPelanggan?.toLowerCase().includes(filters.search.toLowerCase()) ||
+//         i.nomorInvoice?.toLowerCase().includes(filters.search.toLowerCase())
+//       : true;
+//     return byMonth && byStatus && bySearch;
+//   });
+
+//   const handleReset = () => {
+//     setFilters({
+//       month: currentMonth,
+//       status: "",
+//       search: "",
+//     });
+//     setSnackbar({
+//       open: true,
+//       message: `Filter direset ke ${convertMonth(currentMonth)}`,
+//       severity: "success",
+//     });
+//   };
+
+//   useEffect(() => {
+//     setLoading(true);
+//     const timeout = setTimeout(() => {
+//       setAnimateKey((prev) => prev + 1);
+//       setLoading(false);
+//     }, 500);
+//     return () => clearTimeout(timeout);
+//   }, [filters]);
+
+//   const handleCloseSnackbar = () =>
+//     setSnackbar((prev) => ({ ...prev, open: false }));
+
+//   // 🔹 Summary cards
+//   const summary = useMemo(() => {
+//     const totalInvoice = filtered.length;
+//     const totalLunas = filtered.filter(
+//       (i) => i.statusPembayaran === "Lunas"
+//     ).length;
+//     const totalBelum = filtered.filter(
+//       (i) => i.statusPembayaran === "Belum Lunas"
+//     ).length;
+//     const totalNominal = filtered.reduce((sum, i) => sum + (i.total || 0), 0);
+//     return { totalInvoice, totalLunas, totalBelum, totalNominal };
+//   }, [filtered]);
+
+//   // 🔹 Action handlers
+//   const handleView = (invoice) => {
+//     navigate(`/invoices/${invoice.id}.pdf`, { state: { data: invoice } });
+//   };
+
+//   const handlePrint = (invoice) => {
+//     generatePDF(invoice);
+//   };
+
+//   const handleSendWhatsApp = (invoice) => {
+//     setSelectedInvoice(invoice);
+//     setOpenWaDialog(true);
+//   };
+
+//   const handleSend = (phone) => {
+//     if (selectedInvoice) sendWhatsApp(selectedInvoice, phone);
+//   };
+
+//   // ✅ Upload bukti pembayaran (khusus kasir)
+//   const handleUploadProof = async (invoiceId, file) => {
+//     if (!file) return;
+
+//     const res = await invoiceService.uploadProof(invoiceId, file);
+//     if (res?.success) {
+//       setSnackbar({
+//         open: true,
+//         message: "✅ Bukti pembayaran berhasil diupload!",
+//         severity: "success",
+//       });
+//       fetchInvoices();
+//     } else {
+//       setSnackbar({
+//         open: true,
+//         message: "❌ Gagal upload bukti pembayaran.",
+//         severity: "error",
+//       });
+//     }
+//   };
+
+//   return (
+//     <Box sx={{ display: "flex", minHeight: "100vh" }}>
+//       <Sidebar active="dashboard" />
+
+//       <Box sx={{ flexGrow: 1, p: 4 }}>
+//         <header
+//           style={{
+//             display: "flex",
+//             justifyContent: "space-between",
+//             alignItems: "center",
+//             marginBottom: 20,
+//             flexWrap: "wrap",
+//             gap: 16,
+//           }}
+//         >
+//           <h2 style={{ margin: 0 }}>📊 Daftar Invoice Pelanggan</h2>
+
+//           <Box
+//             sx={{
+//               display: "flex",
+//               gap: 2,
+//               alignItems: "center",
+//               flexWrap: "wrap",
+//               justifyContent: "flex-end",
+//             }}
+//           >
+//             <TextField
+//               label="Periode"
+//               size="small"
+//               type="month"
+//               InputLabelProps={{ shrink: true }}
+//               value={filters.month}
+//               onChange={(e) =>
+//                 setFilters((f) => ({ ...f, month: e.target.value }))
+//               }
+//               sx={{ minWidth: 150 }}
+//             />
+
+//             <TextField
+//               select
+//               label="Status"
+//               size="small"
+//               value={filters.status}
+//               onChange={(e) =>
+//                 setFilters((f) => ({ ...f, status: e.target.value }))
+//               }
+//               sx={{ width: 150 }}
+//             >
+//               <MenuItem value="">Semua</MenuItem>
+//               <MenuItem value="Lunas">Lunas</MenuItem>
+//               <MenuItem value="Belum Lunas">Belum Lunas</MenuItem>
+//             </TextField>
+
+//             <TextField
+//               label="Cari pelanggan / invoice"
+//               size="small"
+//               value={filters.search}
+//               onChange={(e) =>
+//                 setFilters((f) => ({ ...f, search: e.target.value }))
+//               }
+//               sx={{ minWidth: 220 }}
+//             />
+
+//             <Button
+//               variant="outlined"
+//               color="secondary"
+//               size="small"
+//               onClick={handleReset}
+//               sx={{
+//                 fontWeight: "bold",
+//                 "&:hover": { backgroundColor: "#f8e1ff" },
+//               }}
+//             >
+//               RESET
+//             </Button>
+//           </Box>
+//         </header>
+
+//         {/* Summary cards */}
+//         <Grid container spacing={2} sx={{ mb: 3 }}>
+//           {[
+//             {
+//               title: "Total Invoice",
+//               value: summary.totalInvoice,
+//               color: "#007bff",
+//               textColor: "white",
+//             },
+//             {
+//               title: "Lunas",
+//               value: summary.totalLunas,
+//               color: "#28a745",
+//               textColor: "white",
+//             },
+//             {
+//               title: "Belum Lunas",
+//               value: summary.totalBelum,
+//               color: "#ffc107",
+//               textColor: "#333",
+//             },
+//             {
+//               title: "Total Tagihan",
+//               value: `Rp ${summary.totalNominal.toLocaleString("id-ID")}`,
+//               color: "#6f42c1",
+//               textColor: "white",
+//             },
+//           ].map((card, index) => (
+//             <Grid item xs={12} sm={6} md={3} key={index}>
+//               <Card
+//                 sx={{
+//                   bgcolor: card.color,
+//                   color: card.textColor,
+//                   transition: "all 0.3s ease",
+//                   "&:hover": {
+//                     transform: "scale(1.05)",
+//                     boxShadow: "0 6px 16px rgba(0,0,0,0.2)",
+//                   },
+//                 }}
+//               >
+//                 <CardContent>
+//                   <Typography variant="h6">{card.title}</Typography>
+//                   <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+//                     {card.value}
+//                   </Typography>
+//                 </CardContent>
+//               </Card>
+//             </Grid>
+//           ))}
+//         </Grid>
+
+//         {/* Table */}
+//         {loading ? (
+//           <Box sx={{ p: 2 }}>
+//             {[1, 2, 3].map((i) => (
+//               <Skeleton
+//                 key={i}
+//                 variant="rectangular"
+//                 height={60}
+//                 sx={{ borderRadius: 2, mb: 1.5 }}
+//                 animation="wave"
+//               />
+//             ))}
+//           </Box>
+//         ) : (
+//           <Slide key={animateKey} direction="up" in mountOnEnter unmountOnExit>
+//             <div>
+//               <InvoiceTable
+//                 data={filtered}
+//                 onView={handleView}
+//                 onPrint={handlePrint}
+//                 onSendWhatsApp={handleSendWhatsApp}
+//                 onUploadProof={handleUploadProof} // ✅ kirim fungsi upload ke komponen table
+//                 userRole={user?.role}
+//               />
+//             </div>
+//           </Slide>
+//         )}
+
+//         {/* Dialog WhatsApp */}
+//         <WhatsAppDialog
+//           isOpen={openWaDialog}
+//           onClose={() => setOpenWaDialog(false)}
+//           onSend={handleSend}
+//         />
+
+//         {/* Snackbar */}
+//         <Snackbar
+//           open={snackbar.open}
+//           autoHideDuration={3000}
+//           onClose={handleCloseSnackbar}
+//           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+//         >
+//           <Alert
+//             onClose={handleCloseSnackbar}
+//             severity={snackbar.severity}
+//             sx={{ width: "100%", fontSize: 14 }}
+//           >
+//             {snackbar.message}
+//           </Alert>
+//         </Snackbar>
+//       </Box>
+//     </Box>
+//   );
+// };
+
+// export default DashboardPage;
+
+
 import React, { useState, useMemo, useEffect } from "react";
 import {
   Box,
@@ -20,9 +394,11 @@ import { invoiceService } from "../services/invoiceService";
 import { generatePDF } from "../utils/pdfGenerator";
 import { sendWhatsApp } from "../utils/sendWhatsApp";
 import WhatsAppDialog from "../components/WhatsAppDialog";
+import { authService } from "../services/authService";
 
 const DashboardPage = () => {
   const navigate = useNavigate();
+  const user = authService.getCurrentUser();
   const currentMonth = new Date().toISOString().slice(0, 7);
 
   const [filters, setFilters] = useState({
@@ -33,6 +409,7 @@ const DashboardPage = () => {
 
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isFirstLoad, setIsFirstLoad] = useState(true); // ✅ Tambahan untuk deteksi load pertama
   const [animateKey, setAnimateKey] = useState(0);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -43,6 +420,7 @@ const DashboardPage = () => {
   const [openWaDialog, setOpenWaDialog] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
+  // 🔹 Ambil data invoice dari server
   const fetchInvoices = async () => {
     setLoading(true);
     try {
@@ -61,6 +439,7 @@ const DashboardPage = () => {
         statusPembayaran: item.status_pembayaran,
         tanggalInvoice: item.tanggal_invoice,
         tanggalJatuhTempo: item.tanggal_jatuh_tempo,
+        buktiTransfer: item.bukti_transfer,
       }));
 
       setInvoices(mapped);
@@ -73,6 +452,7 @@ const DashboardPage = () => {
       });
     } finally {
       setLoading(false);
+      setIsFirstLoad(false); // ✅ Hanya sekali
     }
   };
 
@@ -80,12 +460,25 @@ const DashboardPage = () => {
     fetchInvoices();
   }, []);
 
+  // 🔹 Animasi filter — tapi tanpa trigger loading ulang
+  useEffect(() => {
+    if (isFirstLoad) return; // ⛔ jangan trigger di load pertama
+
+    const timeout = setTimeout(() => {
+      setAnimateKey((prev) => prev + 1);
+    }, 250);
+
+    return () => clearTimeout(timeout);
+  }, [filters]);
+
+  // 🔹 Helper untuk ubah format bulan
   const convertMonth = (value) => {
     if (!value) return "";
     const date = new Date(value);
     return date.toLocaleString("id-ID", { month: "long", year: "numeric" });
   };
 
+  // 🔹 Filter data
   const filtered = invoices.filter((i) => {
     const byMonth = filters.month
       ? i.periode?.toLowerCase().includes(
@@ -102,6 +495,7 @@ const DashboardPage = () => {
     return byMonth && byStatus && bySearch;
   });
 
+  // 🔹 Reset filter
   const handleReset = () => {
     setFilters({
       month: currentMonth,
@@ -115,18 +509,10 @@ const DashboardPage = () => {
     });
   };
 
-  useEffect(() => {
-    setLoading(true);
-    const timeout = setTimeout(() => {
-      setAnimateKey((prev) => prev + 1);
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timeout);
-  }, [filters]);
-
   const handleCloseSnackbar = () =>
     setSnackbar((prev) => ({ ...prev, open: false }));
 
+  // 🔹 Summary cards
   const summary = useMemo(() => {
     const totalInvoice = filtered.length;
     const totalLunas = filtered.filter(
@@ -139,6 +525,7 @@ const DashboardPage = () => {
     return { totalInvoice, totalLunas, totalBelum, totalNominal };
   }, [filtered]);
 
+  // 🔹 Action handlers
   const handleView = (invoice) => {
     navigate(`/invoices/${invoice.id}.pdf`, { state: { data: invoice } });
   };
@@ -156,11 +543,34 @@ const DashboardPage = () => {
     if (selectedInvoice) sendWhatsApp(selectedInvoice, phone);
   };
 
+  // ✅ Upload bukti pembayaran (khusus kasir)
+  const handleUploadProof = async (invoiceId, file) => {
+    if (!file) return;
+
+    const res = await invoiceService.uploadProof(invoiceId, file);
+    if (res?.success) {
+      setSnackbar({
+        open: true,
+        message: "✅ Bukti pembayaran berhasil diupload!",
+        severity: "success",
+      });
+      fetchInvoices();
+    } else {
+      setSnackbar({
+        open: true,
+        message: "❌ Gagal upload bukti pembayaran.",
+        severity: "error",
+      });
+    }
+  };
+
+  // 🔹 Render
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar active="dashboard" />
 
       <Box sx={{ flexGrow: 1, p: 4 }}>
+        {/* Header */}
         <header
           style={{
             display: "flex",
@@ -234,6 +644,7 @@ const DashboardPage = () => {
           </Box>
         </header>
 
+        {/* Summary cards */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
           {[
             {
@@ -284,7 +695,8 @@ const DashboardPage = () => {
           ))}
         </Grid>
 
-        {loading ? (
+        {/* Table */}
+        {loading && isFirstLoad ? (
           <Box sx={{ p: 2 }}>
             {[1, 2, 3].map((i) => (
               <Skeleton
@@ -304,17 +716,21 @@ const DashboardPage = () => {
                 onView={handleView}
                 onPrint={handlePrint}
                 onSendWhatsApp={handleSendWhatsApp}
+                onUploadProof={handleUploadProof}
+                userRole={user?.role}
               />
             </div>
           </Slide>
         )}
 
+        {/* Dialog WhatsApp */}
         <WhatsAppDialog
           isOpen={openWaDialog}
           onClose={() => setOpenWaDialog(false)}
           onSend={handleSend}
         />
 
+        {/* Snackbar */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={3000}

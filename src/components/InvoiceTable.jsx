@@ -12,6 +12,7 @@ import {
   Chip,
   Stack,
 } from "@mui/material";
+import { FaWhatsapp } from "react-icons/fa";
 
 const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp }) => {
   const [page, setPage] = useState(0);
@@ -82,7 +83,7 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp }) => {
                     alignItems="center"
                     sx={{ flexWrap: "wrap" }}
                   >
-                    {/* 🔹 Detail */}
+                    {/*Detail */}
                     <Button
                       size="small"
                       variant="outlined"
@@ -93,7 +94,7 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp }) => {
                       Detail
                     </Button>
 
-                    {/* 🔹 Cetak */}
+                    {/*Cetak */}
                     <Button
                       size="small"
                       variant="contained"
@@ -104,16 +105,24 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp }) => {
                       Cetak
                     </Button>
 
-                    {/* 🔹 Kirim WA */}
+                    {/*Kirim WA */}
                     <Button
-                      size="small"
-                      variant="contained"
-                      color="secondary"
-                      sx={{ textTransform: "none", height: 32 }}
-                      onClick={() => onSendWhatsApp(row)}
-                    >
-                      Kirim WA
-                    </Button>
+                    size="small"
+                    variant="contained"
+                    sx={{
+                      backgroundColor: "#25D366",
+                      color: "white",
+                      "&:hover": { backgroundColor: "#1EBE57" },
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      px: 2,
+                    }}
+                    onClick={() => onSendWhatsApp(row)}
+                   >
+                    <FaWhatsapp size={18} />
+                    Kirim WA
+                  </Button>
                   </Stack>
                 </TableCell>
               </TableRow>

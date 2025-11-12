@@ -123,7 +123,6 @@ export const invoiceService = {
     }
   },
 
-  // perbaikan: pakai POST biar sesuai dengan route backend
   async uploadProof(id, file) {
     try {
       const formData = new FormData();
@@ -139,4 +138,18 @@ export const invoiceService = {
       return null;
     }
   },
+
+  async getMonthlyStats() {
+    try {
+      const res = await apiClient.get("/invoices/stats/monthly");
+      return res.data?.data || [];
+    } catch (err) {
+      console.error("Gagal ambil data statistik bulanan:", err);
+      return [];
+    }
+  },
+  
+
 };
+
+

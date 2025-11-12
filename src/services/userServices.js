@@ -30,4 +30,17 @@ export const userService = {
       return null;
     }
   },
+
+  async updatePassword(id, data) {
+    try {
+      const res = await apiClient.put(`/users/${id}/password`, {
+        new_password: data.new_password,
+      });
+      return res.data;
+    } catch (err) {
+      console.error("Gagal ubah password:", err);
+      return { success: false };
+    }
+  }
+  
 };

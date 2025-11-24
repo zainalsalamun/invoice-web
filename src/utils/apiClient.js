@@ -1,8 +1,12 @@
 import axios from "axios";
 import { authService } from "../services/authService";
 
+// const apiClient = axios.create({
+//   baseURL: process.env.REACT_APP_API_URL || "http://localhost:2002/api",
+// });
+
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:2002/api",
+  baseURL: process.env.REACT_APP_API_URL || "https://ce1d65342d57.ngrok-free.app/api",
 });
 
 apiClient.interceptors.request.use(

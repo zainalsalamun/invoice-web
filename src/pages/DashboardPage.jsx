@@ -103,21 +103,34 @@ const DashboardPage = () => {
     return date.toLocaleString("id-ID", { month: "long", year: "numeric" });
   };
 
+
+  const getYearMonth = (dateStr) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toISOString().slice(0, 7);
+  };
+
   const filtered = invoices.filter((i) => {
     const byMonth = filters.month
-      ? i.periode?.toLowerCase().includes(
-          convertMonth(filters.month).toLowerCase()
-        )
+      ? getYearMonth(i.tanggalInvoice) === filters.month
       : true;
+  
     const byStatus = filters.status
       ? i.statusPembayaran?.toLowerCase() === filters.status.toLowerCase()
       : true;
+  
     const bySearch = filters.search
       ? i.namaPelanggan?.toLowerCase().includes(filters.search.toLowerCase()) ||
         i.nomorInvoice?.toLowerCase().includes(filters.search.toLowerCase())
       : true;
+  
     return byMonth && byStatus && bySearch;
   });
+  
+  
+
+
 
   const handleReset = () => {
     setFilters({

@@ -1,70 +1,181 @@
+/* src/pages/InvoiceViewer.jsx */
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Button, Box, Typography, Divider } from "@mui/material";
-import { QRCodeCanvas } from "qrcode.react";
 import logoRingnet from "../assets/logoringnet.png";
 import { generatePDF } from "../utils/pdfGenerator";
 import { invoiceService } from "../services/invoiceService";
-import { authService } from "../services/authService";
 
 const InvoiceViewer = () => {
   const { invoiceId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const [invoice, setInvoice] = useState(null);
-  const user = authService.getCurrentUser();
 
+  // 🔧 Normalisasi + perhitungan DPP / VAT / Total
+  const normalizeInvoice = (data) => {
+    if (!data) return null;
+
+    // ambil semua kemungkinan field
+    const rawNomor =
+      data.nomorInvoice || data.nomor_invoice || data.nomor_tagihan || "-";
+    const rawNama = data.namaPelanggan || data.nama_pelanggan || "-";
+    const rawAlamat = data.alamat || data.alamat_pelanggan || "-";
+    const rawLayanan = data.layanan || data.keterangan || "";
+    const rawHargaPaket = data.hargaPaket || data.harga_paket || 0;
+    const rawPpn = data.ppn || data.vat || 0;
+    const rawTotal = data.total || data.total_tagihan || 0;
+
+    // items: kalau backend sudah kirim array items pakai itu
+    // kalau tidak ada, fallback ke 1 baris dari layanan + harga paket
+    const items =
+      Array.isArray(data.items) && data.items.length > 0
+        ? data.items.map((it, idx) => ({
+            no: idx + 1,
+            keterangan: it.keterangan || it.layanan || rawLayanan || "-",
+            harga: Number(it.harga || it.harga_satuan || 0),
+            qty: Number(it.qty || it.jumlah || 1),
+          }))
+        : [
+            {
+              no: 1,
+              keterangan: rawLayanan || "Layanan Internet",
+              harga: Number(rawHargaPaket || rawTotal - rawPpn || 0),
+              qty: 1,
+            },
+          ];
+
+    // hitung DPP (sum harga * qty)
+    let dpp =
+      data.dpp != null
+        ? Number(data.dpp)
+        : items.reduce((sum, it) => sum + it.harga * it.qty, 0);
+
+    // hitung VAT (ppn)
+    let vat =
+      data.vat != null
+        ? Number(data.vat)
+        : rawPpn
+        ? Number(rawPpn)
+        : Math.round(dpp * 0.11);
+
+    // hitung total
+    let totalTagihan =
+      data.total_tagihan != null
+        ? Number(data.total_tagihan)
+        : rawTotal
+        ? Number(rawTotal)
+        : dpp + vat;
+
+    return {
+      id: data.id,
+      nomorInvoice: rawNomor,
+      namaPelanggan: rawNama,
+      alamat: rawAlamat,
+      layanan: rawLayanan,
+      periode: data.periode || "-",
+      statusPembayaran: data.statusPembayaran || data.status_pembayaran || "-",
+      tanggalInvoice: data.tanggalInvoice || data.tanggal_invoice || "-",
+      tanggalJatuhTempo:
+        data.tanggalJatuhTempo || data.tanggal_jatuh_tempo || "-",
+      items,
+      dpp,
+      vat,
+      totalTagihan,
+    };
+  };
+
+  // 🔄 Load invoice (state -> localStorage -> API)
   useEffect(() => {
     const loadInvoice = async () => {
+      // 1. dari navigate state
       if (location.state?.data) {
         const data = normalizeInvoice(location.state.data);
         setInvoice(data);
         localStorage.setItem("lastInvoice", JSON.stringify(data));
-      } else {
-        const stored = localStorage.getItem("lastInvoice");
-        if (stored) {
-          setInvoice(JSON.parse(stored));
-        } else if (invoiceId) {
-          try {
-            const res = await invoiceService.getById(invoiceId);
-            if (res) setInvoice(normalizeInvoice(res));
-            else navigate("/");
-          } catch {
-            navigate("/");
-          }
-        } else {
-          navigate("/");
+        return;
+      }
+
+      // 2. dari localStorage (kalau refresh)
+      const stored = localStorage.getItem("lastInvoice");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          setInvoice(parsed);
+          return;
+        } catch {
+          // ignore parsing error
         }
       }
+
+      // 3. dari backend (kalau akses langsung /invoices/:id.pdf)
+      if (invoiceId) {
+        try {
+          const res = await invoiceService.getById(invoiceId);
+          if (res) {
+            const data = normalizeInvoice(res);
+            setInvoice(data);
+            localStorage.setItem("lastInvoice", JSON.stringify(data));
+            return;
+          }
+        } catch (e) {
+          console.error("Gagal ambil invoice:", e);
+        }
+      }
+
+      // fallback: balik ke dashboard
+      navigate("/");
     };
+
     loadInvoice();
   }, [location.state, invoiceId, navigate]);
 
-  const normalizeInvoice = (data) => ({
-    id: data.id || data._id,
-    nomorInvoice: data.nomorInvoice || data.nomor_invoice || "-",
-    namaPelanggan: data.namaPelanggan || data.nama_pelanggan || "-",
-    alamat: data.alamat || "-",
-    layanan: data.layanan || "-",
-    hargaPaket: data.hargaPaket || data.harga_paket || 0,
-    ppn: data.ppn || 0,
-    total: data.total || 0,
-    periode: data.periode || "-",
-    statusPembayaran: data.statusPembayaran || data.status_pembayaran || "-",
-    tanggalInvoice: data.tanggalInvoice || data.tanggal_invoice || "-",
-    tanggalJatuhTempo:
-      data.tanggalJatuhTempo || data.tanggal_jatuh_tempo || "-",
-    buktiTransfer: data.buktiTransfer || data.bukti_transfer || null,
-  });
+  if (!invoice) {
+    return (
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          bgcolor: "#f4f6f9",
+        }}
+      >
+        <Typography>Memuat data invoice...</Typography>
+      </Box>
+    );
+  }
 
-  if (!invoice)
-    return <p style={{ textAlign: "center" }}>Memuat data invoice...</p>;
+  const formatDate = (val) => {
+    if (!val || val === "-") return "-";
+    const d = new Date(val);
+    if (Number.isNaN(d.getTime())) return val;
+    return d.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
 
-  const isLunas = invoice.statusPembayaran === "Lunas";
-  const watermarkText = isLunas ? "LUNAS" : "BELUM LUNAS";
-  const watermarkColor = isLunas
-    ? "rgba(0, 128, 0, 0.15)"
-    : "rgba(255, 0, 0, 0.12)";
+  const formatCurrency = (n) =>
+    `Rp ${Number(n || 0).toLocaleString("id-ID", {
+      maximumFractionDigits: 0,
+    })}`;
+
+  const {
+    nomorInvoice,
+    namaPelanggan,
+    alamat,
+    periode,
+    statusPembayaran,
+    tanggalInvoice,
+    tanggalJatuhTempo,
+    items,
+    dpp,
+    vat,
+    totalTagihan,
+  } = invoice;
 
   return (
     <Box
@@ -79,121 +190,100 @@ const InvoiceViewer = () => {
     >
       <Box
         sx={{
-          width: "820px",
+          width: "900px",
           background: "#fff",
           borderRadius: "10px",
           boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
-          p: 5,
-          position: "relative",
-          overflow: "hidden",
+          p: 4,
         }}
       >
-        {/* 💧 Watermark */}
-        <Typography
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%) rotate(-25deg)",
-            fontSize: "100px",
-            fontWeight: 900,
-            color: watermarkColor,
-            opacity: 0.25,
-            textTransform: "uppercase",
-            userSelect: "none",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        >
-          {watermarkText}
-        </Typography>
-
-        {/* Header */}
+        {/* HEADER */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "flex-start",
             mb: 3,
-            position: "relative",
-            zIndex: 1,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          {/* Logo + company info */}
+          <Box sx={{ display: "flex", gap: 2 }}>
             <img
               src={logoRingnet}
               alt="Ringnet Logo"
-              width={85}
-              height={85}
+              width={80}
+              height={80}
               style={{ borderRadius: 8 }}
             />
             <Box>
               <Typography
-                variant="h5"
-                sx={{ fontWeight: 700, color: "#007bff", lineHeight: 1.1 }}
+                variant="h6"
+                sx={{ fontWeight: 700, textTransform: "uppercase" }}
               >
-                RINGNET
-              </Typography>
-              <Typography variant="subtitle2" sx={{ color: "#ff6600" }}>
-                Internet Service Provider
+                PT. RING MEDIA NUSANTARA
               </Typography>
               <Typography variant="body2">
-                Jl. Telekomunikasi No. 45, Yogyakarta
+                Jl. Wuluh No. 1 Papringan, Nologaten, Catur Tunggal,
               </Typography>
-              <Typography variant="body2">(0274) 123-456</Typography>
+              <Typography variant="body2">Depok, Sleman, Yogyakarta</Typography>
+              <Typography variant="body2">0877-4796-3000</Typography>
+              <Typography variant="body2">
+                ringmedianusantara@gmail.com
+              </Typography>
             </Box>
           </Box>
-          <QRCodeCanvas value={invoice.nomorInvoice} size={85} />
+
+          {/* Info tagihan */}
+          <Box sx={{ textAlign: "right" }}>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 700, mb: 1, textTransform: "uppercase" }}
+            >
+              TAGIHAN
+            </Typography>
+            <Typography variant="body2">
+              <b>Nomor Tagihan :</b> {nomorInvoice}
+            </Typography>
+            <Typography variant="body2">
+              <b>Tgl Tagihan :</b> {formatDate(tanggalInvoice)}
+            </Typography>
+            <Typography variant="body2">
+              <b>Jatuh Tempo :</b> {formatDate(tanggalJatuhTempo)}
+            </Typography>
+            <Typography variant="body2">
+              <b>Periode :</b> {periode}
+            </Typography>
+            <Typography variant="body2">
+              <b>Status :</b> {statusPembayaran}
+            </Typography>
+          </Box>
         </Box>
 
         <Divider sx={{ mb: 3 }} />
 
-        <Typography
-          variant="h6"
-          sx={{
-            color: "#007bff",
-            textAlign: "center",
-            mb: 3,
-            letterSpacing: "0.5px",
-            fontWeight: 600,
-          }}
-        >
-          INVOICE PEMBAYARAN INTERNET
-        </Typography>
-
-        {/* Informasi Pelanggan */}
+        {/* KEPADA */}
         <Box
           sx={{
+            border: "1px solid #ccc",
+            borderRadius: 1,
+            p: 2,
             mb: 3,
-            display: "flex",
-            flexDirection: "column",
-            gap: 0.5,
-            fontSize: 15,
+            bgcolor: "#fafafa",
           }}
         >
-          <Typography>
-            <b>Nomor Invoice:</b> {invoice.nomorInvoice}
+          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+            Kepada :
           </Typography>
-          <Typography>
-            <b>Tanggal:</b> {invoice.tanggalInvoice}
+          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+            {namaPelanggan}
           </Typography>
-          <Typography>
-            <b>Nama Pelanggan:</b> {invoice.namaPelanggan}
-          </Typography>
-          <Typography>
-            <b>Alamat:</b> {invoice.alamat}
-          </Typography>
-          <Typography>
-            <b>Layanan:</b> {invoice.layanan}
-          </Typography>
-          <Typography>
-            <b>Periode:</b> {invoice.periode}
-          </Typography>
+          {alamat && alamat !== "-" && (
+            <Typography variant="body2" sx={{ mt: 0.5 }}>
+              {alamat}
+            </Typography>
+          )}
         </Box>
 
-        <Divider sx={{ my: 3 }} />
-
-        {/* Tabel Harga */}
+        {/* TABEL ITEM */}
         <table
           style={{
             width: "100%",
@@ -203,87 +293,206 @@ const InvoiceViewer = () => {
           }}
         >
           <thead>
-            <tr style={{ background: "#f0f0f0" }}>
-              <th style={{ textAlign: "left", padding: "10px 8px" }}>
-                Deskripsi
+            <tr>
+              <th
+                style={{
+                  border: "1px solid #ccc",
+                  padding: "8px",
+                  width: "40px",
+                }}
+              >
+                No
               </th>
-              <th style={{ textAlign: "right", padding: "10px 8px" }}>Harga</th>
+              <th
+                style={{
+                  border: "1px solid #ccc",
+                  padding: "8px",
+                  textAlign: "left",
+                }}
+              >
+                Keterangan
+              </th>
+              <th
+                style={{
+                  border: "1px solid #ccc",
+                  padding: "8px",
+                  textAlign: "right",
+                  width: "140px",
+                }}
+              >
+                Harga
+              </th>
+              <th
+                style={{
+                  border: "1px solid #ccc",
+                  padding: "8px",
+                  width: "70px",
+                  textAlign: "center",
+                }}
+              >
+                Qty
+              </th>
+              <th
+                style={{
+                  border: "1px solid #ccc",
+                  padding: "8px",
+                  textAlign: "right",
+                  width: "160px",
+                }}
+              >
+                Sub Total
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td style={{ padding: "8px" }}>{invoice.layanan}</td>
-              <td style={{ textAlign: "right", padding: "8px" }}>
-                Rp {invoice.hargaPaket?.toLocaleString("id-ID")}
-              </td>
-            </tr>
-            <tr>
-              <td style={{ padding: "8px" }}>PPN 11%</td>
-              <td style={{ textAlign: "right", padding: "8px" }}>
-                Rp {invoice.ppn?.toLocaleString("id-ID")}
-              </td>
-            </tr>
-            <tr style={{ borderTop: "2px solid #ddd" }}>
-              <td style={{ fontWeight: "bold", padding: "8px" }}>Total</td>
-              <td
-                style={{
-                  textAlign: "right",
-                  fontWeight: "bold",
-                  padding: "8px",
-                }}
-              >
-                Rp {invoice.total?.toLocaleString("id-ID")}
-              </td>
-            </tr>
+            {items.map((it, idx) => {
+              const subTotal = (it.harga || 0) * (it.qty || 0);
+              return (
+                <tr key={idx}>
+                  <td
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "6px 8px",
+                      textAlign: "center",
+                    }}
+                  >
+                    {it.no || idx + 1}
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "6px 8px",
+                    }}
+                  >
+                    {it.keterangan}
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "6px 8px",
+                      textAlign: "right",
+                    }}
+                  >
+                    {formatCurrency(it.harga)}
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "6px 8px",
+                      textAlign: "center",
+                    }}
+                  >
+                    {it.qty}
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #ddd",
+                      padding: "6px 8px",
+                      textAlign: "right",
+                    }}
+                  >
+                    {formatCurrency(subTotal)}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
-        <Box sx={{ textAlign: "left", mb: 3 }}>
-          <Typography>
-            <b>Status Pembayaran:</b> {invoice.statusPembayaran}
+        {/* RINGKASAN DPP / VAT / TOTAL */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            mb: 3,
+          }}
+        >
+          <Box sx={{ width: 320 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                mb: 0.5,
+              }}
+            >
+              <Typography>DPP</Typography>
+              <Typography>{formatCurrency(dpp)}</Typography>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                mb: 0.5,
+              }}
+            >
+              <Typography>VAT 11%</Typography>
+              <Typography>{formatCurrency(vat)}</Typography>
+            </Box>
+            <Divider sx={{ my: 1 }} />
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontWeight: "bold",
+              }}
+            >
+              <Typography>Total Tagihan</Typography>
+              <Typography>{formatCurrency(totalTagihan)}</Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        <Divider sx={{ my: 2 }} />
+
+        {/* INFORMASI PEMBAYARAN */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+            Pembayaran ditransfer ke:
           </Typography>
-          <Typography>
-            <b>Jatuh Tempo:</b> {invoice.tanggalJatuhTempo}
+          <Typography variant="body2">
+            PT RING MEDIA NUSANTARA
+          </Typography>
+          <Typography variant="body2">
+            Bank Mandiri Bisnis 137-00-7999997-1
+          </Typography>
+
+          <Typography variant="body2" sx={{ mt: 2, fontStyle: "italic" }}>
+            *Apabila sudah melakukan pembayaran via transfer mohon
+            dikonfirmasikan kepada Bag. Keuangan - Nurlia Febriyanti
           </Typography>
         </Box>
 
-        <Divider sx={{ my: 3 }} />
+        <Divider sx={{ my: 2 }} />
 
-        {/* Footer */}
+        {/* FOOTER */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            mt: 4,
-            alignItems: "flex-start",
+            alignItems: "flex-end",
+            mt: 3,
           }}
         >
           <Box>
             <Typography variant="body2">
-              Terima kasih telah menggunakan layanan <b>Ringnet</b> 🙏
-            </Typography>
-            <Typography variant="body2">
-              Mohon lakukan pembayaran sebelum jatuh tempo.
+              Terima kasih telah menggunakan layanan Ringnet.
             </Typography>
           </Box>
           <Box sx={{ textAlign: "center" }}>
             <Typography variant="body2">Hormat kami,</Typography>
-            <Typography
-              variant="body2"
-              sx={{ mt: 6, fontWeight: "bold", textTransform: "capitalize" }}
-            >
-              Admin Ringnet
+            <Typography variant="body2" sx={{ mt: 6, fontWeight: 600 }}>
+              PT. RING MEDIA NUSANTARA
             </Typography>
           </Box>
         </Box>
 
-        {/* 🔘 Tombol bawah */}
+        {/* ACTION BUTTONS */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "center",
             gap: 2,
-            mt: 5,
+            mt: 4,
             flexWrap: "wrap",
           }}
         >
@@ -294,26 +503,6 @@ const InvoiceViewer = () => {
           >
             📄 Generate PDF
           </Button>
-
-          {user?.role === "kasir" ? (
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={() => navigate(`/invoices/${invoice.id}/proof`)}
-            >
-              🧾 {invoice.buktiTransfer ? "Lihat Bukti" : "Upload Bukti"}
-            </Button>
-          ) : invoice.buktiTransfer ? (
-            <Button
-              variant="outlined"
-              color="success"
-              href={`http://localhost:2002${invoice.buktiTransfer}`}
-              target="_blank"
-            >
-              🧾 Lihat Bukti
-            </Button>
-          ) : null}
-
           <Button variant="outlined" onClick={() => navigate(-1)}>
             ⬅️ Kembali
           </Button>

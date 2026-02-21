@@ -23,8 +23,10 @@ export const customerService = {
 
   async create(data) {
     try {
-      const payload = buildPayload(data);
-      const res = await apiClient.post("/customers", payload);
+      const payload = buildFormData(data);
+      const res = await apiClient.post("/customers", payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       return res.data?.data || null;
     } catch (err) {
       console.error("Gagal tambah pelanggan:", err);
@@ -34,8 +36,10 @@ export const customerService = {
 
   async update(id, data) {
     try {
-      const payload = buildPayload(data);
-      const res = await apiClient.put(`/customers/${id}`, payload);
+      const payload = buildFormData(data);
+      const res = await apiClient.put(`/customers/${id}`, payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       return res.data?.data || null;
     } catch (err) {
       console.error("Gagal update pelanggan:", err);
@@ -54,20 +58,25 @@ export const customerService = {
   },
 };
 
-/** Bersihkan dan format payload sebelum dikirim ke API */
-function buildPayload(data) {
-  return {
-    id_pelanggan: data.id_pelanggan || null,
-    nama: data.nama || "",
-    alamat: data.alamat || null,
-    nomor_wa: data.nomor_wa || "",
-    paket: data.paket || "",
-    area: data.area || "",
-    aktif: data.aktif !== undefined ? data.aktif : true,
-    tanggal_aktivasi: data.tanggal_aktivasi || null,
-    tanggal_jatuh_tempo: data.tanggal_jatuh_tempo || null,
-    harga_langganan: data.harga_langganan ? parseFloat(data.harga_langganan) : null,
-    metode_pembayaran: data.metode_pembayaran || null,
-    bukti_transfer: data.bukti_transfer || null,
-  };
+/** Build FormData — mendukung upload file bukti_transfer */
+function buildFormData(data) {
+  const fd = new FormData();
+  if (data.id_pelanggan) fd.append("id_pelanggan", data.id_pelanggan);
+  if (data.nama) fd.append("nama", data.nama);
+  if (data.alamat) fd.append("alamat", data.alamat);
+  if (data.area) fd.append("area", data.area);
+  if (data.nomor_wa) fd.append("nomor_wa", data.nomor_wa);
+  if (data.paket) fd.append("paket", data.paket);
+  if (data.tanggal_aktivasi) fd.append("tanggal_aktivasi", data.tanggal_aktivasi);
+  if (data.tanggal_jatuh_tempo) fd.append("tanggal_jatuh_tempo", data.tanggal_jatuh_tempo);
+  if (data.harga_langganan) fd.append("harga_langganan", parseFloat(data.harga_langganan));
+  if (data.metode_pembayaran_id) fd.append("metode_pembayaran_id", data.metode_pembayaran_id);
+  fd.append("aktif", data.aktif !== undefined ? data.aktif : true);
+
+  // File upload — hanya append jika berupa File object
+  if (data.bukti_transfer instanceof File) {
+    fd.append("bukti_transfer", data.bukti_transfer);
+  }
+
+  return fd;
 }

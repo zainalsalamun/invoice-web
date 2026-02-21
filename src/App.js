@@ -6,8 +6,9 @@ import InvoiceViewer from "./pages/InvoiceViewer";
 import CustomerPage from "./pages/CustomerPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import SettingsPage from "./pages/SettingsPage";
+import MetodePembayaranPage from "./pages/MetodePembayaranPage";
 import NotFoundPage from "./pages/NotFoundPage";
-import LoginPage from "./pages/LoginPage"; 
+import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import InvoiceDetailPage from "./pages/InvoiceDetailPage";
 import InvoiceProofPage from "./pages/InvoiceProofPage";
@@ -71,23 +72,32 @@ const App = () => {
         }
       />
 
+      <Route
+        path="/metode-pembayaran"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <MetodePembayaranPage />
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="*" element={<NotFoundPage />} />
 
       <Route
         path="/invoices/detail/:id"
         element={
-        <ProtectedRoute allowedRoles={["admin", "kasir"]}>
-        <InvoiceDetailPage />
-        </ProtectedRoute>
-       }
+          <ProtectedRoute allowedRoles={["admin", "kasir"]}>
+            <InvoiceDetailPage />
+          </ProtectedRoute>
+        }
       />
 
-    <Route path="/invoices/:id/proof" element={<InvoiceProofPage />} />
+      <Route path="/invoices/:id/proof" element={<InvoiceProofPage />} />
 
 
     </Routes>
 
-    
+
   );
 };
 

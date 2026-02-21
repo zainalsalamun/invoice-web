@@ -9,7 +9,28 @@ import {
   Button,
   TableContainer,
   TablePagination,
+  Chip,
+  Tooltip,
+  Typography,
 } from "@mui/material";
+
+const formatRupiah = (value) => {
+  if (!value && value !== 0) return "-";
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(value);
+};
+
+const formatTanggal = (iso) => {
+  if (!iso) return "-";
+  return new Date(iso).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
 
 const CustomerTable = ({ data, onEdit, onDelete }) => {
   const [page, setPage] = React.useState(0);
@@ -24,32 +45,77 @@ const CustomerTable = ({ data, onEdit, onDelete }) => {
   const paginated = data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <Paper sx={{ borderRadius: 2, boxShadow: 3 }}>
+    <Paper sx={{ borderRadius: 2, boxShadow: 3, overflow: "hidden" }}>
       <TableContainer>
-        <Table>
+        <Table size="small">
           <TableHead>
-            <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-              <TableCell><b>Nama</b></TableCell>
-              <TableCell><b>Alamat</b></TableCell>
-              <TableCell><b>Nomor WA</b></TableCell>
-              <TableCell><b>Paket</b></TableCell>
-              <TableCell align="center"><b>Aksi</b></TableCell>
+            <TableRow sx={{ backgroundColor: "#1976d2" }}>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>ID Pelanggan</TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Nama</TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Area</TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Nomor WA</TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Paket</TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Harga</TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Metode</TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Jatuh Tempo</TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Status</TableCell>
+              <TableCell align="center" sx={{ color: "#fff", fontWeight: "bold" }}>
+                Aksi
+              </TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
             {paginated.map((row) => (
               <TableRow key={row.id} hover>
-                <TableCell>{row.nama}</TableCell>
-                <TableCell>{row.alamat}</TableCell>
-                <TableCell>{row.nomor_wa}</TableCell>
-                <TableCell>{row.paket}</TableCell>
-                <TableCell align="center">
+                <TableCell>
+                  <Typography variant="caption" color="text.secondary" fontFamily="monospace">
+                    {row.id_pelanggan || "-"}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" fontWeight={500}>
+                    {row.nama}
+                  </Typography>
+                  {row.alamat && (
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {row.alamat}
+                    </Typography>
+                  )}
+                </TableCell>
+                <TableCell>{row.area || "-"}</TableCell>
+                <TableCell>{row.nomor_wa || "-"}</TableCell>
+                <TableCell>{row.paket || "-"}</TableCell>
+                <TableCell>{formatRupiah(row.harga_langganan)}</TableCell>
+                <TableCell>
+                  {row.metode_pembayaran ? (
+                    <Chip label={row.metode_pembayaran} size="small" variant="outlined" />
+                  ) : (
+                    "-"
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Tooltip
+                    title={`Aktivasi: ${formatTanggal(row.tanggal_aktivasi)}`}
+                    placement="top"
+                  >
+                    <span>{formatTanggal(row.tanggal_jatuh_tempo)}</span>
+                  </Tooltip>
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={row.aktif ? "Aktif" : "Nonaktif"}
+                    size="small"
+                    color={row.aktif ? "success" : "default"}
+                    variant="filled"
+                  />
+                </TableCell>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Button
                     variant="outlined"
                     size="small"
                     onClick={() => onEdit(row)}
-                    sx={{ mr: 1 }}
+                    sx={{ mr: 1, fontSize: "0.72rem" }}
                   >
                     Edit
                   </Button>
@@ -58,6 +124,7 @@ const CustomerTable = ({ data, onEdit, onDelete }) => {
                     size="small"
                     color="error"
                     onClick={() => onDelete(row.id)}
+                    sx={{ fontSize: "0.72rem" }}
                   >
                     Hapus
                   </Button>
@@ -67,8 +134,8 @@ const CustomerTable = ({ data, onEdit, onDelete }) => {
 
             {data.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                  Tidak ada data pelanggan.
+                <TableCell colSpan={10} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                  📭 Tidak ada data pelanggan.
                 </TableCell>
               </TableRow>
             )}

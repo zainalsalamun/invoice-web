@@ -12,6 +12,8 @@ import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import InvoiceDetailPage from "./pages/InvoiceDetailPage";
 import InvoiceProofPage from "./pages/InvoiceProofPage";
+import KeuanganPage from "./pages/KeuanganPage";
+import ChatTrackingPage from "./pages/ChatTrackingPage";
 
 const App = () => {
   return (
@@ -21,7 +23,7 @@ const App = () => {
       <Route
         path="/"
         element={
-          <ProtectedRoute allowedRoles={["admin", "kasir", "teknisi"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "kasir", "teknisi"]}>
             <DashboardPage />
           </ProtectedRoute>
         }
@@ -30,7 +32,7 @@ const App = () => {
       <Route
         path="/invoices/new"
         element={
-          <ProtectedRoute allowedRoles={["admin", "kasir"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "kasir"]}>
             <CreateInvoicePage />
           </ProtectedRoute>
         }
@@ -39,7 +41,7 @@ const App = () => {
       <Route
         path="/invoices/:invoiceId.pdf"
         element={
-          <ProtectedRoute allowedRoles={["admin", "kasir", "teknisi"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "kasir", "teknisi"]}>
             <InvoiceViewer />
           </ProtectedRoute>
         }
@@ -48,7 +50,7 @@ const App = () => {
       <Route
         path="/customers"
         element={
-          <ProtectedRoute allowedRoles={["admin", "teknisi"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "teknisi"]}>
             <CustomerPage />
           </ProtectedRoute>
         }
@@ -57,7 +59,7 @@ const App = () => {
       <Route
         path="/users"
         element={
-          <ProtectedRoute allowedRoles={["admin"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin"]}>
             <UserManagementPage />
           </ProtectedRoute>
         }
@@ -66,7 +68,7 @@ const App = () => {
       <Route
         path="/settings"
         element={
-          <ProtectedRoute allowedRoles={["admin", "kasir", "teknisi"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "kasir", "teknisi"]}>
             <SettingsPage />
           </ProtectedRoute>
         }
@@ -75,8 +77,17 @@ const App = () => {
       <Route
         path="/metode-pembayaran"
         element={
-          <ProtectedRoute allowedRoles={["admin"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin"]}>
             <MetodePembayaranPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/chat-tracking"
+        element={
+          <ProtectedRoute allowedRoles={["super_admin", "admin"]}>
+            <ChatTrackingPage />
           </ProtectedRoute>
         }
       />
@@ -93,6 +104,15 @@ const App = () => {
       />
 
       <Route path="/invoices/:id/proof" element={<InvoiceProofPage />} />
+
+      <Route
+        path="/keuangan"
+        element={
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "kasir"]}>
+            <KeuanganPage />
+          </ProtectedRoute>
+        }
+      />
 
 
     </Routes>

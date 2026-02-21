@@ -148,6 +148,9 @@ import {
   People,
   Settings,
   Group,
+  CreditCard,
+  AccountBalanceWallet,
+  Chat,
 } from "@mui/icons-material";
 import { authService } from "../services/authService";
 
@@ -160,22 +163,44 @@ const Sidebar = ({ active }) => {
     location.pathname === path || (active && active === path);
 
   const roleColors = {
+    super_admin: "#7c3aed",
     admin: "#FF5252",
     kasir: "#4CAF50",
     teknisi: "#2196F3",
   };
 
+  const roleLabels = {
+    super_admin: "⚡ Super Admin",
+    admin: "👑 Admin",
+    kasir: "💰 Kasir",
+    teknisi: "🔧 Teknisi",
+  };
+
   const menuByRole = {
+    super_admin: [
+      { label: "Dashboard", icon: <Dashboard />, path: "/" },
+      { label: "Invoices", icon: <ReceiptLong />, path: "/invoices/new" },
+      { label: "Customers", icon: <Group />, path: "/customers" },
+      { label: "Metode Pembayaran", icon: <CreditCard />, path: "/metode-pembayaran" },
+      { label: "Keuangan", icon: <AccountBalanceWallet />, path: "/keuangan" },
+      { label: "Chat Tracking", icon: <Chat />, path: "/chat-tracking" },
+      { label: "Users", icon: <People />, path: "/users" },
+      { label: "Settings", icon: <Settings />, path: "/settings" },
+    ],
     admin: [
       { label: "Dashboard", icon: <Dashboard />, path: "/" },
       { label: "Invoices", icon: <ReceiptLong />, path: "/invoices/new" },
       { label: "Customers", icon: <Group />, path: "/customers" },
+      { label: "Metode Pembayaran", icon: <CreditCard />, path: "/metode-pembayaran" },
+      { label: "Keuangan", icon: <AccountBalanceWallet />, path: "/keuangan" },
+      { label: "Chat Tracking", icon: <Chat />, path: "/chat-tracking" },
       { label: "Users", icon: <People />, path: "/users" },
       { label: "Settings", icon: <Settings />, path: "/settings" },
     ],
     kasir: [
       { label: "Dashboard", icon: <Dashboard />, path: "/" },
       { label: "Invoices", icon: <ReceiptLong />, path: "/invoices/new" },
+      { label: "Keuangan", icon: <AccountBalanceWallet />, path: "/keuangan" },
       { label: "Settings", icon: <Settings />, path: "/settings" },
     ],
     teknisi: [
@@ -246,7 +271,7 @@ const Sidebar = ({ active }) => {
               textTransform: "capitalize",
             }}
           >
-            {user?.role || "Guest"}
+            {roleLabels[user?.role] || user?.role || "Guest"}
           </span>
         </div>
       </div>
@@ -272,13 +297,13 @@ const Sidebar = ({ active }) => {
                 : "rgba(255,255,255,0.85)",
             }}
             onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor =
-                "rgba(255,255,255,0.15)")
+            (e.currentTarget.style.backgroundColor =
+              "rgba(255,255,255,0.15)")
             }
             onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = isActive(item.path)
-                ? "rgba(255, 255, 255, 0.25)"
-                : "transparent")
+            (e.currentTarget.style.backgroundColor = isActive(item.path)
+              ? "rgba(255, 255, 255, 0.25)"
+              : "transparent")
             }
           >
             {item.icon}

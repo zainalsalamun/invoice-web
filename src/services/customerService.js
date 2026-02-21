@@ -64,13 +64,15 @@ function buildFormData(data) {
   if (data.id_pelanggan) fd.append("id_pelanggan", data.id_pelanggan);
   if (data.nama) fd.append("nama", data.nama);
   if (data.alamat) fd.append("alamat", data.alamat);
-  if (data.area) fd.append("area", data.area);
+  if (data.kategori_pelanggan) fd.append("kategori_pelanggan", data.kategori_pelanggan);
   if (data.nomor_wa) fd.append("nomor_wa", data.nomor_wa);
   if (data.paket) fd.append("paket", data.paket);
-  if (data.tanggal_aktivasi) fd.append("tanggal_aktivasi", data.tanggal_aktivasi);
   if (data.tanggal_jatuh_tempo) fd.append("tanggal_jatuh_tempo", data.tanggal_jatuh_tempo);
   if (data.harga_langganan) fd.append("harga_langganan", parseFloat(data.harga_langganan));
   if (data.metode_pembayaran_id) fd.append("metode_pembayaran_id", data.metode_pembayaran_id);
+  if (data.notes) fd.append("notes", data.notes);
+  if (data.status_pembayaran) fd.append("status_pembayaran", data.status_pembayaran);
+  if (data.tagihan_periode_bulan) fd.append("tagihan_periode_bulan", data.tagihan_periode_bulan);
   fd.append("aktif", data.aktif !== undefined ? data.aktif : true);
 
   // File upload — hanya append jika berupa File object

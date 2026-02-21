@@ -32,7 +32,8 @@ const formatTanggal = (iso) => {
   });
 };
 
-const CustomerTable = ({ data, onEdit, onDelete }) => {
+const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
+  const canDelete = userRole === "super_admin";
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
@@ -50,15 +51,15 @@ const CustomerTable = ({ data, onEdit, onDelete }) => {
         <Table size="small">
           <TableHead>
             <TableRow sx={{ backgroundColor: "#1976d2" }}>
-              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>ID Pelanggan</TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>ID</TableCell>
               <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Nama</TableCell>
-              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Area</TableCell>
-              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Nomor WA</TableCell>
-              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Paket</TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Kategori</TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>WA</TableCell>
               <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Harga</TableCell>
               <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Metode</TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Tagihan (Bulan)</TableCell>
               <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Jatuh Tempo</TableCell>
-              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Status</TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Status Bayar</TableCell>
               <TableCell align="center" sx={{ color: "#fff", fontWeight: "bold" }}>
                 Aksi
               </TableCell>
@@ -83,32 +84,37 @@ const CustomerTable = ({ data, onEdit, onDelete }) => {
                     </Typography>
                   )}
                 </TableCell>
-                <TableCell>{row.area || "-"}</TableCell>
+                <TableCell>{row.kategori_pelanggan || "-"}</TableCell>
                 <TableCell>{row.nomor_wa || "-"}</TableCell>
-                <TableCell>{row.paket || "-"}</TableCell>
                 <TableCell>{formatRupiah(row.harga_langganan)}</TableCell>
                 <TableCell>
-                  {row.metode_pembayaran ? (
-                    <Chip label={row.metode_pembayaran} size="small" variant="outlined" />
+                  {row.metode_pembayaran_nama ? (
+                    <Chip label={row.metode_pembayaran_nama} size="small" variant="outlined" />
                   ) : (
                     "-"
                   )}
                 </TableCell>
+                <TableCell>{row.tagihan_periode_bulan || "-"}</TableCell>
                 <TableCell>
-                  <Tooltip
-                    title={`Aktivasi: ${formatTanggal(row.tanggal_aktivasi)}`}
-                    placement="top"
-                  >
-                    <span>{formatTanggal(row.tanggal_jatuh_tempo)}</span>
-                  </Tooltip>
+                  {formatTanggal(row.tanggal_jatuh_tempo)}
                 </TableCell>
                 <TableCell>
                   <Chip
-                    label={row.aktif ? "Aktif" : "Nonaktif"}
+                    label={row.status_pembayaran || "BELUM LUNAS"}
                     size="small"
-                    color={row.aktif ? "success" : "default"}
+                    color={row.status_pembayaran === "LUNAS" ? "success" : "error"}
                     variant="filled"
+                    sx={{ mb: 0.5 }}
                   />
+                  {row.aktif === false && (
+                    <Chip
+                      label="Nonaktif"
+                      size="small"
+                      color="default"
+                      variant="filled"
+                      sx={{ display: "block" }}
+                    />
+                  )}
                 </TableCell>
                 <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Button
@@ -119,15 +125,17 @@ const CustomerTable = ({ data, onEdit, onDelete }) => {
                   >
                     Edit
                   </Button>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    color="error"
-                    onClick={() => onDelete(row.id)}
-                    sx={{ fontSize: "0.72rem" }}
-                  >
-                    Hapus
-                  </Button>
+                  {canDelete && (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      color="error"
+                      onClick={() => onDelete(row.id)}
+                      sx={{ fontSize: "0.72rem" }}
+                    >
+                      Hapus
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

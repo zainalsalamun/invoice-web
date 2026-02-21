@@ -33,12 +33,14 @@ const defaultForm = {
   alamat: "",
   nomor_wa: "",
   paket: "",
-  area: "",
-  tanggal_aktivasi: "",
+  kategori_pelanggan: "",
   tanggal_jatuh_tempo: "",
   harga_langganan: "",
   metode_pembayaran_id: "",
   aktif: true,
+  notes: "",
+  status_pembayaran: "BELUM LUNAS",
+  tagihan_periode_bulan: "",
   bukti_transfer: null, // File object
 };
 
@@ -55,9 +57,12 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         ...initialData,
         id_pelanggan: initialData.id_pelanggan ?? "",
         metode_pembayaran_id: initialData.metode_pembayaran_id ?? "",
-        tanggal_aktivasi: toInputDate(initialData.tanggal_aktivasi),
+        kategori_pelanggan: initialData.kategori_pelanggan ?? "",
         tanggal_jatuh_tempo: toInputDate(initialData.tanggal_jatuh_tempo),
         harga_langganan: initialData.harga_langganan ?? "",
+        notes: initialData.notes ?? "",
+        status_pembayaran: initialData.status_pembayaran ?? "BELUM LUNAS",
+        tagihan_periode_bulan: initialData.tagihan_periode_bulan ?? "",
         bukti_transfer: null, // reset — file baru akan diisi ulang jika ada
       }
       : defaultForm
@@ -196,14 +201,42 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
 
         <Grid item xs={12} sm={6}>
           <TextField
-            label="Area"
-            name="area"
-            value={form.area}
+            label="Kategori Pelanggan"
+            name="kategori_pelanggan"
+            value={form.kategori_pelanggan}
             onChange={handleChange}
             fullWidth
             size="small"
-            placeholder="cth: Bandung Barat"
+            placeholder="cth: Retail, Bisnis, Warnet"
           />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            label="Tagihan Periode Bulan"
+            name="tagihan_periode_bulan"
+            value={form.tagihan_periode_bulan}
+            onChange={handleChange}
+            fullWidth
+            size="small"
+            placeholder="cth: Januari 2024"
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth size="small">
+            <InputLabel id="status-label">Status Pembayaran</InputLabel>
+            <Select
+              labelId="status-label"
+              name="status_pembayaran"
+              value={form.status_pembayaran}
+              label="Status Pembayaran"
+              onChange={handleChange}
+            >
+              <MenuItem value="LUNAS">Lunas</MenuItem>
+              <MenuItem value="BELUM LUNAS">Belum Lunas</MenuItem>
+            </Select>
+          </FormControl>
         </Grid>
 
         <Grid item xs={12}>
@@ -216,6 +249,20 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
             size="small"
             multiline
             rows={2}
+          />
+        </Grid>
+
+        <Grid item xs={12}>
+          <TextField
+            label="Notes / Catatan"
+            name="notes"
+            value={form.notes ?? ""}
+            onChange={handleChange}
+            fullWidth
+            size="small"
+            multiline
+            rows={2}
+            placeholder="Catatan tambahan..."
           />
         </Grid>
       </Grid>
@@ -307,19 +354,6 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         Tanggal
       </Typography>
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Tanggal Aktivasi"
-            name="tanggal_aktivasi"
-            value={form.tanggal_aktivasi}
-            onChange={handleChange}
-            fullWidth
-            size="small"
-            type="date"
-            InputLabelProps={{ shrink: true }}
-          />
-        </Grid>
-
         <Grid item xs={12} sm={6}>
           <TextField
             label="Tanggal Jatuh Tempo"

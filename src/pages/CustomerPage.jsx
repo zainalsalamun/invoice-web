@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Typography, TextField, MenuItem, Select, InputLabel, FormControl } from "@mui/material";
 import Sidebar from "../components/Sidebar";
 import CustomerTable from "../components/CustomerTable";
 import CustomerForm from "../components/CustomerForm";
 import { customerService } from "../services/customerService";
-import { notifySuccess, notifyInfo, notifyError } from "../utils/notify"; // ✅ pakai notifikasi global
+import { authService } from "../services/authService";
+import { notifySuccess, notifyInfo, notifyError } from "../utils/notify";
 
 const CustomerPage = () => {
   const [customers, setCustomers] = useState([]);
   const [editing, setEditing] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const user = authService.getCurrentUser();
 
   const fetchData = async () => {
     try {
@@ -21,9 +23,23 @@ const CustomerPage = () => {
     }
   };
 
+  const [search, setSearch] = useState("");
+  const [filterKategori, setFilterKategori] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+
   useEffect(() => {
     fetchData();
   }, []);
+
+  const filteredCustomers = customers.filter(c => {
+    const matchSearch = c.nama.toLowerCase().includes(search.toLowerCase()) ||
+      (c.id_pelanggan && c.id_pelanggan.toLowerCase().includes(search.toLowerCase()));
+    const matchKategori = filterKategori ? c.kategori_pelanggan === filterKategori : true;
+    const matchStatus = filterStatus ? c.status_pembayaran === filterStatus : true;
+    return matchSearch && matchKategori && matchStatus;
+  });
+
+  const uniqueKategori = [...new Set(customers.map(c => c.kategori_pelanggan).filter(Boolean))];
 
   const handleSave = async (formData) => {
     try {
@@ -76,22 +92,61 @@ const CustomerPage = () => {
           />
         ) : (
           <>
-            <Button
-              variant="contained"
-              sx={{
-                mb: 2,
-                fontWeight: "bold",
-                textTransform: "none",
-                borderRadius: 2,
-                boxShadow: "0 3px 6px rgba(0,0,0,0.1)",
-              }}
-              onClick={() => setShowForm(true)}
-            >
-              ➕ Tambah Pelanggan
-            </Button>
+            <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Button
+                variant="contained"
+                sx={{
+                  fontWeight: "bold",
+                  textTransform: "none",
+                  borderRadius: 2,
+                  boxShadow: "0 3px 6px rgba(0,0,0,0.1)",
+                  height: 40
+                }}
+                onClick={() => setShowForm(true)}
+              >
+                ➕ Tambah Pelanggan
+              </Button>
+
+              <TextField
+                label="Cari Nama / ID"
+                variant="outlined"
+                size="small"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                sx={{ width: 200 }}
+              />
+
+              <FormControl size="small" sx={{ width: 200 }}>
+                <InputLabel>Kategori</InputLabel>
+                <Select
+                  value={filterKategori}
+                  label="Kategori"
+                  onChange={(e) => setFilterKategori(e.target.value)}
+                >
+                  <MenuItem value="">Semua</MenuItem>
+                  {uniqueKategori.map(k => (
+                    <MenuItem key={k} value={k}>{k}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ width: 200 }}>
+                <InputLabel>Status Pembayaran</InputLabel>
+                <Select
+                  value={filterStatus}
+                  label="Status Pembayaran"
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <MenuItem value="">Semua</MenuItem>
+                  <MenuItem value="LUNAS">Lunas</MenuItem>
+                  <MenuItem value="BELUM LUNAS">Belum Lunas</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
 
             <CustomerTable
-              data={customers}
+              data={filteredCustomers}
+              userRole={user?.role}
               onEdit={(row) => {
                 setEditing(row);
                 setShowForm(true);

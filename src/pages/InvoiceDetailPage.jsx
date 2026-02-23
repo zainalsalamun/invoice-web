@@ -11,7 +11,8 @@ import {
 } from "@mui/material";
 import Sidebar from "../components/Sidebar";
 import { invoiceService } from "../services/invoiceService";
-import { API_BASE_URL } from "../utils/apiClient";
+
+const API_BASE = process.env.REACT_APP_API_URL?.replace("/api", "");
 
 const InvoiceDetailPage = () => {
   const { id } = useParams();
@@ -164,7 +165,7 @@ const InvoiceDetailPage = () => {
                 }}
               >
                 <img
-                  src={`${API_BASE_URL}${invoice.bukti_transfer}`}
+                  src={`${API_BASE}${invoice.bukti_transfer}`}
                   alt="Bukti Transfer"
                   style={{
                     width: "100%",
@@ -178,7 +179,7 @@ const InvoiceDetailPage = () => {
                 <Button
                   variant="contained"
                   color="primary"
-                  href={`${API_BASE_URL}${invoice.bukti_transfer}`}
+                  href={`${API_BASE}${invoice.bukti_transfer}`}
                   target="_blank"
                   sx={{
                     borderRadius: 2,

@@ -9,7 +9,8 @@ import {
 } from "@mui/material";
 import Sidebar from "../components/Sidebar";
 import { invoiceService } from "../services/invoiceService";
-import { API_BASE_URL } from "../utils/apiClient";
+
+const API_BASE = process.env.REACT_APP_API_URL?.replace("/api", "");
 
 const InvoiceProofPage = () => {
   const { id } = useParams();
@@ -81,7 +82,7 @@ const InvoiceProofPage = () => {
               <Box>
                 <Typography sx={{ mb: 1 }}>📎 Bukti yang diupload:</Typography>
                 <img
-                  src={`${API_BASE_URL}${invoice.bukti_transfer}`}
+                  src={`${API_BASE}${invoice.bukti_transfer}`}
                   alt="Bukti Transfer"
                   style={{
                     maxWidth: "100%",

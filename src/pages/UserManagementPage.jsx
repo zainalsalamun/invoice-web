@@ -24,9 +24,8 @@ import {
 } from "@mui/material";
 import Sidebar from "../components/Sidebar";
 import axios from "axios";
-import { API_BASE_URL } from "../utils/apiClient";
 
-const BASE_URL = `${API_BASE_URL}/api`;
+const BASE_URL = process.env.REACT_APP_API_URL;
 
 const UserManagementPage = () => {
   const [users, setUsers] = useState([]);

@@ -2,7 +2,7 @@ import axios from "axios";
 import { authService } from "../services/authService";
 
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL,
+  baseURL: process.env.REACT_APP_API_URL || "/api",
 });
 
 apiClient.interceptors.request.use(

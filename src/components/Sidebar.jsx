@@ -165,15 +165,17 @@ const Sidebar = ({ active }) => {
   const roleColors = {
     super_admin: "#7c3aed",
     admin: "#FF5252",
+    admin_junior: "#f59e0b",
     kasir: "#4CAF50",
     teknisi: "#2196F3",
   };
 
   const roleLabels = {
-    super_admin: "⚡ Super Admin",
-    admin: "👑 Admin",
-    kasir: "💰 Kasir",
-    teknisi: "🔧 Teknisi",
+    super_admin: "Super Admin",
+    admin: "Admin",
+    admin_junior: "Admin Junior",
+    kasir: "Kasir",
+    teknisi: "Teknisi",
   };
 
   const menuByRole = {
@@ -197,6 +199,14 @@ const Sidebar = ({ active }) => {
       { label: "Users", icon: <People />, path: "/users" },
       { label: "Settings", icon: <Settings />, path: "/settings" },
     ],
+    admin_junior: [
+      { label: "Dashboard", icon: <Dashboard />, path: "/" },
+      { label: "Invoices", icon: <ReceiptLong />, path: "/invoices/new" },
+      { label: "Customers", icon: <Group />, path: "/customers" },
+      { label: "Metode Pembayaran", icon: <CreditCard />, path: "/metode-pembayaran" },
+      { label: "Keuangan", icon: <AccountBalanceWallet />, path: "/keuangan" },
+      { label: "Chat Tracking", icon: <Chat />, path: "/chat-tracking" },
+    ],
     kasir: [
       { label: "Dashboard", icon: <Dashboard />, path: "/" },
       { label: "Invoices", icon: <ReceiptLong />, path: "/invoices/new" },
@@ -216,6 +226,7 @@ const Sidebar = ({ active }) => {
     <div
       style={{
         width: 240,
+        minWidth: 240,
         background: "linear-gradient(180deg, #4facfe 0%, #0052d4 100%)",
         color: "#fff",
         padding: "24px 0",
@@ -223,7 +234,11 @@ const Sidebar = ({ active }) => {
         flexDirection: "column",
         alignItems: "center",
         boxShadow: "3px 0 10px rgba(0,0,0,0.15)",
-        minHeight: "100vh",
+        height: "100vh",
+        position: "sticky",
+        top: 0,
+        overflowY: "auto",
+        boxSizing: "border-box"
       }}
     >
       <div

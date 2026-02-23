@@ -26,6 +26,7 @@ const CustomerPage = () => {
   const [search, setSearch] = useState("");
   const [filterKategori, setFilterKategori] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [filterBulan, setFilterBulan] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -36,7 +37,8 @@ const CustomerPage = () => {
       (c.id_pelanggan && c.id_pelanggan.toLowerCase().includes(search.toLowerCase()));
     const matchKategori = filterKategori ? c.kategori_pelanggan === filterKategori : true;
     const matchStatus = filterStatus ? c.status_pembayaran === filterStatus : true;
-    return matchSearch && matchKategori && matchStatus;
+    const matchBulan = filterBulan ? (c.tanggal_jatuh_tempo && new Date(c.tanggal_jatuh_tempo).getMonth() + 1 === parseInt(filterBulan)) : true;
+    return matchSearch && matchKategori && matchStatus && matchBulan;
   });
 
   const uniqueKategori = [...new Set(customers.map(c => c.kategori_pelanggan).filter(Boolean))];
@@ -140,6 +142,29 @@ const CustomerPage = () => {
                   <MenuItem value="">Semua</MenuItem>
                   <MenuItem value="LUNAS">Lunas</MenuItem>
                   <MenuItem value="BELUM LUNAS">Belum Lunas</MenuItem>
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ width: 170 }}>
+                <InputLabel>Bulan</InputLabel>
+                <Select
+                  value={filterBulan}
+                  label="Bulan"
+                  onChange={(e) => setFilterBulan(e.target.value)}
+                >
+                  <MenuItem value="">Semua</MenuItem>
+                  <MenuItem value="1">Januari</MenuItem>
+                  <MenuItem value="2">Februari</MenuItem>
+                  <MenuItem value="3">Maret</MenuItem>
+                  <MenuItem value="4">April</MenuItem>
+                  <MenuItem value="5">Mei</MenuItem>
+                  <MenuItem value="6">Juni</MenuItem>
+                  <MenuItem value="7">Juli</MenuItem>
+                  <MenuItem value="8">Agustus</MenuItem>
+                  <MenuItem value="9">September</MenuItem>
+                  <MenuItem value="10">Oktober</MenuItem>
+                  <MenuItem value="11">November</MenuItem>
+                  <MenuItem value="12">Desember</MenuItem>
                 </Select>
               </FormControl>
             </Box>

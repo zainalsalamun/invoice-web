@@ -24,8 +24,9 @@ import {
 } from "@mui/material";
 import Sidebar from "../components/Sidebar";
 import axios from "axios";
+import { API_BASE_URL } from "../utils/apiClient";
 
-const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:2002/api";
+const BASE_URL = `${API_BASE_URL}/api`;
 
 const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
@@ -39,6 +40,8 @@ const UserManagementPage = () => {
 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const canDelete = currentUser?.role === "super_admin";
 
   // 🔹 Ambil data user
   const fetchUsers = async () => {
@@ -53,7 +56,7 @@ const UserManagementPage = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, );
+  },);
 
   // 🔹 Tambah user
   const handleSubmit = async () => {
@@ -133,7 +136,7 @@ const UserManagementPage = () => {
 
       <Box sx={{ flexGrow: 1, p: 4 }}>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: "bold" }}>
-          👥 Manajemen User
+          Manajemen User
         </Typography>
 
         <Card sx={{ mb: 3, borderRadius: 2, boxShadow: 2 }}>
@@ -143,18 +146,20 @@ const UserManagementPage = () => {
             <Typography variant="body1">
               Kelola akun <b>Admin</b>, <b>Kasir</b>, dan <b>Teknisi</b> untuk sistem Ringnet
             </Typography>
-            <Button
-              variant="contained"
-              sx={{
-                background: "linear-gradient(90deg, #007bff, #0052d4)",
-                textTransform: "none",
-                fontWeight: 600,
-                px: 3,
-              }}
-              onClick={() => setOpenDialog(true)}
-            >
-              + Tambah User
-            </Button>
+            {canDelete && (
+              <Button
+                variant="contained"
+                sx={{
+                  background: "linear-gradient(90deg, #007bff, #0052d4)",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  px: 3,
+                }}
+                onClick={() => setOpenDialog(true)}
+              >
+                + Tambah User
+              </Button>
+            )}
           </CardContent>
         </Card>
 
@@ -174,9 +179,11 @@ const UserManagementPage = () => {
                 <TableRow key={u.id} hover>
                   <TableCell>{u.username}</TableCell>
                   <TableCell>
-                    {u.role === "admin" ? "👑 Admin" :
-                     u.role === "kasir" ? "💰 Kasir" :
-                     "🧰 Teknisi"}
+                    {u.role === "super_admin" ? "Super Admin" :
+                      u.role === "admin" ? "Admin" :
+                        u.role === "admin_junior" ? "Admin Junior" :
+                          u.role === "kasir" ? "Kasir" :
+                            "Teknisi"}
                   </TableCell>
                   <TableCell>
                     {u.created_at
@@ -193,14 +200,16 @@ const UserManagementPage = () => {
                     >
                       Ganti Password
                     </Button>
-                    <Button
-                      size="small"
-                      color="error"
-                      variant="outlined"
-                      onClick={() => handleDelete(u.id)}
-                    >
-                      Hapus
-                    </Button>
+                    {canDelete && (
+                      <Button
+                        size="small"
+                        color="error"
+                        variant="outlined"
+                        onClick={() => handleDelete(u.id)}
+                      >
+                        Hapus
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -224,16 +233,15 @@ const UserManagementPage = () => {
               display: "flex",
               flexDirection: "column",
               gap: 2,
-              mt: 1,
               minWidth: 320,
             }}
           >
             <TextField
+              sx={{ mt: 1 }}
               label="Username"
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
               fullWidth
-              autoFocus
             />
             <TextField
               label="Password"
@@ -250,8 +258,12 @@ const UserManagementPage = () => {
               fullWidth
             >
               <MenuItem value="admin">Admin</MenuItem>
+              <MenuItem value="admin_junior">Admin Junior</MenuItem>
               <MenuItem value="kasir">Kasir</MenuItem>
               <MenuItem value="teknisi">Teknisi</MenuItem>
+              {canDelete && (
+                <MenuItem value="super_admin">Super Admin</MenuItem>
+              )}
             </TextField>
           </DialogContent>
 
@@ -275,8 +287,8 @@ const UserManagementPage = () => {
         {/* 🔹 Dialog Ganti Password */}
         <Dialog open={openPasswordDialog} onClose={() => setOpenPasswordDialog(false)}>
           <DialogTitle>Ganti Password User</DialogTitle>
-          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <Typography variant="body2" sx={{ mb: 1 }}>
+          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 320 }}>
+            <Typography variant="body2" sx={{ mb: 1, mt: 1 }}>
               Ganti password untuk user: <b>{selectedUser?.username}</b>
             </Typography>
             <TextField

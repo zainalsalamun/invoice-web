@@ -9,13 +9,14 @@ import {
 } from "@mui/material";
 import Sidebar from "../components/Sidebar";
 import { invoiceService } from "../services/invoiceService";
+import { API_BASE_URL } from "../utils/apiClient";
 
 const InvoiceProofPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [invoice, setInvoice] = useState(null);
   const [uploading, setUploading] = useState(false);
-//   const [filePreview, setFilePreview] = useState(null);
+  //   const [filePreview, setFilePreview] = useState(null);
 
   const fetchInvoice = async () => {
     try {
@@ -28,7 +29,7 @@ const InvoiceProofPage = () => {
 
   useEffect(() => {
     fetchInvoice();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handleUpload = async (e) => {
@@ -80,7 +81,7 @@ const InvoiceProofPage = () => {
               <Box>
                 <Typography sx={{ mb: 1 }}>📎 Bukti yang diupload:</Typography>
                 <img
-                  src={`http://localhost:2002${invoice.bukti_transfer}`}
+                  src={`${API_BASE_URL}${invoice.bukti_transfer}`}
                   alt="Bukti Transfer"
                   style={{
                     maxWidth: "100%",

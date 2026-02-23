@@ -60,6 +60,7 @@ const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
               <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Tagihan (Bulan)</TableCell>
               <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Jatuh Tempo</TableCell>
               <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Status Bayar</TableCell>
+              <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Notes</TableCell>
               <TableCell align="center" sx={{ color: "#fff", fontWeight: "bold" }}>
                 Aksi
               </TableCell>
@@ -78,11 +79,7 @@ const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
                   <Typography variant="body2" fontWeight={500}>
                     {row.nama}
                   </Typography>
-                  {row.alamat && (
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      {row.alamat}
-                    </Typography>
-                  )}
+
                 </TableCell>
                 <TableCell>{row.kategori_pelanggan || "-"}</TableCell>
                 <TableCell>{row.nomor_wa || "-"}</TableCell>
@@ -116,6 +113,11 @@ const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
                     />
                   )}
                 </TableCell>
+                <TableCell>
+                  <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+                    {row.notes || "-"}
+                  </Typography>
+                </TableCell>
                 <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Button
                     variant="outlined"
@@ -142,7 +144,7 @@ const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
 
             {data.length === 0 && (
               <TableRow>
-                <TableCell colSpan={10} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                <TableCell colSpan={11} align="center" sx={{ py: 4, color: "text.secondary" }}>
                   📭 Tidak ada data pelanggan.
                 </TableCell>
               </TableRow>

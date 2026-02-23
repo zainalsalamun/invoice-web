@@ -23,7 +23,7 @@ const App = () => {
       <Route
         path="/"
         element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "kasir", "teknisi"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "kasir", "teknisi"]}>
             <DashboardPage />
           </ProtectedRoute>
         }
@@ -32,7 +32,7 @@ const App = () => {
       <Route
         path="/invoices/new"
         element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "kasir"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "kasir"]}>
             <CreateInvoicePage />
           </ProtectedRoute>
         }
@@ -41,7 +41,7 @@ const App = () => {
       <Route
         path="/invoices/:invoiceId.pdf"
         element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "kasir", "teknisi"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "kasir", "teknisi"]}>
             <InvoiceViewer />
           </ProtectedRoute>
         }
@@ -50,7 +50,7 @@ const App = () => {
       <Route
         path="/customers"
         element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "teknisi"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "teknisi"]}>
             <CustomerPage />
           </ProtectedRoute>
         }
@@ -68,7 +68,7 @@ const App = () => {
       <Route
         path="/settings"
         element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "kasir", "teknisi"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "kasir", "teknisi"]}>
             <SettingsPage />
           </ProtectedRoute>
         }
@@ -77,7 +77,7 @@ const App = () => {
       <Route
         path="/metode-pembayaran"
         element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior"]}>
             <MetodePembayaranPage />
           </ProtectedRoute>
         }
@@ -86,7 +86,7 @@ const App = () => {
       <Route
         path="/chat-tracking"
         element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior"]}>
             <ChatTrackingPage />
           </ProtectedRoute>
         }
@@ -108,7 +108,7 @@ const App = () => {
       <Route
         path="/keuangan"
         element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "kasir"]}>
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "kasir"]}>
             <KeuanganPage />
           </ProtectedRoute>
         }

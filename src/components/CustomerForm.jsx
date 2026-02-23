@@ -25,7 +25,9 @@ import { Add as AddIcon, PhotoCamera, Close } from "@mui/icons-material";
 import { metodePembayaranService } from "../services/metodePembayaranService";
 import { notifySuccess, notifyError } from "../utils/notify";
 
-const API_BASE = process.env.REACT_APP_API_URL?.replace("/api", "") || "http://localhost:2002";
+import { API_BASE_URL } from "../utils/apiClient";
+
+const API_BASE = API_BASE_URL;
 
 const defaultForm = {
   id_pelanggan: "",

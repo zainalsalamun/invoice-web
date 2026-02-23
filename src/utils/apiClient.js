@@ -5,8 +5,10 @@ import { authService } from "../services/authService";
 //   baseURL: process.env.REACT_APP_API_URL || "http://localhost:2002/api",
 // });
 
+export const API_BASE_URL = process.env.REACT_APP_API_URL?.replace(/\/api\/?$/, "") || process.env.REACT_APP_API_BASE_URL || "http://localhost:2002";
+
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:2002/api",
+  baseURL: `${API_BASE_URL}/api`,
 });
 
 apiClient.interceptors.request.use(

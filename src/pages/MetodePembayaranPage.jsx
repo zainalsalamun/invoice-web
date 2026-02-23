@@ -28,6 +28,8 @@ import { notifySuccess, notifyError } from "../utils/notify";
 const MetodePembayaranPage = () => {
     const [list, setList] = useState([]);
     const [loading, setLoading] = useState(true);
+    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const canDelete = currentUser?.role === "super_admin";
 
     // Dialog state
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -192,15 +194,17 @@ const MetodePembayaranPage = () => {
                                                     <Edit fontSize="small" />
                                                 </IconButton>
                                             </Tooltip>
-                                            <Tooltip title="Hapus">
-                                                <IconButton
-                                                    size="small"
-                                                    color="error"
-                                                    onClick={() => setDeleteTarget(item)}
-                                                >
-                                                    <Delete fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
+                                            {canDelete && (
+                                                <Tooltip title="Hapus">
+                                                    <IconButton
+                                                        size="small"
+                                                        color="error"
+                                                        onClick={() => setDeleteTarget(item)}
+                                                    >
+                                                        <Delete fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))

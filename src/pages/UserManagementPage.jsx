@@ -23,9 +23,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import Sidebar from "../components/Sidebar";
-import axios from "axios";
-
-const BASE_URL = process.env.REACT_APP_API_URL;
+import apiClient from "../utils/apiClient";
 
 const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
@@ -37,15 +35,13 @@ const UserManagementPage = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
   const [loading, setLoading] = useState(false);
 
-  const token = localStorage.getItem("token");
-  const headers = { Authorization: `Bearer ${token}` };
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
   const canDelete = currentUser?.role === "super_admin";
 
   // 🔹 Ambil data user
   const fetchUsers = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/users`, { headers });
+      const res = await apiClient.get(`/users`);
       setUsers(res.data.data || []);
     } catch (err) {
       console.error("Gagal ambil data user:", err);
@@ -69,7 +65,7 @@ const UserManagementPage = () => {
 
     setLoading(true);
     try {
-      await axios.post(`${BASE_URL}/users`, form, { headers });
+      await apiClient.post(`/users`, form);
       setOpenDialog(false);
       setForm({ username: "", password: "", role: "kasir" });
       fetchUsers();
@@ -86,7 +82,7 @@ const UserManagementPage = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Yakin ingin menghapus user ini?")) return;
     try {
-      await axios.delete(`${BASE_URL}/users/${id}`, { headers });
+      await apiClient.delete(`/users/${id}`);
       fetchUsers();
       setSnackbar({ open: true, message: "User berhasil dihapus", severity: "success" });
     } catch (err) {
@@ -114,10 +110,9 @@ const UserManagementPage = () => {
 
     setLoading(true);
     try {
-      await axios.put(
-        `${BASE_URL}/users/${selectedUser.id}/password`,
-        { new_password: passwordForm.new_password },
-        { headers }
+      await apiClient.put(
+        `/users/${selectedUser.id}/password`,
+        { new_password: passwordForm.new_password }
       );
       setOpenPasswordDialog(false);
       setSnackbar({ open: true, message: "Password berhasil diubah", severity: "success" });

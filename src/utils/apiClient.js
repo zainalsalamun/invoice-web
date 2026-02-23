@@ -1,8 +1,12 @@
 import axios from "axios";
 import { authService } from "../services/authService";
 
+const isProd = process.env.NODE_ENV === "production";
+
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "/api",
+  // Jika di Vercel (production), abaikan REACT_APP_API_URL dan paksa jadi "/api"
+  // Jika di lokal (laptop), hanya mengandalkan REACT_APP_API_URL di .env
+  baseURL: isProd ? "/api" : process.env.REACT_APP_API_URL,
 });
 
 apiClient.interceptors.request.use(

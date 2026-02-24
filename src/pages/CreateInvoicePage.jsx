@@ -8,7 +8,7 @@ const CreateInvoicePage = () => {
 
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
-      <Sidebar active="invoices" />
+      <Sidebar active="/invoices/new" />
 
       <div
         style={{

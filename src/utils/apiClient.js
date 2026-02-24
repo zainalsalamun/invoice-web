@@ -3,9 +3,11 @@ import axios from "axios";
 // import { authService } from "../services/authService";
 
 
+const isProd = process.env.NODE_ENV === "production";
+
 const apiClient = axios.create({
-  // baseURL akan otomatis mengambil dari .env sesuai mode (dev/prod)
-  baseURL: process.env.REACT_APP_API_URL || "/api",
+  // Gunakan /api di production (Vercel Proxy), atau REACT_APP_API_URL di development
+  baseURL: isProd ? "/api" : (process.env.REACT_APP_API_URL || "/api"),
 });
 
 apiClient.interceptors.request.use(

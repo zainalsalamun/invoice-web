@@ -51,7 +51,7 @@ const UserManagementPage = () => {
 
   useEffect(() => {
     fetchUsers();
-  },);
+  }, []);
 
   // 🔹 Tambah user
   const handleSubmit = async () => {

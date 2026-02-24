@@ -26,7 +26,6 @@ const InvoiceListPage = () => {
     const navigate = useNavigate();
     const user = authService.getCurrentUser();
     const currentMonth = new Date().toISOString().slice(0, 7);
-    const currentYear = new Date().getFullYear();
 
     const [filters, setFilters] = useState({
         month: currentMonth,

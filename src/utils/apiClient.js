@@ -2,7 +2,6 @@ import axios from "axios";
 // Hapus import authService karena menyebabkan circular dependency
 // import { authService } from "../services/authService";
 
-const isProd = process.env.NODE_ENV === "production";
 
 const apiClient = axios.create({
   // baseURL akan otomatis mengambil dari .env sesuai mode (dev/prod)

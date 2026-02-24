@@ -10,9 +10,9 @@ import {
   TableRow,
   TableCell,
   TableBody,
+  TableContainer,
   Paper,
   CircularProgress,
-  Divider,
 } from "@mui/material";
 import Sidebar from "../components/Sidebar";
 import { invoiceService } from "../services/invoiceService";
@@ -71,8 +71,6 @@ const DashboardPage = () => {
 
   const formatRupiah = (angka) => {
     return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(angka || 0);
   };
@@ -81,7 +79,7 @@ const DashboardPage = () => {
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f1f5f9" }}>
       <Sidebar active="/" />
 
-      <Box sx={{ flexGrow: 1, p: 4 }}>
+      <Box sx={{ flexGrow: 1, p: { xs: 3, md: 5 }, width: "100%" }}>
         <Typography variant="h4" fontWeight="bold" sx={{ mb: 1, color: "#1e293b" }}>
           🏠 Dashboard Utama
         </Typography>
@@ -94,12 +92,12 @@ const DashboardPage = () => {
             <CircularProgress />
           </Box>
         ) : (
-          <>
+          <Box sx={{ width: "100%", maxWidth: "1400px", mx: "auto" }}>
             {/* --- SECTION 1: TASK TRACKING --- */}
-            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2.5, color: "#334155", display: 'flex', alignItems: 'center', gap: 1, px: 0.5 }}>
               📋 Ringkasan Tugas (Chat Tracking)
             </Typography>
-            <Grid container spacing={3} sx={{ mb: 5 }}>
+            <Grid container spacing={3} sx={{ mb: 6 }}>
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard title="Total Tugas" value={taskStats.total} icon={<Assignment />} color="#3b82f6" />
               </Grid>
@@ -115,10 +113,10 @@ const DashboardPage = () => {
             </Grid>
 
             {/* --- SECTION 2: INVOICE SUMMARY --- */}
-            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2.5, color: "#334155", display: 'flex', alignItems: 'center', gap: 1, px: 0.5 }}>
               🧾 Ringkasan Invoice & Keuangan
             </Typography>
-            <Grid container spacing={3} sx={{ mb: 5 }}>
+            <Grid container spacing={3} sx={{ mb: 6 }}>
               <Grid item xs={12} sm={6} md={3}>
                 <StatCard title="Total Invoice" value={invoiceStats.total} icon={<Receipt />} color="#6366f1" />
               </Grid>
@@ -129,79 +127,81 @@ const DashboardPage = () => {
                 <StatCard title="Belum Bayar" value={invoiceStats.belum} icon={<ErrorOutline />} color="#f43f5e" />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
-                <StatCard title="Total Tagihan" value={formatRupiah(invoiceStats.totalRp)} icon={<Assignment />} color="#8b5cf6" />
+                <StatCard title="Total Tagihan" label="Rp" value={formatRupiah(invoiceStats.totalRp)} icon={<Assignment />} color="#8b5cf6" />
               </Grid>
             </Grid>
 
             {/* --- SECTION 3: RECENT ACTIVITIES --- */}
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Paper sx={{ p: 3, borderRadius: 3, boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}>
-                  <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                    🕒 Tugas Terbaru
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow sx={{ bgcolor: "#f8fafc" }}>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Tanggal</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>PIC</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Deskripsi</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Progress</TableCell>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2.5, color: "#334155", display: 'flex', alignItems: 'center', gap: 1, px: 0.5 }}>
+              🕒 Tugas Terbaru
+            </Typography>
+            <Paper sx={{ width: "100%", borderRadius: 3, boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", overflow: "hidden" }}>
+              <TableContainer sx={{ width: "100%" }}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Tanggal</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>PIC</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Deskripsi</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Progress</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {tasks.slice(0, 5).map((task) => (
+                      <TableRow key={task.id} hover>
+                        <TableCell sx={{ width: 120 }}>{new Date(task.tanggal).toLocaleDateString('id-ID')}</TableCell>
+                        <TableCell fontWeight="bold" sx={{ width: 150 }}>{task.nama_pic}</TableCell>
+                        <TableCell sx={{ maxWidth: 400 }}>{task.deskripsi}</TableCell>
+                        <TableCell sx={{ width: 180 }}>
+                          <span style={{
+                            padding: "6px 12px",
+                            borderRadius: 6,
+                            fontSize: "0.75rem",
+                            fontWeight: "bold",
+                            backgroundColor: task.progress === "Sudah Selesai" ? "#dcfce7" : task.progress === "Sedang Diproses" ? "#fef3c7" : "#fee2e2",
+                            color: task.progress === "Sudah Selesai" ? "#166534" : task.progress === "Sedang Diproses" ? "#92400e" : "#991b1b"
+                          }}>
+                            {task.progress}
+                          </span>
+                        </TableCell>
                       </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {tasks.slice(0, 5).map((task) => (
-                        <TableRow key={task.id} hover>
-                          <TableCell>{new Date(task.tanggal).toLocaleDateString('id-ID')}</TableCell>
-                          <TableCell fontWeight="bold">{task.nama_pic}</TableCell>
-                          <TableCell sx={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {task.deskripsi}
-                          </TableCell>
-                          <TableCell>
-                            <span style={{
-                              padding: "4px 8px",
-                              borderRadius: 6,
-                              fontSize: "0.75rem",
-                              fontWeight: "bold",
-                              backgroundColor: task.progress === "Sudah Selesai" ? "#dcfce7" : task.progress === "Sedang Diproses" ? "#fef3c7" : "#fee2e2",
-                              color: task.progress === "Sudah Selesai" ? "#166534" : task.progress === "Sedang Diproses" ? "#92400e" : "#991b1b"
-                            }}>
-                              {task.progress}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </Paper>
-              </Grid>
-            </Grid>
-          </>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          </Box>
         )}
       </Box>
     </Box>
   );
 };
 
-const StatCard = ({ title, value, icon, color }) => (
+const StatCard = ({ title, value, icon, color, label }) => (
   <Card sx={{
     height: '100%',
     borderRadius: 3,
-    boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+    boxShadow: "0 1px 3px 0 rgba(0,0,0,0.1)",
     borderLeft: `6px solid ${color}`,
     transition: "transform 0.2s",
-    "&:hover": { transform: "translateY(-4px)", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }
+    "&:hover": { transform: "translateY(-4px)", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" }
   }}>
-    <CardContent sx={{ p: 3 }}>
+    <CardContent sx={{ p: 3, "&:last-child": { pb: 3 } }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
-          <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1, textTransform: 'uppercase', letterSpacing: 1 }}>
+          <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1, textTransform: 'uppercase', letterSpacing: 1, fontWeight: "bold" }}>
             {title}
           </Typography>
-          <Typography variant="h4" fontWeight="bold" sx={{ color: "#1e293b" }}>
-            {value}
-          </Typography>
+          <Box sx={{ mt: label ? 0 : 0.5 }}>
+            {label && (
+              <Typography variant="subtitle2" sx={{ color: "#475569", fontWeight: "bold", mb: -0.5 }}>
+                {label}
+              </Typography>
+            )}
+            <Typography variant="h4" fontWeight="800" sx={{ color: "#1e293b" }}>
+              {value}
+            </Typography>
+          </Box>
         </Box>
         <Box sx={{
           bgcolor: `${color}15`,

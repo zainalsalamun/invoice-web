@@ -33,6 +33,8 @@ const SettingsPage = () => {
           flexGrow: 1,
           p: 4,
           backgroundColor: "#f4f6f9",
+          minWidth: 0,
+          overflowX: "hidden",
         }}
       >
         <Typography variant="h5" sx={{ mb: 3, fontWeight: "bold" }}>
@@ -68,8 +70,8 @@ const SettingsPage = () => {
                 user?.role === "admin"
                   ? "#FF5252"
                   : user?.role === "kasir"
-                  ? "#4CAF50"
-                  : "#2196F3",
+                    ? "#4CAF50"
+                    : "#2196F3",
             }}
           >
             {user?.role || "-"}

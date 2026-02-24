@@ -262,7 +262,7 @@ const ChatTrackingPage = () => {
         <Box sx={{ display: "flex", minHeight: "100vh" }}>
             <Sidebar active="/chat-tracking" />
 
-            <Box sx={{ flexGrow: 1, p: 4, overflowX: 'hidden' }}>
+            <Box sx={{ flexGrow: 1, p: 4, minWidth: 0, overflowX: 'hidden' }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                     <Typography variant="h5" fontWeight="bold">
                         💬 {user?.role === "super_admin" ? "Chat Tracking Management" : "Daftar Tugas Saya"}

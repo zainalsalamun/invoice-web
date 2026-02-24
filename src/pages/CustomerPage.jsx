@@ -78,7 +78,7 @@ const CustomerPage = () => {
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar active="customers" />
 
-      <Box sx={{ flexGrow: 1, p: 4 }}>
+      <Box sx={{ flexGrow: 1, p: 4, minWidth: 0, overflowX: 'hidden' }}>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: "bold" }}>
           👥 Manajemen Pelanggan
         </Typography>

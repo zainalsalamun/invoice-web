@@ -103,7 +103,7 @@ const MetodePembayaranPage = () => {
         <Box sx={{ display: "flex", minHeight: "100vh" }}>
             <Sidebar active="metode-pembayaran" />
 
-            <Box sx={{ flexGrow: 1, p: 4 }}>
+            <Box sx={{ flexGrow: 1, p: 4, minWidth: 0, overflowX: "hidden" }}>
                 {/* Header */}
                 <Box
                     sx={{

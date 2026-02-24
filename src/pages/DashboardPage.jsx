@@ -79,8 +79,8 @@ const DashboardPage = () => {
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f1f5f9" }}>
       <Sidebar active="/" />
 
-      <Box sx={{ flexGrow: 1, p: { xs: 3, md: 5 }, width: "100%" }}>
-        <Typography variant="h4" fontWeight="bold" sx={{ mb: 1, color: "#1e293b" }}>
+      <Box sx={{ flexGrow: 1, p: { xs: 3, md: 5 }, minWidth: 0, overflowX: "hidden" }}>
+        <Typography variant="h4" fontWeight="bold" sx={{ mb: 1, color: "#1e293b", display: "flex", alignItems: "center", gap: 2 }}>
           🏠 Dashboard Utama
         </Typography>
         <Typography variant="body1" sx={{ mb: 4, color: "#64748b" }}>

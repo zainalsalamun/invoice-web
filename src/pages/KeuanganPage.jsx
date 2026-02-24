@@ -87,7 +87,7 @@ const KeuanganPage = () => {
     return (
         <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f4f7fb" }}>
             <Sidebar active="/keuangan" />
-            <div style={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
+            <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", minWidth: 0, overflowX: "hidden" }}>
                 <Box
                     sx={{
                         p: 4,

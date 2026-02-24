@@ -34,7 +34,7 @@ const formatTanggal = (iso) => {
 const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
   const canDelete = userRole === "super_admin";
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
   const handleChangePage = (_, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (e) => {
@@ -159,7 +159,7 @@ const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
         onPageChange={handleChangePage}
         rowsPerPage={rowsPerPage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-        rowsPerPageOptions={[5, 10, 25]}
+        rowsPerPageOptions={[10, 25, 50]}
         labelRowsPerPage="Baris per halaman:"
       />
     </Paper>

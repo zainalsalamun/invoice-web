@@ -14,6 +14,7 @@ import InvoiceDetailPage from "./pages/InvoiceDetailPage";
 import InvoiceProofPage from "./pages/InvoiceProofPage";
 import KeuanganPage from "./pages/KeuanganPage";
 import ChatTrackingPage from "./pages/ChatTrackingPage";
+import InvoiceListPage from "./pages/InvoiceListPage";
 
 const App = () => {
   return (
@@ -25,6 +26,15 @@ const App = () => {
         element={
           <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "kasir", "teknisi"]}>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/invoices"
+        element={
+          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "kasir", "teknisi"]}>
+            <InvoiceListPage />
           </ProtectedRoute>
         }
       />
@@ -59,7 +69,7 @@ const App = () => {
       <Route
         path="/users"
         element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin"]}>
+          <ProtectedRoute allowedRoles={["super_admin"]}>
             <UserManagementPage />
           </ProtectedRoute>
         }

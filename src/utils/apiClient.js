@@ -1,12 +1,12 @@
 import axios from "axios";
-import { authService } from "../services/authService";
+// Hapus import authService karena menyebabkan circular dependency
+// import { authService } from "../services/authService";
 
 const isProd = process.env.NODE_ENV === "production";
 
 const apiClient = axios.create({
-  // Jika di Vercel (production), abaikan REACT_APP_API_URL dan paksa jadi "/api"
-  // Jika di lokal (laptop), hanya mengandalkan REACT_APP_API_URL di .env
-  baseURL: isProd ? "/api" : process.env.REACT_APP_API_URL,
+  // baseURL akan otomatis mengambil dari .env sesuai mode (dev/prod)
+  baseURL: process.env.REACT_APP_API_URL || "/api",
 });
 
 apiClient.interceptors.request.use(
@@ -23,12 +23,17 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
+    // Jangan redirect jika error terjadi di endpoint login atau register
+    const isAuthEndpoint = error.config?.url?.includes("/auth/login") || error.config?.url?.includes("/auth/register");
+
+    if ((error.response?.status === 401 || error.response?.status === 403) && !isAuthEndpoint) {
       console.warn("⚠️ Token invalid / expired, logout otomatis...");
-      authService.logout();
+
+      // Hapus token dan user secara manual untuk menghindari circular dependency
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
 
       localStorage.setItem("sessionExpired", "true");
-
       window.location.href = "/login";
     }
     return Promise.reject(error);

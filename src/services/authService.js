@@ -11,8 +11,9 @@ export const authService = {
       }
       return null;
     } catch (err) {
-      console.error("Login gagal:", err);
-      return null;
+      const errorMsg = err.response?.data?.message || err.message || "Terjadi kesalahan saat login";
+      console.error("Login gagal:", errorMsg, err);
+      return { success: false, message: errorMsg };
     }
   },
 

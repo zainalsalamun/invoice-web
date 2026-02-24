@@ -17,15 +17,24 @@ const fmtDate = (iso) => {
 
 // ─── Normalize data dari InvoiceViewer & DashboardPage ───
 const normalize = (data) => {
+  const rawItems = Array.isArray(data.items) ? data.items : [];
+
   const items =
-    Array.isArray(data.items) && data.items.length > 0
-      ? data.items
+    rawItems.length > 0
+      ? rawItems.map((it, idx) => ({
+        no: it.no || idx + 1,
+        keterangan: it.deskripsi || it.keterangan || "-",
+        harga: parseFloat(it.harga || 0),
+        qty: parseInt(it.qty || 1),
+        jumlah: parseFloat(it.jumlah || (it.harga * it.qty) || 0)
+      }))
       : [
         {
           no: 1,
           keterangan: data.layanan || "Layanan Internet",
           harga: parseFloat(data.hargaPaket || data.harga_paket || 0),
           qty: 1,
+          jumlah: parseFloat(data.hargaPaket || data.harga_paket || 0)
         },
       ];
 
@@ -46,6 +55,7 @@ const normalize = (data) => {
 
   let periodeLabel = data.periode || "-";
   if (periodeLabel && periodeLabel !== "-") {
+    // Handle both "2026-02" and "Februari 2026" formats
     const pd = new Date(
       periodeLabel.length <= 7 ? periodeLabel + "-01" : periodeLabel
     );

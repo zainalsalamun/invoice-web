@@ -9,6 +9,7 @@ const InvoicePreview = ({ data, onReset }) => {
 
   if (!data) return null;
 
+  const items = Array.isArray(data.items) ? data.items : [];
   const nomor = data.nomor_invoice || data.nomorInvoice;
   const nama = data.nama_pelanggan || data.namaPelanggan;
   const alamat = data.alamat;
@@ -22,20 +23,68 @@ const InvoicePreview = ({ data, onReset }) => {
   const tanggalInvoice = data.tanggal_invoice || data.tanggalInvoice;
 
   return (
-    <div className="invoice-preview">
-      <h2>Preview Invoice</h2>
+    <div className="invoice-preview" style={{ maxWidth: "800px", margin: "0 auto", padding: "20px", border: "1px solid #ddd", borderRadius: "8px", backgroundColor: "#fff" }}>
+      <h2 style={{ textAlign: "center", marginBottom: "20px" }}>Preview Invoice</h2>
 
-      <p><strong>Nomor Invoice:</strong> {nomor}</p>
-      <p><strong>Tanggal Invoice:</strong> {tanggalInvoice}</p>
-      <p><strong>Nama Pelanggan:</strong> {nama}</p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "20px" }}>
+        <div>
+          <p><strong>Nomor Invoice:</strong> {nomor}</p>
+          <p><strong>Tanggal Invoice:</strong> {tanggalInvoice}</p>
+          <p><strong>Periode:</strong> {periode}</p>
+        </div>
+        <div>
+          <p><strong>Nama Pelanggan:</strong> {nama}</p>
+          <p><strong>Status:</strong> <span style={{ color: status === "Lunas" ? "green" : "red", fontWeight: "bold" }}>{status}</span></p>
+          <p><strong>Jatuh Tempo:</strong> {jatuhTempo}</p>
+        </div>
+      </div>
+
       <p><strong>Alamat:</strong> {alamat}</p>
-      <p><strong>Layanan:</strong> {layanan}</p>
-      <p><strong>Harga Paket:</strong> Rp {harga?.toLocaleString()}</p>
-      <p><strong>PPN 11%:</strong> Rp {ppn?.toLocaleString()}</p>
-      <p><strong>Total:</strong> Rp {total?.toLocaleString()}</p>
-      <p><strong>Status:</strong> {status}</p>
-      <p><strong>Periode:</strong> {periode}</p>
-      <p><strong>Jatuh Tempo:</strong> {jatuhTempo}</p>
+
+      <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "20px", marginBottom: "20px" }}>
+        <thead>
+          <tr style={{ backgroundColor: "#f8f9fa", borderBottom: "2px solid #dee2e6" }}>
+            <th style={{ padding: "10px", textAlign: "left" }}>Deskripsi</th>
+            <th style={{ padding: "10px", textAlign: "right" }}>Harga</th>
+            <th style={{ padding: "10px", textAlign: "center" }}>Qty</th>
+            <th style={{ padding: "10px", textAlign: "right" }}>Jumlah</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.length > 0 ? (
+            items.map((it, idx) => (
+              <tr key={idx} style={{ borderBottom: "1px solid #dee2e6" }}>
+                <td style={{ padding: "10px" }}>{it.deskripsi || it.keterangan}</td>
+                <td style={{ padding: "10px", textAlign: "right" }}>Rp {parseFloat(it.harga).toLocaleString("id-ID")}</td>
+                <td style={{ padding: "10px", textAlign: "center" }}>{it.qty}</td>
+                <td style={{ padding: "10px", textAlign: "right" }}>Rp {parseFloat(it.jumlah).toLocaleString("id-ID")}</td>
+              </tr>
+            ))
+          ) : (
+            <tr style={{ borderBottom: "1px solid #dee2e6" }}>
+              <td style={{ padding: "10px" }}>{layanan || "Layanan Internet"}</td>
+              <td style={{ padding: "10px", textAlign: "right" }}>Rp {parseFloat(harga).toLocaleString("id-ID")}</td>
+              <td style={{ padding: "10px", textAlign: "center" }}>1</td>
+              <td style={{ padding: "10px", textAlign: "right" }}>Rp {parseFloat(harga).toLocaleString("id-ID")}</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+
+      <div style={{ marginLeft: "auto", width: "300px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
+          <span>Subtotal:</span>
+          <span>Rp {(total - ppn).toLocaleString("id-ID")}</span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
+          <span>PPN 11%:</span>
+          <span>Rp {ppn?.toLocaleString("id-ID")}</span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", borderTop: "2px solid #eee", paddingTop: "5px", fontWeight: "bold" }}>
+          <span>Total:</span>
+          <span>Rp {total?.toLocaleString("id-ID")}</span>
+        </div>
+      </div>
 
       <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginTop: "20px" }}>
         <button

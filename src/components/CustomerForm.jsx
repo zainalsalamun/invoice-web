@@ -31,16 +31,15 @@ const defaultForm = {
   nama: "",
   alamat: "",
   nomor_wa: "",
-  paket: "",
   kategori_pelanggan: "",
   tanggal_jatuh_tempo: "",
-  harga_langganan: "",
   metode_pembayaran_id: "",
   aktif: true,
   notes: "",
   status_pembayaran: "BELUM LUNAS",
   tagihan_periode_bulan: "",
-  bukti_transfer: null, // File object
+  bukti_transfer: null,
+  items: [{ deskripsi: "Paket Internet", harga: "", qty: 1, jumlah: 0 }],
 };
 
 const toInputDate = (iso) => {
@@ -58,11 +57,13 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         metode_pembayaran_id: initialData.metode_pembayaran_id ?? "",
         kategori_pelanggan: initialData.kategori_pelanggan ?? "",
         tanggal_jatuh_tempo: toInputDate(initialData.tanggal_jatuh_tempo),
-        harga_langganan: initialData.harga_langganan ?? "",
         notes: initialData.notes ?? "",
         status_pembayaran: initialData.status_pembayaran ?? "BELUM LUNAS",
         tagihan_periode_bulan: initialData.tagihan_periode_bulan ?? "",
-        bukti_transfer: null, // reset — file baru akan diisi ulang jika ada
+        bukti_transfer: null,
+        items: initialData.items && initialData.items.length > 0
+          ? initialData.items
+          : [{ deskripsi: initialData.paket || "Paket Internet", harga: initialData.harga_langganan || "", qty: 1, jumlah: initialData.harga_langganan || 0 }],
       }
       : defaultForm
   );
@@ -101,6 +102,35 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleItemChange = (index, field, value) => {
+    const newItems = [...form.items];
+    newItems[index][field] = value;
+
+    if (field === "harga" || field === "qty") {
+      const harga = parseFloat(newItems[index].harga) || 0;
+      const qty = parseInt(newItems[index].qty) || 0;
+      newItems[index].jumlah = harga * qty;
+    }
+
+    setForm((prev) => ({ ...prev, items: newItems }));
+  };
+
+  const addItem = () => {
+    setForm((prev) => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        { deskripsi: "", harga: "", qty: 1, jumlah: 0 },
+      ],
+    }));
+  };
+
+  const removeItem = (index) => {
+    if (form.items.length === 1) return;
+    const newItems = form.items.filter((_, i) => i !== index);
+    setForm((prev) => ({ ...prev, items: newItems }));
+  };
+
   const handleSwitch = (e) => {
     setForm((prev) => ({ ...prev, aktif: e.target.checked }));
   };
@@ -120,7 +150,14 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(form);
+    // Maintain single fields for backward compatibility (using first item)
+    const firstItem = form.items[0] || {};
+    const updatedForm = {
+      ...form,
+      paket: firstItem.deskripsi || "",
+      harga_langganan: firstItem.harga || 0
+    };
+    onSubmit(updatedForm);
   };
 
   // Simpan metode pembayaran baru langsung dari form
@@ -268,36 +305,74 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
 
       <Divider sx={{ mb: 2 }} />
 
-      {/* ─── Paket & Tagihan ─── */}
+      {/* ─── Paket & Tagihan (Items) ─── */}
       <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5, fontWeight: 600 }}>
         Paket & Tagihan
       </Typography>
+
+      {form.items.map((item, index) => (
+        <Grid container spacing={2} key={index} sx={{ mb: 2, alignItems: "center" }}>
+          <Grid item xs={12} sm={5}>
+            <TextField
+              label="Deskripsi Paket"
+              value={item.deskripsi}
+              onChange={(e) => handleItemChange(index, "deskripsi", e.target.value)}
+              fullWidth
+              size="small"
+              placeholder="cth: Paket 20 Mbps"
+            />
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              label="Harga (Rp)"
+              type="number"
+              value={item.harga}
+              onChange={(e) => handleItemChange(index, "harga", e.target.value)}
+              fullWidth
+              size="small"
+              inputProps={{ min: 0 }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={2}>
+            <TextField
+              label="Qty"
+              type="number"
+              value={item.qty}
+              onChange={(e) => handleItemChange(index, "qty", e.target.value)}
+              fullWidth
+              size="small"
+              inputProps={{ min: 1 }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={2} sx={{ display: "flex", gap: 1 }}>
+            <Typography variant="body2" sx={{ alignSelf: "center", minWidth: 80, fontWeight: "bold" }}>
+              Rp {(parseFloat(item.jumlah) || 0).toLocaleString()}
+            </Typography>
+            <IconButton color="error" onClick={() => removeItem(index)} disabled={form.items.length === 1}>
+              <Close />
+            </IconButton>
+          </Grid>
+        </Grid>
+      ))}
+
+      <Button
+        variant="outlined"
+        size="small"
+        startIcon={<AddIcon />}
+        onClick={addItem}
+        sx={{ mb: 3, textTransform: "none" }}
+      >
+        Tambah Baris Layanan
+      </Button>
+
+      {/* Total Section */}
+      <Box sx={{ mb: 3, p: 2, bgcolor: "#f9f9f9", borderRadius: 2, textAlign: "right" }}>
+        <Typography variant="subtitle1" fontWeight="bold">
+          Total Tagihan: Rp {form.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0).toLocaleString()}
+        </Typography>
+      </Box>
+
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Paket Internet"
-            name="paket"
-            value={form.paket}
-            onChange={handleChange}
-            fullWidth
-            size="small"
-            placeholder="cth: Paket 20 Mbps"
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Harga Langganan (Rp)"
-            name="harga_langganan"
-            value={form.harga_langganan}
-            onChange={handleChange}
-            fullWidth
-            size="small"
-            type="number"
-            inputProps={{ min: 0 }}
-          />
-        </Grid>
-
         {/* Metode Pembayaran */}
         <Grid item xs={12} sm={7}>
           <FormControl fullWidth size="small">
@@ -320,7 +395,6 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
               ))}
             </Select>
           </FormControl>
-          {/* Link tambah metode baru */}
           <Typography
             variant="caption"
             color="primary"

@@ -80,5 +80,9 @@ function buildFormData(data) {
     fd.append("bukti_transfer", data.bukti_transfer);
   }
 
+  if (data.items && Array.isArray(data.items)) {
+    fd.append("items", JSON.stringify(data.items));
+  }
+
   return fd;
 }

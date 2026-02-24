@@ -13,6 +13,7 @@ import {
   Box,
   Paper,
   Typography,
+  Grid,
 } from "@mui/material";
 import AlertDialog from "./AlertDialog";
 import { invoiceService } from "../services/invoiceService";
@@ -23,9 +24,8 @@ const InvoiceForm = ({ onPreview }) => {
     customerId: "",
     namaPelanggan: "",
     alamat: "",
-    layanan: "",
-    hargaPaket: "",
-    periode: "",
+    items: [{ deskripsi: "Paket Internet", harga: "", qty: 1, jumlah: 0 }],
+    periode: dayjs().format("YYYY-MM"),
     tanggalJatuhTempo: dayjs().add(7, "day").format("YYYY-MM-DD"),
     statusPembayaran: "Belum Lunas",
   });
@@ -48,7 +48,6 @@ const InvoiceForm = ({ onPreview }) => {
 
   const refs = {
     namaPelanggan: useRef(null),
-    hargaPaket: useRef(null),
   };
 
   useEffect(() => {
@@ -68,8 +67,21 @@ const InvoiceForm = ({ onPreview }) => {
         customerId: selected.id,
         namaPelanggan: selected.nama,
         alamat: selected.alamat,
-        layanan: selected.paket,
-        hargaPaket: selected.harga_paket || "",
+        items: selected.items && selected.items.length > 0
+          ? selected.items.map(it => ({
+            deskripsi: it.deskripsi,
+            harga: it.harga,
+            qty: it.qty || 1,
+            jumlah: it.jumlah || (it.harga * (it.qty || 1))
+          }))
+          : [
+            {
+              deskripsi: selected.paket || "Paket Internet",
+              harga: selected.harga_paket || "",
+              qty: 1,
+              jumlah: selected.harga_paket || 0,
+            },
+          ],
       }));
     } else {
       setFormData((prev) => ({
@@ -77,8 +89,7 @@ const InvoiceForm = ({ onPreview }) => {
         customerId: "",
         namaPelanggan: "",
         alamat: "",
-        layanan: "",
-        hargaPaket: "",
+        items: [{ deskripsi: "Paket Internet", harga: "", qty: 1, jumlah: 0 }],
       }));
     }
   };
@@ -87,6 +98,35 @@ const InvoiceForm = ({ onPreview }) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrorFields((prev) => prev.filter((f) => f !== name));
+  };
+
+  const handleItemChange = (index, field, value) => {
+    const newItems = [...formData.items];
+    newItems[index][field] = value;
+
+    if (field === "harga" || field === "qty") {
+      const harga = parseFloat(newItems[index].harga) || 0;
+      const qty = parseInt(newItems[index].qty) || 0;
+      newItems[index].jumlah = harga * qty;
+    }
+
+    setFormData((prev) => ({ ...prev, items: newItems }));
+  };
+
+  const addItem = () => {
+    setFormData((prev) => ({
+      ...prev,
+      items: [
+        ...prev.items,
+        { deskripsi: "", harga: "", qty: 1, jumlah: 0 },
+      ],
+    }));
+  };
+
+  const removeItem = (index) => {
+    if (formData.items.length === 1) return;
+    const newItems = formData.items.filter((_, i) => i !== index);
+    setFormData((prev) => ({ ...prev, items: newItems }));
   };
 
   const handleFileChange = (e) => {
@@ -100,7 +140,7 @@ const InvoiceForm = ({ onPreview }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const required = ["namaPelanggan", "hargaPaket"];
+    const required = ["namaPelanggan"];
     const empty = required.filter((f) => !formData[f]);
 
     if (empty.length > 0) {
@@ -111,16 +151,17 @@ const InvoiceForm = ({ onPreview }) => {
       return;
     }
 
-    const harga = parseFloat(formData.hargaPaket);
-    const ppn = Math.round(harga * 0.11);
-    const total = harga + ppn;
+    // Hitung total dari semua items
+    const subtotal = formData.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0);
+    const ppn = Math.round(subtotal * 0.11);
+    const total = subtotal + ppn;
 
     const payload = {
       customer_id: formData.customerId || null,
       nama_pelanggan: formData.namaPelanggan,
       alamat: formData.alamat,
-      layanan: formData.layanan,
-      harga_paket: harga,
+      layanan: formData.items[0]?.deskripsi || "",
+      harga_paket: subtotal,
       ppn,
       total,
       periode: formData.periode
@@ -129,6 +170,12 @@ const InvoiceForm = ({ onPreview }) => {
       status_pembayaran: formData.statusPembayaran,
       tanggal_invoice: dayjs().format("YYYY-MM-DD"),
       tanggal_jatuh_tempo: formData.tanggalJatuhTempo,
+      items: formData.items.map(it => ({
+        deskripsi: it.deskripsi,
+        harga: parseFloat(it.harga) || 0,
+        qty: parseInt(it.qty) || 1,
+        jumlah: parseFloat(it.jumlah) || 0
+      })),
     };
 
     setLoading(true);
@@ -136,11 +183,9 @@ const InvoiceForm = ({ onPreview }) => {
       const result = await invoiceService.create(payload);
 
       if (result?.success && result.data) {
-        // 🔹 Kalau status = Lunas dan ada bukti, upload file
         if (formData.statusPembayaran === "Lunas" && buktiFile) {
           await invoiceService.uploadProof(result.data.id, buktiFile);
         }
-
         onPreview(result.data);
       } else {
         alert("Gagal menyimpan invoice ke server");
@@ -167,8 +212,14 @@ const InvoiceForm = ({ onPreview }) => {
         customerId: result.id,
         namaPelanggan: result.nama,
         alamat: result.alamat,
-        layanan: result.paket,
-        hargaPaket: result.harga_paket,
+        items: [
+          {
+            deskripsi: result.paket || "Paket Internet",
+            harga: result.harga_paket,
+            qty: 1,
+            jumlah: result.harga_paket,
+          },
+        ],
       }));
       setShowNewCustomerModal(false);
       setNewCustomer({ nama: "", alamat: "", paket: "", harga_paket: "" });
@@ -177,14 +228,14 @@ const InvoiceForm = ({ onPreview }) => {
 
   return (
     <>
-      <Box sx={{ display: "flex", justifyContent: "flex-start", p: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-start", p: 4, width: "100%" }}>
         <Paper
           elevation={3}
           sx={{
             borderRadius: 3,
             p: 4,
             width: "100%",
-            maxWidth: 600,
+            maxWidth: 800,
             backgroundColor: "#fff",
             boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
           }}
@@ -251,29 +302,88 @@ const InvoiceForm = ({ onPreview }) => {
               fullWidth
               value={formData.alamat}
               onChange={handleChange}
-              sx={{ mb: 2 }}
+              sx={{ mb: 4 }}
             />
 
-            <TextField
-              label="Layanan Internet"
-              name="layanan"
-              fullWidth
-              value={formData.layanan}
-              onChange={handleChange}
-              sx={{ mb: 2 }}
-            />
+            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: "bold", borderBottom: "2px solid #eee", pb: 1 }}>
+              📦 Paket & Tagihan (Items)
+            </Typography>
 
-            <TextField
-              label="Harga Paket (Rp)"
-              type="number"
-              name="hargaPaket"
-              fullWidth
-              inputRef={refs.hargaPaket}
-              value={formData.hargaPaket}
-              onChange={handleChange}
-              error={errorFields.includes("hargaPaket")}
-              sx={{ mb: 2 }}
-            />
+            {formData.items.map((item, index) => (
+              <Box key={index} sx={{ mb: 3, p: 2, border: "1px solid #e0e0e0", borderRadius: 2, bgcolor: "#fafafa" }}>
+                <Grid container spacing={2} alignItems="center">
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Deskripsi Layanan"
+                      size="small"
+                      fullWidth
+                      value={item.deskripsi}
+                      onChange={(e) => handleItemChange(index, "deskripsi", e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={3}>
+                    <TextField
+                      label="Harga (Rp)"
+                      type="number"
+                      size="small"
+                      fullWidth
+                      value={item.harga}
+                      onChange={(e) => handleItemChange(index, "harga", e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={2}>
+                    <TextField
+                      label="Qty"
+                      type="number"
+                      size="small"
+                      fullWidth
+                      value={item.qty}
+                      onChange={(e) => handleItemChange(index, "qty", e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={1} sx={{ textAlign: "center" }}>
+                    <Button
+                      color="error"
+                      onClick={() => removeItem(index)}
+                      sx={{ minWidth: "auto", p: 1 }}
+                      disabled={formData.items.length === 1}
+                    >
+                      🗑️
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Box>
+            ))}
+
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={addItem}
+              sx={{ mb: 4, textTransform: "none" }}
+            >
+              ➕ Tambah Baris Layanan
+            </Button>
+
+            <Box sx={{ mb: 4, p: 2, bgcolor: "#f1f5f9", borderRadius: 2 }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                <Typography variant="body2">Subtotal:</Typography>
+                <Typography variant="body2" fontWeight="bold">
+                  Rp {formData.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0).toLocaleString("id-ID")}
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                <Typography variant="body2">PPN (11%):</Typography>
+                <Typography variant="body2" fontWeight="bold">
+                  Rp {Math.round(formData.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0) * 0.11).toLocaleString("id-ID")}
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1, pt: 1, borderTop: "1px solid #cbd5e1" }}>
+                <Typography variant="subtitle1" fontWeight="bold">Total Tagihan:</Typography>
+                <Typography variant="subtitle1" fontWeight="bold" color="primary">
+                  Rp {Math.round(formData.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0) * 1.11).toLocaleString("id-ID")}
+                </Typography>
+              </Box>
+            </Box>
 
             <TextField
               label="Periode Tagihan"
@@ -310,7 +420,6 @@ const InvoiceForm = ({ onPreview }) => {
               <MenuItem value="Lunas">Lunas</MenuItem>
             </TextField>
 
-            {/* ✅ Hanya tampil kalau status = Lunas */}
             {formData.statusPembayaran === "Lunas" && (
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body2" sx={{ mb: 1 }}>
@@ -357,7 +466,6 @@ const InvoiceForm = ({ onPreview }) => {
         </Paper>
       </Box>
 
-      {/* Modal tambah pelanggan */}
       <Dialog
         open={showNewCustomerModal}
         onClose={() => setShowNewCustomerModal(false)}
@@ -415,7 +523,7 @@ const InvoiceForm = ({ onPreview }) => {
 
       <AlertDialog
         isOpen={showAlert}
-        message="Nama pelanggan dan harga wajib diisi!"
+        message="Nama pelanggan dan item wajib diisi!"
         onClose={() => setShowAlert(false)}
       />
     </>

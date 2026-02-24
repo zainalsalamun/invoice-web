@@ -16,7 +16,7 @@ import { FaWhatsapp } from "react-icons/fa";
 
 const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp }) => {
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const handleChangePage = (_, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (e) => {
@@ -107,22 +107,22 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp }) => {
 
                     {/*Kirim WA */}
                     <Button
-                    size="small"
-                    variant="contained"
-                    sx={{
-                      backgroundColor: "#25D366",
-                      color: "white",
-                      "&:hover": { backgroundColor: "#1EBE57" },
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      px: 2,
-                    }}
-                    onClick={() => onSendWhatsApp(row)}
-                   >
-                    <FaWhatsapp size={18} />
-                    Kirim WA
-                  </Button>
+                      size="small"
+                      variant="contained"
+                      sx={{
+                        backgroundColor: "#25D366",
+                        color: "white",
+                        "&:hover": { backgroundColor: "#1EBE57" },
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        px: 2,
+                      }}
+                      onClick={() => onSendWhatsApp(row)}
+                    >
+                      <FaWhatsapp size={18} />
+                      Kirim WA
+                    </Button>
                   </Stack>
                 </TableCell>
               </TableRow>
@@ -146,7 +146,7 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp }) => {
         onPageChange={handleChangePage}
         rowsPerPage={rowsPerPage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-        rowsPerPageOptions={[5, 10, 25]}
+        rowsPerPageOptions={[10, 25, 50]}
         labelRowsPerPage="Baris per halaman:"
       />
     </Paper>

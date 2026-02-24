@@ -140,7 +140,7 @@
 
 // export default Sidebar;
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Dashboard,
@@ -151,13 +151,19 @@ import {
   CreditCard,
   AccountBalanceWallet,
   Chat,
+  ExpandMore,
+  ExpandLess,
 } from "@mui/icons-material";
+import { Collapse } from "@mui/material";
 import { authService } from "../services/authService";
 
 const Sidebar = ({ active }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = authService.getCurrentUser();
+  const [openInvoices, setOpenInvoices] = useState(
+    location.pathname.startsWith("/invoices") || (active && active.startsWith("/invoices"))
+  );
 
   const isActive = (path) =>
     location.pathname === path || (active && active === path);
@@ -181,7 +187,15 @@ const Sidebar = ({ active }) => {
   const menuByRole = {
     super_admin: [
       { label: "Dashboard", icon: <Dashboard />, path: "/" },
-      { label: "Invoices", icon: <ReceiptLong />, path: "/invoices/new" },
+      {
+        label: "Invoices",
+        icon: <ReceiptLong />,
+        path: "/invoices", // Parent path
+        children: [
+          { label: "Daftar Invoice", path: "/invoices" },
+          { label: "Buat Invoice", path: "/invoices/new" },
+        ],
+      },
       { label: "Customers", icon: <Group />, path: "/customers" },
       { label: "Metode Pembayaran", icon: <CreditCard />, path: "/metode-pembayaran" },
       { label: "Keuangan", icon: <AccountBalanceWallet />, path: "/keuangan" },
@@ -191,17 +205,32 @@ const Sidebar = ({ active }) => {
     ],
     admin: [
       { label: "Dashboard", icon: <Dashboard />, path: "/" },
-      { label: "Invoices", icon: <ReceiptLong />, path: "/invoices/new" },
+      {
+        label: "Invoices",
+        icon: <ReceiptLong />,
+        path: "/invoices",
+        children: [
+          { label: "Daftar Invoice", path: "/invoices" },
+          { label: "Buat Invoice", path: "/invoices/new" },
+        ],
+      },
       { label: "Customers", icon: <Group />, path: "/customers" },
       { label: "Metode Pembayaran", icon: <CreditCard />, path: "/metode-pembayaran" },
       { label: "Keuangan", icon: <AccountBalanceWallet />, path: "/keuangan" },
       { label: "Chat Tracking", icon: <Chat />, path: "/chat-tracking" },
-      { label: "Users", icon: <People />, path: "/users" },
       { label: "Settings", icon: <Settings />, path: "/settings" },
     ],
     admin_junior: [
       { label: "Dashboard", icon: <Dashboard />, path: "/" },
-      { label: "Invoices", icon: <ReceiptLong />, path: "/invoices/new" },
+      {
+        label: "Invoices",
+        icon: <ReceiptLong />,
+        path: "/invoices",
+        children: [
+          { label: "Daftar Invoice", path: "/invoices" },
+          { label: "Buat Invoice", path: "/invoices/new" },
+        ],
+      },
       { label: "Customers", icon: <Group />, path: "/customers" },
       { label: "Metode Pembayaran", icon: <CreditCard />, path: "/metode-pembayaran" },
       { label: "Keuangan", icon: <AccountBalanceWallet />, path: "/keuangan" },
@@ -209,7 +238,15 @@ const Sidebar = ({ active }) => {
     ],
     kasir: [
       { label: "Dashboard", icon: <Dashboard />, path: "/" },
-      { label: "Invoices", icon: <ReceiptLong />, path: "/invoices/new" },
+      {
+        label: "Invoices",
+        icon: <ReceiptLong />,
+        path: "/invoices",
+        children: [
+          { label: "Daftar Invoice", path: "/invoices" },
+          { label: "Buat Invoice", path: "/invoices/new" },
+        ],
+      },
       { label: "Keuangan", icon: <AccountBalanceWallet />, path: "/keuangan" },
       { label: "Settings", icon: <Settings />, path: "/settings" },
     ],
@@ -292,39 +329,79 @@ const Sidebar = ({ active }) => {
       </div>
 
       <div style={{ flexGrow: 1, width: "100%" }}>
-        {menu.map((item, i) => (
-          <div
-            key={i}
-            onClick={() => navigate(item.path)}
-            style={{
-              width: "100%",
-              padding: "12px 28px",
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              backgroundColor: isActive(item.path)
-                ? "rgba(255, 255, 255, 0.25)"
-                : "transparent",
-              cursor: "pointer",
-              transition: "0.3s",
-              color: isActive(item.path)
-                ? "#fff"
-                : "rgba(255,255,255,0.85)",
-            }}
-            onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor =
-              "rgba(255,255,255,0.15)")
-            }
-            onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = isActive(item.path)
-              ? "rgba(255, 255, 255, 0.25)"
-              : "transparent")
-            }
-          >
-            {item.icon}
-            <span style={{ fontWeight: 500 }}>{item.label}</span>
-          </div>
-        ))}
+        {menu.map((item, i) => {
+          const hasChildren = item.children && item.children.length > 0;
+          const isParentActive = hasChildren && (location.pathname.startsWith(item.path) || (active && active.startsWith(item.path)));
+
+          return (
+            <div key={i}>
+              <div
+                onClick={() => {
+                  if (hasChildren) {
+                    setOpenInvoices(!openInvoices);
+                  } else {
+                    navigate(item.path);
+                  }
+                }}
+                style={{
+                  width: "100%",
+                  padding: "12px 28px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  backgroundColor: !hasChildren && isActive(item.path)
+                    ? "rgba(255, 255, 255, 0.25)"
+                    : "transparent",
+                  cursor: "pointer",
+                  transition: "0.3s",
+                  color: (!hasChildren && isActive(item.path)) || (hasChildren && isParentActive)
+                    ? "#fff"
+                    : "rgba(255,255,255,0.85)",
+                  boxSizing: "border-box"
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)")
+                }
+                onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = !hasChildren && isActive(item.path)
+                  ? "rgba(255, 255, 255, 0.25)"
+                  : "transparent")
+                }
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  {item.icon}
+                  <span style={{ fontWeight: 500 }}>{item.label}</span>
+                </div>
+                {hasChildren && (openInvoices ? <ExpandLess size={18} /> : <ExpandMore size={18} />)}
+              </div>
+
+              {hasChildren && (
+                <Collapse in={openInvoices} timeout="auto" unmountOnExit>
+                  <div style={{ backgroundColor: "rgba(0,0,0,0.1)", paddingBottom: 8 }}>
+                    {item.children.map((child, ci) => (
+                      <div
+                        key={ci}
+                        onClick={() => navigate(child.path)}
+                        style={{
+                          padding: "10px 28px 10px 64px",
+                          cursor: "pointer",
+                          fontSize: 14,
+                          color: isActive(child.path) ? "#fff" : "rgba(255,255,255,0.7)",
+                          backgroundColor: isActive(child.path) ? "rgba(255,255,255,0.1)" : "transparent",
+                          transition: "0.2s"
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = "#fff"}
+                        onMouseLeave={(e) => e.currentTarget.style.color = isActive(child.path) ? "#fff" : "rgba(255,255,255,0.7)"}
+                      >
+                        {child.label}
+                      </div>
+                    ))}
+                  </div>
+                </Collapse>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,385 +1,222 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
-  TextField,
-  MenuItem,
-  Button,
+  Grid,
   Card,
   CardContent,
   Typography,
-  Grid,
-  Snackbar,
-  Alert,
-  Slide,
-  Skeleton,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Paper,
+  CircularProgress,
+  Divider,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import InvoiceTable from "../components/InvoiceTable";
 import { invoiceService } from "../services/invoiceService";
-import { generatePDF } from "../utils/pdfGenerator";
-import { sendWhatsApp } from "../utils/sendWhatsApp";
-import WhatsAppDialog from "../components/WhatsAppDialog";
+import { chatTrackingService } from "../services/chatTrackingService";
 import { authService } from "../services/authService";
+import {
+  Assignment,
+  CheckCircle,
+  Pending,
+  Receipt,
+  Payment,
+  ErrorOutline,
+} from "@mui/icons-material";
 
 const DashboardPage = () => {
-  const navigate = useNavigate();
   const user = authService.getCurrentUser();
-  const currentMonth = new Date().toISOString().slice(0, 7);
-
-  const [filters, setFilters] = useState({
-    month: currentMonth,
-    status: "",
-    search: "",
-  });
-
   const [invoices, setInvoices] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isFirstLoad, setIsFirstLoad] = useState(true); 
-  const [animateKey, setAnimateKey] = useState(0);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "info",
-  });
-
-  const [openWaDialog, setOpenWaDialog] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState(null);
-
-  // 🔹 Ambil data invoice dari server
-  const fetchInvoices = async () => {
-    setLoading(true);
-    try {
-      const data = await invoiceService.getAll();
-
-      const mapped = data.map((item) => ({
-        id: item.id,
-        nomorInvoice: item.nomor_invoice,
-        namaPelanggan: item.nama_pelanggan,
-        alamat: item.alamat,
-        layanan: item.layanan,
-        hargaPaket: item.harga_paket,
-        ppn: item.ppn,
-        total: item.total,
-        periode: item.periode,
-        statusPembayaran: item.status_pembayaran,
-        tanggalInvoice: item.tanggal_invoice,
-        tanggalJatuhTempo: item.tanggal_jatuh_tempo,
-        buktiTransfer: item.bukti_transfer,
-      }));
-
-      setInvoices(mapped);
-    } catch (err) {
-      console.error("Gagal ambil data invoice:", err);
-      setSnackbar({
-        open: true,
-        message: "Gagal memuat data dari server.",
-        severity: "error",
-      });
-    } finally {
-      setLoading(false);
-      setIsFirstLoad(false); 
-    }
-  };
 
   useEffect(() => {
-    fetchInvoices();
+    fetchData();
   }, []);
 
-  useEffect(() => {
-    if (isFirstLoad) return; 
-
-    const timeout = setTimeout(() => {
-      setAnimateKey((prev) => prev + 1);
-    }, 250);
-
-    return () => clearTimeout(timeout);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters]);
-
-  const convertMonth = (value) => {
-    if (!value) return "";
-    const date = new Date(value);
-    return date.toLocaleString("id-ID", { month: "long", year: "numeric" });
-  };
-
-
-  const getYearMonth = (dateStr) => {
-    if (!dateStr) return "";
-    const d = new Date(dateStr);
-    if (Number.isNaN(d.getTime())) return "";
-    return d.toISOString().slice(0, 7);
-  };
-
-  const filtered = invoices.filter((i) => {
-    const byMonth = filters.month
-      ? getYearMonth(i.tanggalInvoice) === filters.month
-      : true;
-  
-    const byStatus = filters.status
-      ? i.statusPembayaran?.toLowerCase() === filters.status.toLowerCase()
-      : true;
-  
-    const bySearch = filters.search
-      ? i.namaPelanggan?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        i.nomorInvoice?.toLowerCase().includes(filters.search.toLowerCase())
-      : true;
-  
-    return byMonth && byStatus && bySearch;
-  });
-  
-  
-
-
-
-  const handleReset = () => {
-    setFilters({
-      month: currentMonth,
-      status: "",
-      search: "",
-    });
-    setSnackbar({
-      open: true,
-      message: `Filter direset ke ${convertMonth(currentMonth)}`,
-      severity: "success",
-    });
-  };
-
-  const handleCloseSnackbar = () =>
-    setSnackbar((prev) => ({ ...prev, open: false }));
-
-  const summary = useMemo(() => {
-    const totalInvoice = filtered.length;
-    const totalLunas = filtered.filter(
-      (i) => i.statusPembayaran === "Lunas"
-    ).length;
-    const totalBelum = filtered.filter(
-      (i) => i.statusPembayaran === "Belum Lunas"
-    ).length;
-    const totalNominal = filtered.reduce((sum, i) => sum + (i.total || 0), 0);
-    return { totalInvoice, totalLunas, totalBelum, totalNominal };
-  }, [filtered]);
-
-  const handleView = (invoice) => {
-    navigate(`/invoices/${invoice.id}.pdf`, { state: { data: invoice } });
-  };
-
-  const handlePrint = (invoice) => {
-    generatePDF(invoice);
-  };
-
-  const handleSendWhatsApp = (invoice) => {
-    setSelectedInvoice(invoice);
-    setOpenWaDialog(true);
-  };
-
-  const handleSend = (phone) => {
-    if (selectedInvoice) sendWhatsApp(selectedInvoice, phone);
-  };
-
-  const handleUploadProof = async (invoiceId, file) => {
-    if (!file) return;
-
-    const res = await invoiceService.uploadProof(invoiceId, file);
-    if (res?.success) {
-      setSnackbar({
-        open: true,
-        message: "Bukti pembayaran berhasil diupload!",
-        severity: "success",
-      });
-      fetchInvoices();
-    } else {
-      setSnackbar({
-        open: true,
-        message: "Gagal upload bukti pembayaran.",
-        severity: "error",
-      });
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [invData, taskData] = await Promise.all([
+        invoiceService.getAll(),
+        chatTrackingService.getAll(),
+      ]);
+      setInvoices(invData || []);
+      setTasks(taskData || []);
+    } catch (err) {
+      console.error("Gagal ambil data dashboard:", err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const invoiceStats = useMemo(() => {
+    const total = invoices.length;
+    const lunas = invoices.filter((i) => i.status_pembayaran === "Lunas").length;
+    const belum = invoices.filter((i) => i.status_pembayaran === "Belum Lunas").length;
+    const totalRp = invoices.reduce((sum, i) => sum + (i.total || 0), 0);
+    return { total, lunas, belum, totalRp };
+  }, [invoices]);
+
+  const taskStats = useMemo(() => {
+    const total = tasks.length;
+    const selesai = tasks.filter((t) => t.progress === "Sudah Selesai").length;
+    const proses = tasks.filter((t) => t.progress === "Sedang Diproses").length;
+    const belum = tasks.filter((t) => t.progress === "Belum Selesai").length;
+    return { total, selesai, proses, belum };
+  }, [tasks]);
+
+  const formatRupiah = (angka) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(angka || 0);
   };
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      <Sidebar active="dashboard" />
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f1f5f9" }}>
+      <Sidebar active="/" />
 
       <Box sx={{ flexGrow: 1, p: 4 }}>
-        {/* Header */}
-        <header
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 20,
-            flexWrap: "wrap",
-            gap: 16,
-          }}
-        >
-          <h2 style={{ margin: 0 }}>📊 Daftar Invoice Pelanggan</h2>
+        <Typography variant="h4" fontWeight="bold" sx={{ mb: 1, color: "#1e293b" }}>
+          🏠 Dashboard Utama
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 4, color: "#64748b" }}>
+          Selamat datang kembali, <b>{user?.username}</b>. Berikut ringkasan aktivitas sistem hari ini.
+        </Typography>
 
-          <Box
-            sx={{
-              display: "flex",
-              gap: 2,
-              alignItems: "center",
-              flexWrap: "wrap",
-              justifyContent: "flex-end",
-            }}
-          >
-            <TextField
-              label="Periode"
-              size="small"
-              type="month"
-              InputLabelProps={{ shrink: true }}
-              value={filters.month}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, month: e.target.value }))
-              }
-              sx={{ minWidth: 150 }}
-            />
-
-            <TextField
-              select
-              label="Status"
-              size="small"
-              value={filters.status}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, status: e.target.value }))
-              }
-              sx={{ width: 150 }}
-            >
-              <MenuItem value="">Semua</MenuItem>
-              <MenuItem value="Lunas">Lunas</MenuItem>
-              <MenuItem value="Belum Lunas">Belum Lunas</MenuItem>
-            </TextField>
-
-            <TextField
-              label="Cari pelanggan / invoice"
-              size="small"
-              value={filters.search}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, search: e.target.value }))
-              }
-              sx={{ minWidth: 220 }}
-            />
-
-            <Button
-              variant="outlined"
-              color="secondary"
-              size="small"
-              onClick={handleReset}
-              sx={{
-                fontWeight: "bold",
-                "&:hover": { backgroundColor: "#f8e1ff" },
-              }}
-            >
-              RESET
-            </Button>
-          </Box>
-        </header>
-
-        {/* Summary cards */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          {[
-            {
-              title: "Total Invoice",
-              value: summary.totalInvoice,
-              color: "#007bff",
-              textColor: "white",
-            },
-            {
-              title: "Lunas",
-              value: summary.totalLunas,
-              color: "#28a745",
-              textColor: "white",
-            },
-            {
-              title: "Belum Lunas",
-              value: summary.totalBelum,
-              color: "#ffc107",
-              textColor: "#333",
-            },
-            {
-              title: "Total Tagihan",
-              value: `Rp ${summary.totalNominal.toLocaleString("id-ID")}`,
-              color: "#6f42c1",
-              textColor: "white",
-            },
-          ].map((card, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card
-                sx={{
-                  bgcolor: card.color,
-                  color: card.textColor,
-                  transition: "all 0.3s ease",
-                  "&:hover": {
-                    transform: "scale(1.05)",
-                    boxShadow: "0 6px 16px rgba(0,0,0,0.2)",
-                  },
-                }}
-              >
-                <CardContent>
-                  <Typography variant="h6">{card.title}</Typography>
-                  <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-                    {card.value}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* Table */}
-        {loading && isFirstLoad ? (
-          <Box sx={{ p: 2 }}>
-            {[1, 2, 3].map((i) => (
-              <Skeleton
-                key={i}
-                variant="rectangular"
-                height={60}
-                sx={{ borderRadius: 2, mb: 1.5 }}
-                animation="wave"
-              />
-            ))}
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
+            <CircularProgress />
           </Box>
         ) : (
-          <Slide key={animateKey} direction="up" in mountOnEnter unmountOnExit>
-            <div>
-              <InvoiceTable
-                data={filtered}
-                onView={handleView}
-                onPrint={handlePrint}
-                onSendWhatsApp={handleSendWhatsApp}
-                onUploadProof={handleUploadProof}
-                userRole={user?.role}
-              />
-            </div>
-          </Slide>
+          <>
+            {/* --- SECTION 1: TASK TRACKING --- */}
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              📋 Ringkasan Tugas (Chat Tracking)
+            </Typography>
+            <Grid container spacing={3} sx={{ mb: 5 }}>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="Total Tugas" value={taskStats.total} icon={<Assignment />} color="#3b82f6" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="Sudah Selesai" value={taskStats.selesai} icon={<CheckCircle />} color="#22c55e" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="Sedang Diproses" value={taskStats.proses} icon={<Pending />} color="#f59e0b" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="Belum Selesai" value={taskStats.belum} icon={<ErrorOutline />} color="#ef4444" />
+              </Grid>
+            </Grid>
+
+            {/* --- SECTION 2: INVOICE SUMMARY --- */}
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              🧾 Ringkasan Invoice & Keuangan
+            </Typography>
+            <Grid container spacing={3} sx={{ mb: 5 }}>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="Total Invoice" value={invoiceStats.total} icon={<Receipt />} color="#6366f1" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="Invoice Lunas" value={invoiceStats.lunas} icon={<Payment />} color="#10b981" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="Belum Bayar" value={invoiceStats.belum} icon={<ErrorOutline />} color="#f43f5e" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <StatCard title="Total Tagihan" value={formatRupiah(invoiceStats.totalRp)} icon={<Assignment />} color="#8b5cf6" />
+              </Grid>
+            </Grid>
+
+            {/* --- SECTION 3: RECENT ACTIVITIES --- */}
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Paper sx={{ p: 3, borderRadius: 3, boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}>
+                  <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                    🕒 Tugas Terbaru
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Tanggal</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>PIC</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Deskripsi</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Progress</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {tasks.slice(0, 5).map((task) => (
+                        <TableRow key={task.id} hover>
+                          <TableCell>{new Date(task.tanggal).toLocaleDateString('id-ID')}</TableCell>
+                          <TableCell fontWeight="bold">{task.nama_pic}</TableCell>
+                          <TableCell sx={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {task.deskripsi}
+                          </TableCell>
+                          <TableCell>
+                            <span style={{
+                              padding: "4px 8px",
+                              borderRadius: 6,
+                              fontSize: "0.75rem",
+                              fontWeight: "bold",
+                              backgroundColor: task.progress === "Sudah Selesai" ? "#dcfce7" : task.progress === "Sedang Diproses" ? "#fef3c7" : "#fee2e2",
+                              color: task.progress === "Sudah Selesai" ? "#166534" : task.progress === "Sedang Diproses" ? "#92400e" : "#991b1b"
+                            }}>
+                              {task.progress}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Paper>
+              </Grid>
+            </Grid>
+          </>
         )}
-
-        {/* Dialog WhatsApp */}
-        <WhatsAppDialog
-          isOpen={openWaDialog}
-          onClose={() => setOpenWaDialog(false)}
-          onSend={handleSend}
-        />
-
-        {/* Snackbar */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={3000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        >
-          <Alert
-            onClose={handleCloseSnackbar}
-            severity={snackbar.severity}
-            sx={{ width: "100%", fontSize: 14 }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
       </Box>
     </Box>
   );
 };
+
+const StatCard = ({ title, value, icon, color }) => (
+  <Card sx={{
+    height: '100%',
+    borderRadius: 3,
+    boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+    borderLeft: `6px solid ${color}`,
+    transition: "transform 0.2s",
+    "&:hover": { transform: "translateY(-4px)", boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }
+  }}>
+    <CardContent sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+          <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1, textTransform: 'uppercase', letterSpacing: 1 }}>
+            {title}
+          </Typography>
+          <Typography variant="h4" fontWeight="bold" sx={{ color: "#1e293b" }}>
+            {value}
+          </Typography>
+        </Box>
+        <Box sx={{
+          bgcolor: `${color}15`,
+          p: 1.5,
+          borderRadius: 2,
+          color: color,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          {React.cloneElement(icon, { fontSize: 'large' })}
+        </Box>
+      </Box>
+    </CardContent>
+  </Card>
+);
 
 export default DashboardPage;

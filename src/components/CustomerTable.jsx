@@ -37,7 +37,15 @@ const formatTanggal = (iso) => {
   });
 };
 
-const API_BASE = (process.env.REACT_APP_API_URL || "http://localhost:5000/api").replace("/api", "");
+const getApiBase = () => {
+  let url = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+  if (window.location.protocol === "https:" && url.startsWith("http://")) {
+    url = url.replace("http://", "https://");
+  }
+  return url.replace("/api", "");
+};
+
+const API_BASE = getApiBase();
 
 const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
   const canDelete = userRole === "super_admin";

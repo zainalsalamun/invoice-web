@@ -12,7 +12,15 @@ import {
 import Sidebar from "../components/Sidebar";
 import { invoiceService } from "../services/invoiceService";
 
-const API_BASE = process.env.REACT_APP_API_URL?.replace("/api", "");
+const getApiBase = () => {
+  let url = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+  if (window.location.protocol === "https:" && url.startsWith("http://")) {
+    url = url.replace("http://", "https://");
+  }
+  return url.replace("/api", "");
+};
+
+const API_BASE = getApiBase();
 
 const InvoiceDetailPage = () => {
   const { id } = useParams();

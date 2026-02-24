@@ -24,7 +24,15 @@ import { Add as AddIcon, PhotoCamera, Close } from "@mui/icons-material";
 import { metodePembayaranService } from "../services/metodePembayaranService";
 import { notifySuccess, notifyError } from "../utils/notify";
 
-const API_BASE = process.env.REACT_APP_API_URL?.replace("/api", "");
+const getApiBase = () => {
+  let url = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+  if (window.location.protocol === "https:" && url.startsWith("http://")) {
+    url = url.replace("http://", "https://");
+  }
+  return url.replace("/api", "");
+};
+
+const API_BASE = getApiBase();
 
 const defaultForm = {
   id_pelanggan: "",

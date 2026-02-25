@@ -5,6 +5,10 @@
             "destination": "https://touch-order-archives-planner.trycloudflare.com/api/:path*"
         },
         {
+            "source": "/uploads/:path*",
+            "destination": "https://touch-order-archives-planner.trycloudflare.com/uploads/:path*"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }

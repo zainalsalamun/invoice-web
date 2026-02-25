@@ -22,7 +22,18 @@ apiClient.interceptors.request.use(
 );
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Transformasi data untuk menghapus IP lama yang mungkin dikirim dari backend
+    if (response.data) {
+      let stringified = JSON.stringify(response.data);
+      const oldUrlPattern = /https?:\/\/43\.134\.180\.249:3000/g;
+      if (oldUrlPattern.test(stringified)) {
+        stringified = stringified.replace(oldUrlPattern, "");
+        response.data = JSON.parse(stringified);
+      }
+    }
+    return response;
+  },
   (error) => {
     // Jangan redirect jika error terjadi di endpoint login atau register
     const isAuthEndpoint = error.config?.url?.includes("/auth/login") || error.config?.url?.includes("/auth/register");

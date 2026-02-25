@@ -38,10 +38,9 @@ const formatTanggal = (iso) => {
 };
 
 const getApiBase = () => {
+  const isProd = process.env.NODE_ENV === "production";
+  if (isProd) return ""; // Kosongkan agar menggunakan proxy Vercel
   let url = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-  if (window.location.protocol === "https:" && url.startsWith("http://")) {
-    url = url.replace("http://", "https://");
-  }
   return url.replace("/api", "");
 };
 
@@ -125,7 +124,12 @@ const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
                           sx={{ minWidth: 'auto', p: '2px 5px', fontSize: '0.65rem', textTransform: 'none' }}
                           variant="contained"
                           color="info"
-                          onClick={() => setPreviewImage(`${API_BASE}/uploads/bukti_transfer/${row.bukti_transfer}`)}
+                          onClick={() => {
+                            let path = row.bukti_transfer;
+                            if (path.startsWith("http")) path = path.replace(/https?:\/\/43\.134\.180\.249:3000/g, "");
+                            const fullPath = path.startsWith("/uploads") ? `${API_BASE}${path}` : `${API_BASE}/uploads/bukti_transfer/${path}`;
+                            setPreviewImage(fullPath);
+                          }}
                         >
                           Bukti
                         </Button>

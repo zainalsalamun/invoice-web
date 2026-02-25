@@ -11,10 +11,9 @@ import Sidebar from "../components/Sidebar";
 import { invoiceService } from "../services/invoiceService";
 
 const getApiBase = () => {
+  const isProd = process.env.NODE_ENV === "production";
+  if (isProd) return ""; // Kosongkan agar menggunakan proxy Vercel
   let url = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-  if (window.location.protocol === "https:" && url.startsWith("http://")) {
-    url = url.replace("http://", "https://");
-  }
   return url.replace("/api", "");
 };
 
@@ -90,7 +89,7 @@ const InvoiceProofPage = () => {
               <Box>
                 <Typography sx={{ mb: 1 }}>📎 Bukti yang diupload:</Typography>
                 <img
-                  src={`${API_BASE}${invoice.bukti_transfer}`}
+                  src={invoice.bukti_transfer?.startsWith("http") ? invoice.bukti_transfer.replace(/https?:\/\/43\.134\.180\.249:3000/g, "") : `${API_BASE}${invoice.bukti_transfer}`}
                   alt="Bukti Transfer"
                   style={{
                     maxWidth: "100%",

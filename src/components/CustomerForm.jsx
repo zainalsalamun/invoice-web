@@ -25,10 +25,9 @@ import { metodePembayaranService } from "../services/metodePembayaranService";
 import { notifySuccess, notifyError } from "../utils/notify";
 
 const getApiBase = () => {
+  const isProd = process.env.NODE_ENV === "production";
+  if (isProd) return ""; // Kosongkan agar menggunakan proxy Vercel
   let url = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-  if (window.location.protocol === "https:" && url.startsWith("http://")) {
-    url = url.replace("http://", "https://");
-  }
   return url.replace("/api", "");
 };
 
@@ -77,11 +76,13 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
   );
 
   // Preview URL untuk gambar bukti transfer yang dipilih
-  const [previewUrl, setPreviewUrl] = useState(
-    initialData?.bukti_transfer
-      ? `${API_BASE}/uploads/bukti_transfer/${initialData.bukti_transfer}`
-      : null
-  );
+  const [previewUrl, setPreviewUrl] = useState(() => {
+    if (!initialData?.bukti_transfer) return null;
+    const path = initialData.bukti_transfer;
+    if (path.startsWith("http")) return path.replace(/https?:\/\/43\.134\.180\.249:3000/g, "");
+    if (path.startsWith("/uploads")) return `${API_BASE}${path}`;
+    return `${API_BASE}/uploads/bukti_transfer/${path}`;
+  });
 
   const fileInputRef = useRef(null);
 

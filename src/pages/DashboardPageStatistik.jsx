@@ -142,15 +142,15 @@ const DashboardPage = () => {
   const filtered = invoices.filter((i) => {
     const byMonth = filters.month
       ? i.periode?.toLowerCase().includes(
-          convertMonth(filters.month).toLowerCase()
-        )
+        convertMonth(filters.month).toLowerCase()
+      )
       : true;
     const byStatus = filters.status
       ? i.statusPembayaran?.toLowerCase() === filters.status.toLowerCase()
       : true;
     const bySearch = filters.search
       ? i.namaPelanggan?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        i.nomorInvoice?.toLowerCase().includes(filters.search.toLowerCase())
+      i.nomorInvoice?.toLowerCase().includes(filters.search.toLowerCase())
       : true;
     return byMonth && byStatus && bySearch;
   });
@@ -201,6 +201,34 @@ const DashboardPage = () => {
       setSnackbar({
         open: true,
         message: "❌ Gagal upload bukti pembayaran.",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const res = await invoiceService.delete(id);
+      if (res) {
+        setSnackbar({
+          open: true,
+          message: "✅ Invoice berhasil dihapus!",
+          severity: "success",
+        });
+        fetchInvoices();
+        fetchChartData(selectedYear);
+      } else {
+        setSnackbar({
+          open: true,
+          message: "❌ Gagal menghapus invoice.",
+          severity: "error",
+        });
+      }
+    } catch (err) {
+      console.error("❌ Gagal hapus invoice:", err);
+      setSnackbar({
+        open: true,
+        message: "❌ Gagal menghapus invoice.",
         severity: "error",
       });
     }
@@ -423,6 +451,7 @@ const DashboardPage = () => {
               onSendWhatsApp={handleSendWhatsApp}
               onUploadProof={handleUploadProof}
               userRole={user?.role}
+              onDelete={handleDelete}
             />
           </div>
         </Slide>

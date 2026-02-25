@@ -159,6 +159,33 @@ const InvoiceListPage = () => {
         }
     };
 
+    const handleDelete = async (id) => {
+        try {
+            const res = await invoiceService.delete(id);
+            if (res) {
+                setSnackbar({
+                    open: true,
+                    message: "✅ Invoice berhasil dihapus!",
+                    severity: "success",
+                });
+                fetchInvoices();
+            } else {
+                setSnackbar({
+                    open: true,
+                    message: "❌ Gagal menghapus invoice.",
+                    severity: "error",
+                });
+            }
+        } catch (err) {
+            console.error("❌ Gagal hapus invoice:", err);
+            setSnackbar({
+                open: true,
+                message: "❌ Gagal menghapus invoice.",
+                severity: "error",
+            });
+        }
+    };
+
     return (
         <Box sx={{ display: "flex", minHeight: "100vh" }}>
             <Sidebar active="/invoices" />
@@ -376,6 +403,7 @@ const InvoiceListPage = () => {
                             onSendWhatsApp={handleSendWhatsApp}
                             onUploadProof={handleUploadProof}
                             userRole={user?.role}
+                            onDelete={handleDelete}
                         />
                     </div>
                 </Slide>

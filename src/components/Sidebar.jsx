@@ -292,11 +292,11 @@ const Sidebar = ({ active }) => {
             src={require("../assets/logoringnet.png")}
             alt="Ringnet"
             style={{
-              width: 90,
+              width: 70,
               marginBottom: 10,
               background: "#fff",
-              padding: 8,
-              borderRadius: 12,
+              padding: 6,
+              borderRadius: 10,
               boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
             }}
           />

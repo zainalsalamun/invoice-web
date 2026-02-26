@@ -23,7 +23,7 @@ import {
     Tooltip,
     TablePagination,
 } from "@mui/material";
-import { Edit, Delete, Add, UploadFile } from "@mui/icons-material";
+import { Edit, Delete, Add, UploadFile, Search } from "@mui/icons-material";
 import Sidebar from "../components/Sidebar";
 import { chatTrackingService } from "../services/chatTrackingService";
 import { authService } from "../services/authService";
@@ -36,7 +36,7 @@ const ChatTrackingPage = () => {
     const [loading, setLoading] = useState(true);
     const user = authService.getCurrentUser();
     const canDelete = user?.role === "super_admin";
-    const canEdit = ["super_admin", "admin"].includes(user?.role);
+    const canEdit = ["super_admin", "admin", "admin_junior"].includes(user?.role);
 
     // Dialog State
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -51,12 +51,14 @@ const ChatTrackingPage = () => {
         progress: "Belum Selesai",
         keterangan: "",
         admin_id: "",
+        nomor_task: "",
     });
 
 
     const [importOpen, setImportOpen] = useState(false);
     const [importText, setImportText] = useState("");
     const [importing, setImporting] = useState(false);
+    const [searchNoTask, setSearchNoTask] = useState("");
 
     // Pagination State
     const [page, setPage] = useState(0);
@@ -66,12 +68,16 @@ const ChatTrackingPage = () => {
 
     const fetchData = async () => {
         setLoading(true);
-        const isAdmin = user?.role === "admin";
-
         let params = {};
-        // Untuk admin, kita filter berdasarkan admin_id yang di-assign
-        if (isAdmin && user?.id) {
+
+        // Hanya Super Admin yang bisa melihat semua tugas
+        // Admin & Admin Junior hanya bisa melihat tugas mereka sendiri
+        if (user?.role !== "super_admin" && user?.id) {
             params.admin_id = user.id;
+        }
+
+        if (searchNoTask.trim()) {
+            params.nomor_task = searchNoTask.trim();
         }
 
         const data = await chatTrackingService.getAll(params);
@@ -104,19 +110,21 @@ const ChatTrackingPage = () => {
                 progress: item.progress || "Belum Selesai",
                 keterangan: item.keterangan || "",
                 admin_id: item.admin_id || "",
+                nomor_task: item.nomor_task || "",
             });
-
         } else {
             setEditing(null);
+            // Pre-fill PIC and admin_id for non-super_admin
+            const isStaff = ["admin", "admin_junior"].includes(user?.role);
             setForm({
-                nama_pic: user?.role === "admin" ? user.username : "",
+                nama_pic: isStaff ? user.username : "",
                 tanggal: new Date().toISOString().split('T')[0],
                 deskripsi: "",
                 progress: "Belum Selesai",
                 keterangan: "",
-                admin_id: user?.role === "admin" ? user.id : "",
+                admin_id: isStaff ? user.id : "",
+                nomor_task: "",
             });
-
         }
         setDialogOpen(true);
     };
@@ -144,6 +152,7 @@ const ChatTrackingPage = () => {
             setSaving(false);
         }
     };
+
 
     const handleDelete = async (id) => {
         if (window.confirm("Yakin ingin menghapus data ini?")) {
@@ -267,26 +276,37 @@ const ChatTrackingPage = () => {
                     <Typography variant="h5" fontWeight="bold">
                         💬 {user?.role === "super_admin" ? "Chat Tracking Management" : "Daftar Tugas Saya"}
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                        <TextField
+                            size="small"
+                            placeholder="Cari No Task..."
+                            value={searchNoTask}
+                            onChange={(e) => setSearchNoTask(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && fetchData()}
+                            InputProps={{
+                                startAdornment: <Search fontSize="small" sx={{ color: 'text.secondary', mr: 1 }} />,
+                            }}
+                            sx={{ width: 220 }}
+                        />
                         {canDelete && (
-                            <>
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<UploadFile />}
-                                    onClick={() => setImportOpen(true)}
-                                    sx={{ fontWeight: "bold", textTransform: "none", borderRadius: 2 }}
-                                >
-                                    Import Excel
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    startIcon={<Add />}
-                                    onClick={() => handleOpenDialog()}
-                                    sx={{ fontWeight: "bold", textTransform: "none", borderRadius: 2 }}
-                                >
-                                    Tambah Data
-                                </Button>
-                            </>
+                            <Button
+                                variant="outlined"
+                                startIcon={<UploadFile />}
+                                onClick={() => setImportOpen(true)}
+                                sx={{ fontWeight: "bold", textTransform: "none", borderRadius: 2 }}
+                            >
+                                Import Excel
+                            </Button>
+                        )}
+                        {canEdit && (
+                            <Button
+                                variant="contained"
+                                startIcon={<Add />}
+                                onClick={() => handleOpenDialog()}
+                                sx={{ fontWeight: "bold", textTransform: "none", borderRadius: 2 }}
+                            >
+                                Tambah Data
+                            </Button>
                         )}
                     </Box>
                 </Box>
@@ -296,10 +316,11 @@ const ChatTrackingPage = () => {
                         <TableHead>
                             <TableRow sx={{ bgcolor: "#dbeafe" }}>
                                 <TableCell align="center" sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>No</TableCell>
+                                <TableCell sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>No Task</TableCell>
                                 <TableCell sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>Kategori/Nama</TableCell>
                                 <TableCell align="center" sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>Tanggal & Bulan</TableCell>
                                 <TableCell sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>
-                                    {user?.role === "super_admin" ? "Assign Ke Admin" : "PIC Petugas"}
+                                    Assign Ke Admin
                                 </TableCell>
                                 <TableCell sx={{ fontWeight: "bold", border: '1px solid #cbd5e1', width: '35%' }}>Deskripsi</TableCell>
                                 <TableCell sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>Progress</TableCell>
@@ -313,11 +334,11 @@ const ChatTrackingPage = () => {
                         <TableBody>
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={10} align="center" sx={{ py: 3 }}>Memuat data...</TableCell>
+                                    <TableCell colSpan={11} align="center" sx={{ py: 3 }}>Memuat data...</TableCell>
                                 </TableRow>
                             ) : list.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={10} align="center" sx={{ py: 3 }}>Belum ada data Chat Tracking.</TableCell>
+                                    <TableCell colSpan={11} align="center" sx={{ py: 3 }}>Belum ada data Chat Tracking.</TableCell>
                                 </TableRow>
                             ) : (
                                 list.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => {
@@ -332,11 +353,16 @@ const ChatTrackingPage = () => {
                                             }}
                                         >
                                             <TableCell align="center" sx={{ border: '1px solid #e2e8f0', fontWeight: 500 }}>
-                                                {row.id}
+                                                {page * rowsPerPage + index + 1}
                                             </TableCell>
+                                            <TableCell sx={{ border: '1px solid #e2e8f0', fontWeight: "bold", color: "#64748b" }}>
+                                                {row.nomor_task || "-"}
+                                            </TableCell>
+
                                             <TableCell sx={{ border: '1px solid #e2e8f0', color: '#4f46e5', fontWeight: 600, bgcolor: getPicColor(row.nama_pic) }}>
                                                 {row.nama_pic}
                                             </TableCell>
+
                                             <TableCell align="center" sx={{ border: '1px solid #e2e8f0' }}>
                                                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                                                     <Typography sx={{ fontWeight: 'bold', fontSize: 14 }}>
@@ -347,6 +373,7 @@ const ChatTrackingPage = () => {
                                                     </Typography>
                                                 </Box>
                                             </TableCell>
+
                                             <TableCell sx={{ border: '1px solid #e2e8f0', fontWeight: 600 }}>
                                                 <Typography variant="body2" sx={{ fontWeight: 'bold', color: row.admin_username ? '#059669' : '#94a3b8' }}>
                                                     {row.admin_username || "Belum diassign"}
@@ -419,18 +446,16 @@ const ChatTrackingPage = () => {
                 <DialogTitle fontWeight="bold">{editing ? "Edit Chat Tracking" : "Tambah Chat Tracking"}</DialogTitle>
                 <DialogContent dividers>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-                        <FormControl size="small" fullWidth required>
+                        <FormControl size="small" fullWidth required disabled={!canDelete}>
                             <InputLabel>Kategori/Nama (PIC)</InputLabel>
                             <Select
                                 value={form.nama_pic}
                                 label="Kategori/Nama (PIC)"
-                                disabled={!canDelete}
                                 onChange={(e) => {
                                     const selectedAdmin = admins.find(a => a.username === e.target.value);
                                     setForm({
                                         ...form,
                                         nama_pic: e.target.value,
-                                        // Jika superadmin ganti PIC, otomatis ganti assign ke admin juga
                                         admin_id: selectedAdmin ? selectedAdmin.id : form.admin_id
                                     });
                                 }}
@@ -443,6 +468,15 @@ const ChatTrackingPage = () => {
                                 ))}
                             </Select>
                         </FormControl>
+                        <TextField
+                            label="Nomor Task"
+                            size="small"
+                            value={form.nomor_task}
+                            onChange={(e) => setForm({ ...form, nomor_task: e.target.value })}
+                            fullWidth
+                            placeholder="Contoh: TASK-001"
+                        />
+
                         <TextField
                             label="Tanggal"
                             type="date"
@@ -487,23 +521,21 @@ const ChatTrackingPage = () => {
                             fullWidth
                         />
 
-                        {canDelete && (
-                            <FormControl size="small" fullWidth>
-                                <InputLabel>Assign Tugas Ke (Admin)</InputLabel>
-                                <Select
-                                    value={form.admin_id}
-                                    label="Assign Tugas Ke (Admin)"
-                                    onChange={(e) => setForm({ ...form, admin_id: e.target.value })}
-                                >
-                                    <MenuItem value=""><em>-- Belum diassign --</em></MenuItem>
-                                    {admins.map((adm) => (
-                                        <MenuItem key={adm.id} value={adm.id}>
-                                            {adm.username} ({adm.role})
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        )}
+                        <FormControl size="small" fullWidth disabled={!canDelete}>
+                            <InputLabel>Assign Tugas Ke (Admin)</InputLabel>
+                            <Select
+                                value={form.admin_id}
+                                label="Assign Tugas Ke (Admin)"
+                                onChange={(e) => setForm({ ...form, admin_id: e.target.value })}
+                            >
+                                <MenuItem value=""><em>-- Belum diassign --</em></MenuItem>
+                                {admins.map((adm) => (
+                                    <MenuItem key={adm.id} value={adm.id}>
+                                        {adm.username} ({adm.role})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                     </Box>
 
                 </DialogContent>

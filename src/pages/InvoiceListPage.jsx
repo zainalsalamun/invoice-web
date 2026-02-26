@@ -95,12 +95,23 @@ const InvoiceListPage = () => {
         return date.toLocaleString("id-ID", { month: "long", year: "numeric" });
     };
 
+    const getMonthStrings = (value) => {
+        if (!value) return { id: "", en: "" };
+        const date = new Date(value);
+        return {
+            id: date.toLocaleString("id-ID", { month: "long", year: "numeric" }).toLowerCase(),
+            en: date.toLocaleString("en-US", { month: "long", year: "numeric" }).toLowerCase()
+        };
+    };
+
     const filtered = invoices.filter((i) => {
-        const byMonth = filters.month
-            ? i.periode?.toLowerCase().includes(
-                convertMonth(filters.month).toLowerCase()
-            )
-            : true;
+        let byMonth = true;
+        if (filters.month) {
+            const { id, en } = getMonthStrings(filters.month);
+            const p = i.periode?.toLowerCase() || "";
+            const t = i.tanggalInvoice || "";
+            byMonth = p.includes(id) || p.includes(en) || t.startsWith(filters.month);
+        }
         const byStatus = filters.status
             ? i.statusPembayaran?.toLowerCase() === filters.status.toLowerCase()
             : true;
@@ -197,15 +208,48 @@ const InvoiceListPage = () => {
                 {/* Filter Bar */}
                 <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
                     <TextField
-                        label="Periode"
+                        select
+                        label="Bulan"
                         size="small"
-                        type="month"
-                        InputLabelProps={{ shrink: true }}
-                        value={filters.month}
-                        onChange={(e) =>
-                            setFilters((f) => ({ ...f, month: e.target.value }))
-                        }
-                    />
+                        value={filters.month ? filters.month.split("-")[1] : ""}
+                        onChange={(e) => {
+                            const newMonth = e.target.value;
+                            const currentYear = filters.month ? filters.month.split("-")[0] : new Date().getFullYear();
+                            setFilters((f) => ({ ...f, month: `${currentYear}-${newMonth}` }));
+                        }}
+                        sx={{ width: 130 }}
+                    >
+                        <MenuItem value="01">Januari</MenuItem>
+                        <MenuItem value="02">Februari</MenuItem>
+                        <MenuItem value="03">Maret</MenuItem>
+                        <MenuItem value="04">April</MenuItem>
+                        <MenuItem value="05">Mei</MenuItem>
+                        <MenuItem value="06">Juni</MenuItem>
+                        <MenuItem value="07">Juli</MenuItem>
+                        <MenuItem value="08">Agustus</MenuItem>
+                        <MenuItem value="09">September</MenuItem>
+                        <MenuItem value="10">Oktober</MenuItem>
+                        <MenuItem value="11">November</MenuItem>
+                        <MenuItem value="12">Desember</MenuItem>
+                    </TextField>
+                    <TextField
+                        select
+                        label="Tahun"
+                        size="small"
+                        value={filters.month ? filters.month.split("-")[0] : ""}
+                        onChange={(e) => {
+                            const newYear = e.target.value;
+                            const currentMonth = filters.month ? filters.month.split("-")[1] : "01";
+                            setFilters((f) => ({ ...f, month: `${newYear}-${currentMonth}` }));
+                        }}
+                        sx={{ width: 100 }}
+                    >
+                        {[2024, 2025, 2026, 2027, 2028].map((year) => (
+                            <MenuItem key={year} value={String(year)}>
+                                {year}
+                            </MenuItem>
+                        ))}
+                    </TextField>
                     <TextField
                         select
                         label="Status"

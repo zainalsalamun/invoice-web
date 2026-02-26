@@ -7,7 +7,7 @@ export const customerService = {
       return res.data?.data || [];
     } catch (err) {
       console.error("Gagal ambil data pelanggan:", err);
-      return [];
+      throw err;
     }
   },
 
@@ -17,7 +17,7 @@ export const customerService = {
       return res.data?.data || null;
     } catch (err) {
       console.error("Gagal ambil detail pelanggan:", err);
-      return null;
+      throw err;
     }
   },
 

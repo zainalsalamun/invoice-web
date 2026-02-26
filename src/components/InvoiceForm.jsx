@@ -61,14 +61,20 @@ const InvoiceForm = ({ onPreview }) => {
   useEffect(() => {
     const fetchCustomers = async () => {
       setLoadingCustomers(true);
-      const data = await customerService.getAll();
-      setCustomers(data || []);
+      try {
+        const data = await customerService.getAll();
+        setCustomers(data || []);
 
-      // If we have a selected customer via navigation state
-      if (location.state?.selectedCustomer) {
-        handleSelectCustomer(null, location.state.selectedCustomer);
+        // If we have a selected customer via navigation state
+        if (location.state?.selectedCustomer) {
+          handleSelectCustomer(null, location.state.selectedCustomer);
+        }
+      } catch (err) {
+        console.error("Gagal memuat pelanggan di form:", err);
+        setCustomers([]);
+      } finally {
+        setLoadingCustomers(false);
       }
-      setLoadingCustomers(false);
     };
     fetchCustomers();
   }, [location.state]);
@@ -168,7 +174,7 @@ const InvoiceForm = ({ onPreview }) => {
 
     // Hitung total dari semua items
     const subtotal = formData.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0);
-    const ppn = parseFloat(formData.ppn) || 0;
+    const ppn = subtotal * 0.11;
     const total = subtotal + ppn;
 
     const payload = {
@@ -223,25 +229,31 @@ const InvoiceForm = ({ onPreview }) => {
       return;
     }
 
-    const result = await customerService.create(newCustomer);
-    if (result) {
-      setCustomers((prev) => [...prev, result]);
-      setFormData((prev) => ({
-        ...prev,
-        customerId: result.id,
-        namaPelanggan: result.nama,
-        alamat: result.alamat,
-        items: [
-          {
-            deskripsi: result.paket || "Paket Internet",
-            harga: result.harga_paket,
-            qty: 1,
-            jumlah: result.harga_paket,
-          },
-        ],
-      }));
-      setShowNewCustomerModal(false);
-      setNewCustomer({ nama: "", alamat: "", paket: "", harga_paket: "" });
+    try {
+      const result = await customerService.create(newCustomer);
+      if (result) {
+        setCustomers((prev) => [...prev, result]);
+        setFormData((prev) => ({
+          ...prev,
+          customerId: result.id,
+          namaPelanggan: result.nama,
+          alamat: result.alamat,
+          items: [
+            {
+              deskripsi: result.paket || "Paket Internet",
+              harga: result.harga_paket,
+              qty: 1,
+              jumlah: result.harga_paket,
+            },
+          ],
+        }));
+        setShowNewCustomerModal(false);
+        setNewCustomer({ nama: "", alamat: "", paket: "", harga_paket: "" });
+      }
+    } catch (error) {
+      console.error("Gagal menambah pelanggan baru:", error);
+      const errorMsg = error.response?.data?.message || "Gagal menambah pelanggan";
+      notifyError(errorMsg);
     }
   };
 
@@ -383,21 +395,6 @@ const InvoiceForm = ({ onPreview }) => {
               ➕ Tambah Baris Layanan
             </Button>
 
-            <Grid container spacing={2} sx={{ mb: 2 }}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="PPN (Nominal)"
-                  name="ppn"
-                  type="number"
-                  fullWidth
-                  value={formData.ppn}
-                  onChange={handleChange}
-                  placeholder="0"
-                  size="small"
-                />
-              </Grid>
-            </Grid>
-
             <Box sx={{ mb: 4, p: 2, bgcolor: "#f1f5f9", borderRadius: 2 }}>
               <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
                 <Typography variant="body2">Subtotal:</Typography>
@@ -406,18 +403,15 @@ const InvoiceForm = ({ onPreview }) => {
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                <Typography variant="body2">PPN:</Typography>
+                <Typography variant="body2">PPN (11%):</Typography>
                 <Typography variant="body2" fontWeight="bold">
-                  Rp {(parseFloat(formData.ppn) || 0).toLocaleString("id-ID")}
+                  Rp {(formData.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0) * 0.11).toLocaleString("id-ID")}
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1, pt: 1, borderTop: "1px solid #cbd5e1" }}>
                 <Typography variant="subtitle1" fontWeight="bold">Total Tagihan:</Typography>
                 <Typography variant="subtitle1" fontWeight="bold" color="primary">
-                  Rp {(
-                    formData.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0) +
-                    (parseFloat(formData.ppn) || 0)
-                  ).toLocaleString("id-ID")}
+                  Rp {(formData.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0) * 1.11).toLocaleString("id-ID")}
                 </Typography>
               </Box>
             </Box>

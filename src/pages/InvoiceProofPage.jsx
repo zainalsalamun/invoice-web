@@ -19,6 +19,12 @@ const getApiBase = () => {
 
 const API_BASE = getApiBase();
 
+const getBuktiUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path.replace(/https?:\/\/43\.134\.180\.249:3000/g, "");
+  return path.startsWith("/uploads") ? `${API_BASE}${path}` : `${API_BASE}/uploads/bukti_transfer/${path}`;
+};
+
 const InvoiceProofPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -90,7 +96,7 @@ const InvoiceProofPage = () => {
                 <Typography sx={{ mb: 1 }}>📎 Bukti yang diupload:</Typography>
                 {invoice.bukti_transfer?.endsWith(".pdf") ? (
                   <iframe
-                    src={invoice.bukti_transfer?.startsWith("http") ? invoice.bukti_transfer.replace(/https?:\/\/43\.134\.180\.249:3000/g, "") : `${API_BASE}${invoice.bukti_transfer}`}
+                    src={getBuktiUrl(invoice.bukti_transfer)}
                     title="Bukti Transfer PDF"
                     width="100%"
                     height="400px"
@@ -98,7 +104,7 @@ const InvoiceProofPage = () => {
                   />
                 ) : (
                   <img
-                    src={invoice.bukti_transfer?.startsWith("http") ? invoice.bukti_transfer.replace(/https?:\/\/43\.134\.180\.249:3000/g, "") : `${API_BASE}${invoice.bukti_transfer}`}
+                    src={getBuktiUrl(invoice.bukti_transfer)}
                     alt="Bukti Transfer"
                     style={{
                       maxWidth: "100%",

@@ -165,8 +165,12 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
     e.preventDefault();
     // Maintain single fields for backward compatibility (using first item)
     const firstItem = form.items[0] || {};
+    const subtotal = form.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0);
+    const calculatedPpn = subtotal * 0.11;
+
     const updatedForm = {
       ...form,
+      ppn: calculatedPpn,
       paket: firstItem.deskripsi || "",
       harga_langganan: firstItem.harga || 0
     };
@@ -260,30 +264,6 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
           />
         </Grid>
 
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Paket Layanan"
-            name="paket_layanan"
-            value={form.paket_layanan}
-            onChange={handleChange}
-            fullWidth
-            size="small"
-            placeholder="cth: Internet Home 20 Mbps"
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="PPN (Nominal)"
-            name="ppn"
-            value={form.ppn}
-            onChange={handleChange}
-            fullWidth
-            size="small"
-            type="number"
-            placeholder="cth: 25000"
-          />
-        </Grid>
 
         <Grid item xs={12} sm={6}>
           <TextField
@@ -404,10 +384,25 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
       </Button>
 
       {/* Total Section */}
-      <Box sx={{ mb: 3, p: 2, bgcolor: "#f9f9f9", borderRadius: 2, textAlign: "right" }}>
-        <Typography variant="subtitle1" fontWeight="bold">
-          Total Tagihan: Rp {form.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0).toLocaleString()}
-        </Typography>
+      <Box sx={{ mb: 3, p: 2, bgcolor: "#f1f5f9", borderRadius: 2 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+          <Typography variant="body2">Subtotal:</Typography>
+          <Typography variant="body2" fontWeight="bold">
+            Rp {form.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0).toLocaleString("id-ID")}
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+          <Typography variant="body2">PPN (11%):</Typography>
+          <Typography variant="body2" fontWeight="bold">
+            Rp {(form.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0) * 0.11).toLocaleString("id-ID")}
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1, pt: 1, borderTop: "1px solid #cbd5e1" }}>
+          <Typography variant="subtitle1" fontWeight="bold">Total Tagihan:</Typography>
+          <Typography variant="subtitle1" fontWeight="bold" color="primary">
+            Rp {(form.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0) * 1.11).toLocaleString("id-ID")}
+          </Typography>
+        </Box>
       </Box>
 
       <Grid container spacing={2} sx={{ mb: 2 }}>

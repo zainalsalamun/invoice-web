@@ -21,6 +21,12 @@ const getApiBase = () => {
 
 const API_BASE = getApiBase();
 
+const getBuktiUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path.replace(/https?:\/\/43\.134\.180\.249:3000/g, "");
+  return path.startsWith("/uploads") ? `${API_BASE}${path}` : `${API_BASE}/uploads/bukti_transfer/${path}`;
+};
+
 const InvoiceDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -173,7 +179,7 @@ const InvoiceDetailPage = () => {
               >
                 {invoice.bukti_transfer?.endsWith(".pdf") ? (
                   <iframe
-                    src={invoice.bukti_transfer?.startsWith("http") ? invoice.bukti_transfer.replace(/https?:\/\/43\.134\.180\.249:3000/g, "") : `${API_BASE}${invoice.bukti_transfer}`}
+                    src={getBuktiUrl(invoice.bukti_transfer)}
                     title="Bukti Transfer PDF"
                     style={{
                       width: "100%",
@@ -187,7 +193,7 @@ const InvoiceDetailPage = () => {
                   />
                 ) : (
                   <img
-                    src={invoice.bukti_transfer?.startsWith("http") ? invoice.bukti_transfer.replace(/https?:\/\/43\.134\.180\.249:3000/g, "") : `${API_BASE}${invoice.bukti_transfer}`}
+                    src={getBuktiUrl(invoice.bukti_transfer)}
                     alt="Bukti Transfer"
                     style={{
                       width: "100%",
@@ -202,7 +208,7 @@ const InvoiceDetailPage = () => {
                 <Button
                   variant="contained"
                   color="primary"
-                  href={invoice.bukti_transfer?.startsWith("http") ? invoice.bukti_transfer.replace(/https?:\/\/43\.134\.180\.249:3000/g, "") : `${API_BASE}${invoice.bukti_transfer}`}
+                  href={getBuktiUrl(invoice.bukti_transfer)}
                   target="_blank"
                   sx={{
                     borderRadius: 2,

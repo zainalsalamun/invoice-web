@@ -23,7 +23,8 @@ const CustomerPage = () => {
       setCustomers(data);
     } catch (err) {
       console.error("Gagal ambil data pelanggan:", err);
-      notifyError("Gagal memuat data pelanggan");
+      const errorMessage = err.response?.data?.message || err.message || "Gagal memuat data pelanggan";
+      notifyError(`Error: ${errorMessage}`);
     }
   };
 

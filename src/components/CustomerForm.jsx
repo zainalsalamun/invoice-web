@@ -20,7 +20,7 @@ import {
   IconButton,
   Avatar,
 } from "@mui/material";
-import { Add as AddIcon, PhotoCamera, Close } from "@mui/icons-material";
+import { Add as AddIcon, PhotoCamera, Close, PictureAsPdf } from "@mui/icons-material";
 import { metodePembayaranService } from "../services/metodePembayaranService";
 import { notifySuccess, notifyError } from "../utils/notify";
 
@@ -39,6 +39,8 @@ const defaultForm = {
   alamat: "",
   nomor_wa: "",
   kategori_pelanggan: "",
+  paket_layanan: "",
+  ppn: "",
   tanggal_jatuh_tempo: "",
   metode_pembayaran_id: "",
   aktif: true,
@@ -63,6 +65,8 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         id_pelanggan: initialData.id_pelanggan ?? "",
         metode_pembayaran_id: initialData.metode_pembayaran_id ?? "",
         kategori_pelanggan: initialData.kategori_pelanggan ?? "",
+        paket_layanan: initialData.paket_layanan ?? "",
+        ppn: initialData.ppn ?? "",
         tanggal_jatuh_tempo: toInputDate(initialData.tanggal_jatuh_tempo),
         notes: initialData.notes ?? "",
         status_pembayaran: initialData.status_pembayaran ?? "BELUM LUNAS",
@@ -253,6 +257,31 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
             fullWidth
             size="small"
             placeholder="cth: Retail, Bisnis, Warnet"
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            label="Paket Layanan"
+            name="paket_layanan"
+            value={form.paket_layanan}
+            onChange={handleChange}
+            fullWidth
+            size="small"
+            placeholder="cth: Internet Home 20 Mbps"
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            label="PPN (Nominal)"
+            name="ppn"
+            value={form.ppn}
+            onChange={handleChange}
+            fullWidth
+            size="small"
+            type="number"
+            placeholder="cth: 25000"
           />
         </Grid>
 
@@ -460,7 +489,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg,image/jpg,image/png,image/webp"
+          accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
           style={{ display: "none" }}
           onChange={handleFileChange}
         />
@@ -468,11 +497,17 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         {previewUrl ? (
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
             <Box sx={{ position: "relative", display: "inline-block" }}>
-              <Avatar
-                src={previewUrl}
-                variant="rounded"
-                sx={{ width: 120, height: 90, border: "2px solid #e0e0e0" }}
-              />
+              {form.bukti_transfer?.type === "application/pdf" || (typeof form.bukti_transfer === "string" && form.bukti_transfer.endsWith(".pdf")) ? (
+                <Box sx={{ width: 120, height: 90, border: "2px solid #e0e0e0", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 1, bgcolor: "#f5f5f5" }}>
+                  <PictureAsPdf sx={{ fontSize: 40, color: "error.main" }} />
+                </Box>
+              ) : (
+                <Avatar
+                  src={previewUrl}
+                  variant="rounded"
+                  sx={{ width: 120, height: 90, border: "2px solid #e0e0e0" }}
+                />
+              )}
               <IconButton
                 size="small"
                 onClick={removeFile}
@@ -518,7 +553,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
           </Button>
         )}
         <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-          Format: JPG, PNG, WEBP — Maks. 5MB
+          Format: JPG, PNG, WEBP, PDF — Maks. 5MB
         </Typography>
       </Box>
 

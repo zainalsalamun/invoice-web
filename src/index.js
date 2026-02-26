@@ -19,6 +19,10 @@ import { BrowserRouter } from "react-router-dom";
 import { SnackbarProvider } from "notistack"; // ✅
 import App from "./App";
 import "./styles.css";
+import dayjs from "dayjs";
+import "dayjs/locale/id";
+
+dayjs.locale("id");
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(

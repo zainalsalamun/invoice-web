@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Box, Button, Typography, TextField, MenuItem, Select, InputLabel, FormControl } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { Box, Button, Typography, TextField, MenuItem, Select, InputLabel, FormControl, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@mui/material";
 import Sidebar from "../components/Sidebar";
 import CustomerTable from "../components/CustomerTable";
 import CustomerForm from "../components/CustomerForm";
@@ -11,7 +12,10 @@ const CustomerPage = () => {
   const [customers, setCustomers] = useState([]);
   const [editing, setEditing] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState(null);
   const user = authService.getCurrentUser();
+  const navigate = useNavigate();
 
   const fetchData = async () => {
     try {
@@ -30,13 +34,19 @@ const CustomerPage = () => {
 
   useEffect(() => {
     fetchData();
+
+    // Refresh data saat tab kembali aktif
+    const handleFocus = () => fetchData();
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, []);
 
   const filteredCustomers = customers.filter(c => {
+    const effectiveStatus = (c.last_invoice_status || c.status_pembayaran || "BELUM LUNAS").toUpperCase();
     const matchSearch = c.nama.toLowerCase().includes(search.toLowerCase()) ||
       (c.id_pelanggan && c.id_pelanggan.toLowerCase().includes(search.toLowerCase()));
     const matchKategori = filterKategori ? c.kategori_pelanggan === filterKategori : true;
-    const matchStatus = filterStatus ? c.status_pembayaran === filterStatus : true;
+    const matchStatus = filterStatus ? effectiveStatus === filterStatus.toUpperCase() : true;
     const matchBulan = filterBulan ? (c.tanggal_jatuh_tempo && new Date(c.tanggal_jatuh_tempo).getMonth() + 1 === parseInt(filterBulan)) : true;
     return matchSearch && matchKategori && matchStatus && matchBulan;
   });
@@ -61,16 +71,23 @@ const CustomerPage = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Yakin ingin menghapus pelanggan ini?")) {
+  const handleDelete = (id) => {
+    setCustomerToDelete(id);
+    setOpenDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (customerToDelete) {
       try {
-        await customerService.remove(id);
+        await customerService.remove(customerToDelete);
         notifyInfo("🗑️ Pelanggan berhasil dihapus");
         fetchData();
       } catch (err) {
         console.error("Gagal hapus pelanggan:", err);
         notifyError("Gagal menghapus pelanggan");
       }
+      setOpenDeleteDialog(false);
+      setCustomerToDelete(null);
     }
   };
 
@@ -177,10 +194,34 @@ const CustomerPage = () => {
                 setShowForm(true);
               }}
               onDelete={handleDelete}
+              onCreateInvoice={(row) => {
+                navigate("/invoices/new", { state: { selectedCustomer: row } });
+              }}
             />
           </>
         )}
       </Box>
+
+      {/* Dialog Konfirmasi Hapus */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+      >
+        <DialogTitle>Hapus Pelanggan</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Yakin ingin menghapus pelanggan ini? Tindakan ini tidak dapat dibatalkan.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)} color="inherit">
+            Batal
+          </Button>
+          <Button onClick={confirmDelete} color="error" variant="contained" autoFocus>
+            Ya, Hapus
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -67,8 +67,10 @@ function buildFormData(data) {
   if (data.kategori_pelanggan) fd.append("kategori_pelanggan", data.kategori_pelanggan);
   if (data.nomor_wa) fd.append("nomor_wa", data.nomor_wa);
   if (data.paket) fd.append("paket", data.paket);
+  if (data.paket_layanan) fd.append("paket_layanan", data.paket_layanan);
+  if (data.ppn) fd.append("ppn", parseFloat(data.ppn) || 0);
   if (data.tanggal_jatuh_tempo) fd.append("tanggal_jatuh_tempo", data.tanggal_jatuh_tempo);
-  if (data.harga_langganan) fd.append("harga_langganan", parseFloat(data.harga_langganan));
+  if (data.harga_langganan !== undefined) fd.append("harga_langganan", parseFloat(data.harga_langganan) || 0);
   if (data.metode_pembayaran_id) fd.append("metode_pembayaran_id", data.metode_pembayaran_id);
   if (data.notes) fd.append("notes", data.notes);
   if (data.status_pembayaran) fd.append("status_pembayaran", data.status_pembayaran);
@@ -81,7 +83,14 @@ function buildFormData(data) {
   }
 
   if (data.items && Array.isArray(data.items)) {
-    fd.append("items", JSON.stringify(data.items));
+    // Sanitize items before stringifying
+    const sanitizedItems = data.items.map(it => ({
+      deskripsi: it.deskripsi || "Item",
+      harga: parseFloat(it.harga) || 0,
+      qty: parseInt(it.qty) || 1,
+      jumlah: (parseFloat(it.harga) || 0) * (parseInt(it.qty) || 1)
+    }));
+    fd.append("items", JSON.stringify(sanitizedItems));
   }
 
   return fd;

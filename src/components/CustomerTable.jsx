@@ -1,4 +1,8 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
+import "dayjs/locale/id";
+
 import {
   Table,
   TableHead,
@@ -16,8 +20,11 @@ import {
   DialogContent,
   IconButton,
   Box,
+  Tooltip,
 } from "@mui/material";
-import { Close as CloseIcon } from "@mui/icons-material";
+import { Close as CloseIcon, Visibility, Receipt } from "@mui/icons-material";
+
+dayjs.locale("id");
 
 const formatRupiah = (value) => {
   if (!value && value !== 0) return "-";
@@ -46,8 +53,10 @@ const getApiBase = () => {
 
 const API_BASE = getApiBase();
 
-const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
+const CustomerTable = ({ data, onEdit, onDelete, onCreateInvoice, userRole }) => {
   const canDelete = userRole === "super_admin";
+  const canCreateInvoice = ["super_admin", "admin", "kasir"].includes(userRole);
+  const navigate = useNavigate();
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [previewImage, setPreviewImage] = React.useState(null);
@@ -70,6 +79,8 @@ const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
                 <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>ID</TableCell>
                 <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Nama</TableCell>
                 <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Kategori</TableCell>
+                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Paket</TableCell>
+                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>PPN</TableCell>
                 <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>WA</TableCell>
                 <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Harga</TableCell>
                 <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Metode</TableCell>
@@ -86,7 +97,7 @@ const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
             <TableBody>
               {paginated.map((row) => (
                 <TableRow key={row.id} hover>
-                  <TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
                     <Typography variant="caption" color="text.secondary" fontFamily="monospace">
                       {row.id_pelanggan || "-"}
                     </Typography>
@@ -97,6 +108,8 @@ const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
                     </Typography>
                   </TableCell>
                   <TableCell>{row.kategori_pelanggan || "-"}</TableCell>
+                  <TableCell>{row.paket_layanan || "-"}</TableCell>
+                  <TableCell>{row.ppn ? formatRupiah(row.ppn) : "-"}</TableCell>
                   <TableCell>{row.nomor_wa || "-"}</TableCell>
                   <TableCell>{formatRupiah(row.harga_langganan)}</TableCell>
                   <TableCell>
@@ -106,16 +119,19 @@ const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
                       "-"
                     )}
                   </TableCell>
-                  <TableCell>{row.tagihan_periode_bulan || "-"}</TableCell>
+                  <TableCell>{row.last_invoice_periode || row.tagihan_periode_bulan || "-"}</TableCell>
                   <TableCell>
                     {formatTanggal(row.tanggal_jatuh_tempo)}
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Chip
-                        label={row.status_pembayaran || "BELUM LUNAS"}
+                        label={(row.last_invoice_status || row.status_pembayaran || "BELUM LUNAS").toUpperCase()}
                         size="small"
-                        color={row.status_pembayaran === "LUNAS" ? "success" : "error"}
+                        color={
+                          (row.last_invoice_status || row.status_pembayaran || "").toUpperCase() === "LUNAS" ? "success" :
+                            (row.last_invoice_status || row.status_pembayaran || "").toUpperCase() === "CICIL" ? "info" : "error"
+                        }
                         variant="filled"
                       />
                       {row.bukti_transfer && (
@@ -145,12 +161,50 @@ const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
                       />
                     )}
                   </TableCell>
-                  <TableCell>
-                    <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
-                      {row.notes || "-"}
-                    </Typography>
+                  <TableCell sx={{ maxWidth: 150 }}>
+                    <Tooltip title={row.notes || ""} placement="top-start">
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontStyle: 'italic',
+                          color: 'text.secondary',
+                          display: 'block',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {row.notes || "-"}
+                      </Typography>
+                    </Tooltip>
                   </TableCell>
                   <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                    {canCreateInvoice && (() => {
+                      const currentPeriod = dayjs().format("MMMM YYYY").toLowerCase().trim();
+                      const lastPeriod = (row.last_invoice_periode || "").toLowerCase().trim();
+                      const customerPeriod = (row.tagihan_periode_bulan || "").toLowerCase().trim();
+
+                      const isAlreadyCreated = (row.last_invoice_id && lastPeriod === currentPeriod) || (customerPeriod === currentPeriod);
+
+                      return (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          color={isAlreadyCreated ? "primary" : "success"}
+                          onClick={() => {
+                            if (isAlreadyCreated) {
+                              navigate(`/invoices/${row.last_invoice_id}.pdf`);
+                            } else {
+                              onCreateInvoice(row);
+                            }
+                          }}
+                          startIcon={isAlreadyCreated ? <Visibility fontSize="small" /> : <Receipt fontSize="small" />}
+                          sx={{ mr: 1, fontSize: "0.72rem", textTransform: "none" }}
+                        >
+                          {isAlreadyCreated ? "Lihat Invoice" : "Buat Invoice"}
+                        </Button>
+                      );
+                    })()}
                     <Button
                       variant="outlined"
                       size="small"
@@ -176,7 +230,7 @@ const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
 
               {data.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={11} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                  <TableCell colSpan={13} align="center" sx={{ py: 4, color: "text.secondary" }}>
                     📭 Tidak ada data pelanggan.
                   </TableCell>
                 </TableRow>
@@ -204,13 +258,26 @@ const CustomerTable = ({ data, onEdit, onDelete, userRole }) => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ textAlign: 'center', p: 2 }}>
+        <DialogContent sx={{ textAlign: 'center', p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
           {previewImage && (
-            <img
-              src={previewImage}
-              alt="Bukti Transfer"
-              style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: '8px' }}
-            />
+            previewImage.endsWith(".pdf") ? (
+              <iframe
+                src={previewImage}
+                title="Bukti Transfer PDF"
+                style={{ width: '100%', minWidth: '400px', height: '600px', maxHeight: '70vh', borderRadius: '8px', border: "1px solid #ccc" }}
+              />
+            ) : (
+              <img
+                src={previewImage}
+                alt="Bukti Transfer"
+                style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: '8px' }}
+              />
+            )
+          )}
+          {previewImage && (
+            <Button variant="contained" href={previewImage} target="_blank" sx={{ textTransform: "none", alignSelf: "center" }}>
+              Buka di Tab Baru
+            </Button>
           )}
         </DialogContent>
       </Dialog>

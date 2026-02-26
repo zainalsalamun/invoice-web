@@ -59,6 +59,7 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp, userRole, onDelet
                 <TableCell><b>Nama Pelanggan</b></TableCell>
                 <TableCell><b>Periode</b></TableCell>
                 <TableCell><b>Total</b></TableCell>
+                <TableCell><b>Kurang Bayar</b></TableCell>
                 <TableCell><b>Status</b></TableCell>
                 <TableCell align="center"><b>Aksi</b></TableCell>
               </TableRow>
@@ -86,10 +87,25 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp, userRole, onDelet
                   <TableCell>{row.periode}</TableCell>
                   <TableCell>Rp {row.total.toLocaleString("id-ID")}</TableCell>
                   <TableCell>
+                    {row.kurangBayar > 0 ? (
+                      <span style={{ color: "red", fontWeight: "bold" }}>
+                        Rp {row.kurangBayar.toLocaleString("id-ID")}
+                      </span>
+                    ) : (
+                      "-"
+                    )}
+                    {row.tanggalPembayaran && (
+                      <div style={{ fontSize: "0.7rem", color: "#666" }}>
+                        Tgl Bayar: {row.tanggalPembayaran}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <Chip
-                      label={row.statusPembayaran}
+                      label={(row.statusPembayaran || "BELUM LUNAS").toUpperCase()}
                       color={
-                        row.statusPembayaran === "Lunas" ? "success" : "warning"
+                        (row.statusPembayaran || "").toUpperCase() === "LUNAS" ? "success" :
+                          (row.statusPembayaran || "").toUpperCase() === "CICIL" ? "info" : "error"
                       }
                       size="small"
                     />

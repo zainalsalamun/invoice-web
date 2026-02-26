@@ -84,6 +84,18 @@ const InvoicePreview = ({ data, onReset }) => {
           <span>Total:</span>
           <span>Rp {total?.toLocaleString("id-ID")}</span>
         </div>
+        {data.kurang_bayar > 0 && (
+          <div style={{ display: "flex", justifyContent: "space-between", color: "red", fontWeight: "bold", marginTop: "5px" }}>
+            <span>Kurang Bayar ({data.status_pembayaran || status}):</span>
+            <span>Rp {data.kurang_bayar.toLocaleString("id-ID")}</span>
+          </div>
+        )}
+        {data.tanggal_pembayaran && (
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginTop: "10px", color: "#666" }}>
+            <span>Tgl Bayar:</span>
+            <span>{data.tanggal_pembayaran}</span>
+          </div>
+        )}
       </div>
 
       <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginTop: "20px" }}>

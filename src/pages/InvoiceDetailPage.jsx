@@ -171,18 +171,34 @@ const InvoiceDetailPage = () => {
                   alignItems: "flex-start",
                 }}
               >
-                <img
-                  src={invoice.bukti_transfer?.startsWith("http") ? invoice.bukti_transfer.replace(/https?:\/\/43\.134\.180\.249:3000/g, "") : `${API_BASE}${invoice.bukti_transfer}`}
-                  alt="Bukti Transfer"
-                  style={{
-                    width: "100%",
-                    maxWidth: 400,
-                    borderRadius: 8,
-                    border: "1px solid #ccc",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    marginBottom: 8,
-                  }}
-                />
+                {invoice.bukti_transfer?.endsWith(".pdf") ? (
+                  <iframe
+                    src={invoice.bukti_transfer?.startsWith("http") ? invoice.bukti_transfer.replace(/https?:\/\/43\.134\.180\.249:3000/g, "") : `${API_BASE}${invoice.bukti_transfer}`}
+                    title="Bukti Transfer PDF"
+                    style={{
+                      width: "100%",
+                      maxWidth: 400,
+                      height: 500,
+                      borderRadius: 8,
+                      border: "1px solid #ccc",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                      marginBottom: 8,
+                    }}
+                  />
+                ) : (
+                  <img
+                    src={invoice.bukti_transfer?.startsWith("http") ? invoice.bukti_transfer.replace(/https?:\/\/43\.134\.180\.249:3000/g, "") : `${API_BASE}${invoice.bukti_transfer}`}
+                    alt="Bukti Transfer"
+                    style={{
+                      width: "100%",
+                      maxWidth: 400,
+                      borderRadius: 8,
+                      border: "1px solid #ccc",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                      marginBottom: 8,
+                    }}
+                  />
+                )}
                 <Button
                   variant="contained"
                   color="primary"

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import dayjs from "dayjs";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   TextField,
   Autocomplete,
@@ -18,6 +19,7 @@ import {
 import AlertDialog from "./AlertDialog";
 import { invoiceService } from "../services/invoiceService";
 import { customerService } from "../services/customerService";
+import { notifySuccess, notifyError } from "../utils/notify";
 
 const InvoiceForm = ({ onPreview }) => {
   const [formData, setFormData] = useState({
@@ -28,7 +30,13 @@ const InvoiceForm = ({ onPreview }) => {
     periode: dayjs().format("YYYY-MM"),
     tanggalJatuhTempo: dayjs().add(7, "day").format("YYYY-MM-DD"),
     statusPembayaran: "Belum Lunas",
+    kurang_bayar: 0,
+    tanggal_pembayaran: "",
+    ppn: 0,
   });
+
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [buktiFile, setBuktiFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -55,10 +63,15 @@ const InvoiceForm = ({ onPreview }) => {
       setLoadingCustomers(true);
       const data = await customerService.getAll();
       setCustomers(data || []);
+
+      // If we have a selected customer via navigation state
+      if (location.state?.selectedCustomer) {
+        handleSelectCustomer(null, location.state.selectedCustomer);
+      }
       setLoadingCustomers(false);
     };
     fetchCustomers();
-  }, []);
+  }, [location.state]);
 
   const handleSelectCustomer = (_, selected) => {
     if (selected) {
@@ -67,19 +80,20 @@ const InvoiceForm = ({ onPreview }) => {
         customerId: selected.id,
         namaPelanggan: selected.nama,
         alamat: selected.alamat,
-        items: selected.items && selected.items.length > 0
+        ppn: selected.ppn || 0,
+        items: (selected.items && selected.items.length > 0)
           ? selected.items.map(it => ({
             deskripsi: it.deskripsi,
             harga: it.harga,
             qty: it.qty || 1,
-            jumlah: it.jumlah || (it.harga * (it.qty || 1))
+            jumlah: it.harga * (it.qty || 1)
           }))
           : [
             {
-              deskripsi: selected.paket || "Paket Internet",
-              harga: selected.harga_paket || "",
+              deskripsi: selected.paket_layanan || selected.paket || "Paket Internet",
+              harga: selected.harga_langganan || selected.harga_paket || "",
               qty: 1,
-              jumlah: selected.harga_paket || 0,
+              jumlah: selected.harga_langganan || selected.harga_paket || 0,
             },
           ],
       }));
@@ -89,6 +103,7 @@ const InvoiceForm = ({ onPreview }) => {
         customerId: "",
         namaPelanggan: "",
         alamat: "",
+        ppn: 0,
         items: [{ deskripsi: "Paket Internet", harga: "", qty: 1, jumlah: 0 }],
       }));
     }
@@ -153,7 +168,7 @@ const InvoiceForm = ({ onPreview }) => {
 
     // Hitung total dari semua items
     const subtotal = formData.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0);
-    const ppn = Math.round(subtotal * 0.11);
+    const ppn = parseFloat(formData.ppn) || 0;
     const total = subtotal + ppn;
 
     const payload = {
@@ -170,6 +185,8 @@ const InvoiceForm = ({ onPreview }) => {
       status_pembayaran: formData.statusPembayaran,
       tanggal_invoice: dayjs().format("YYYY-MM-DD"),
       tanggal_jatuh_tempo: formData.tanggalJatuhTempo,
+      kurang_bayar: parseFloat(formData.kurang_bayar) || 0,
+      tanggal_pembayaran: formData.tanggal_pembayaran || null,
       items: formData.items.map(it => ({
         deskripsi: it.deskripsi,
         harga: parseFloat(it.harga) || 0,
@@ -186,13 +203,15 @@ const InvoiceForm = ({ onPreview }) => {
         if (formData.statusPembayaran === "Lunas" && buktiFile) {
           await invoiceService.uploadProof(result.data.id, buktiFile);
         }
-        onPreview(result.data);
+        notifySuccess("Invoice berhasil dibuat!");
+        navigate("/invoices");
       } else {
-        alert("Gagal menyimpan invoice ke server");
+        notifyError(result?.message || "Gagal menyimpan invoice ke server");
       }
     } catch (error) {
       console.error("Error saat kirim data:", error);
-      alert("Gagal menyimpan invoice, periksa koneksi server");
+      const msg = error.response?.data?.message || "Gagal menyimpan invoice, periksa koneksi server";
+      notifyError(msg);
     } finally {
       setLoading(false);
     }
@@ -200,7 +219,7 @@ const InvoiceForm = ({ onPreview }) => {
 
   const handleAddCustomer = async () => {
     if (!newCustomer.nama || !newCustomer.harga_paket) {
-      alert("Nama dan harga paket wajib diisi!");
+      notifyError("Nama dan harga paket wajib diisi!");
       return;
     }
 
@@ -364,6 +383,21 @@ const InvoiceForm = ({ onPreview }) => {
               ➕ Tambah Baris Layanan
             </Button>
 
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="PPN (Nominal)"
+                  name="ppn"
+                  type="number"
+                  fullWidth
+                  value={formData.ppn}
+                  onChange={handleChange}
+                  placeholder="0"
+                  size="small"
+                />
+              </Grid>
+            </Grid>
+
             <Box sx={{ mb: 4, p: 2, bgcolor: "#f1f5f9", borderRadius: 2 }}>
               <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
                 <Typography variant="body2">Subtotal:</Typography>
@@ -372,29 +406,72 @@ const InvoiceForm = ({ onPreview }) => {
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                <Typography variant="body2">PPN (11%):</Typography>
+                <Typography variant="body2">PPN:</Typography>
                 <Typography variant="body2" fontWeight="bold">
-                  Rp {Math.round(formData.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0) * 0.11).toLocaleString("id-ID")}
+                  Rp {(parseFloat(formData.ppn) || 0).toLocaleString("id-ID")}
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1, pt: 1, borderTop: "1px solid #cbd5e1" }}>
                 <Typography variant="subtitle1" fontWeight="bold">Total Tagihan:</Typography>
                 <Typography variant="subtitle1" fontWeight="bold" color="primary">
-                  Rp {Math.round(formData.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0) * 1.11).toLocaleString("id-ID")}
+                  Rp {(
+                    formData.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0) +
+                    (parseFloat(formData.ppn) || 0)
+                  ).toLocaleString("id-ID")}
                 </Typography>
               </Box>
             </Box>
 
-            <TextField
-              label="Periode Tagihan"
-              type="month"
-              name="periode"
-              fullWidth
-              value={formData.periode}
-              onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
-              sx={{ mb: 2 }}
-            />
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: "bold", color: "text.primary" }}>
+              Periode Tagihan
+            </Typography>
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  fullWidth
+                  value={dayjs(formData.periode).format("MM")}
+                  onChange={(e) => {
+                    const newMonth = e.target.value;
+                    const currentYear = dayjs(formData.periode).format("YYYY");
+                    setFormData({ ...formData, periode: `${currentYear}-${newMonth}` });
+                  }}
+                  size="small"
+                >
+                  <MenuItem value="01">Januari</MenuItem>
+                  <MenuItem value="02">Februari</MenuItem>
+                  <MenuItem value="03">Maret</MenuItem>
+                  <MenuItem value="04">April</MenuItem>
+                  <MenuItem value="05">Mei</MenuItem>
+                  <MenuItem value="06">Juni</MenuItem>
+                  <MenuItem value="07">Juli</MenuItem>
+                  <MenuItem value="08">Agustus</MenuItem>
+                  <MenuItem value="09">September</MenuItem>
+                  <MenuItem value="10">Oktober</MenuItem>
+                  <MenuItem value="11">November</MenuItem>
+                  <MenuItem value="12">Desember</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select
+                  fullWidth
+                  value={dayjs(formData.periode).format("YYYY")}
+                  onChange={(e) => {
+                    const newYear = e.target.value;
+                    const currentMonth = dayjs(formData.periode).format("MM");
+                    setFormData({ ...formData, periode: `${newYear}-${currentMonth}` });
+                  }}
+                  size="small"
+                >
+                  {[2024, 2025, 2026, 2027, 2028].map((year) => (
+                    <MenuItem key={year} value={String(year)}>
+                      {year}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+            </Grid>
 
             <TextField
               label="Tanggal Jatuh Tempo"
@@ -414,16 +491,42 @@ const InvoiceForm = ({ onPreview }) => {
               fullWidth
               value={formData.statusPembayaran}
               onChange={handleChange}
-              sx={{ mb: 3 }}
+              sx={{ mb: 2 }}
             >
               <MenuItem value="Belum Lunas">Belum Lunas</MenuItem>
               <MenuItem value="Lunas">Lunas</MenuItem>
+              <MenuItem value="Cicil">Cicil</MenuItem>
             </TextField>
 
-            {formData.statusPembayaran === "Lunas" && (
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Nominal Kurang Bayar"
+                  name="kurang_bayar"
+                  type="number"
+                  fullWidth
+                  value={formData.kurang_bayar}
+                  onChange={handleChange}
+                  placeholder="0"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Tanggal Pembayaran"
+                  name="tanggal_pembayaran"
+                  type="date"
+                  fullWidth
+                  value={formData.tanggal_pembayaran}
+                  onChange={handleChange}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+            </Grid>
+
+            {formData.statusPembayaran !== "Belum Lunas" && (
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body2" sx={{ mb: 1 }}>
-                  Bukti Pembayaran:
+                  Bukti Pembayaran (Opsional jika status Cicil/Lunas):
                 </Typography>
                 <input
                   type="file"
@@ -460,7 +563,7 @@ const InvoiceForm = ({ onPreview }) => {
                 textTransform: "none",
               }}
             >
-              {loading ? "💾 Menyimpan..." : "📄 Preview Invoice"}
+              {loading ? "💾 Menyimpan..." : "💾 Simpan Invoice"}
             </Button>
           </form>
         </Paper>

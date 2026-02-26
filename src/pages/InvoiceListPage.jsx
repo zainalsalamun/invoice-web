@@ -62,6 +62,8 @@ const InvoiceListPage = () => {
                     tanggalInvoice: item.tanggal_invoice,
                     tanggalJatuhTempo: item.tanggal_jatuh_tempo,
                     buktiTransfer: item.bukti_transfer,
+                    kurangBayar: item.kurang_bayar,
+                    tanggalPembayaran: item.tanggal_pembayaran,
                 }))
             );
         } catch (err) {

@@ -88,16 +88,26 @@ const InvoiceProofPage = () => {
             {invoice.bukti_transfer ? (
               <Box>
                 <Typography sx={{ mb: 1 }}>📎 Bukti yang diupload:</Typography>
-                <img
-                  src={invoice.bukti_transfer?.startsWith("http") ? invoice.bukti_transfer.replace(/https?:\/\/43\.134\.180\.249:3000/g, "") : `${API_BASE}${invoice.bukti_transfer}`}
-                  alt="Bukti Transfer"
-                  style={{
-                    maxWidth: "100%",
-                    borderRadius: 8,
-                    border: "1px solid #ddd",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  }}
-                />
+                {invoice.bukti_transfer?.endsWith(".pdf") ? (
+                  <iframe
+                    src={invoice.bukti_transfer?.startsWith("http") ? invoice.bukti_transfer.replace(/https?:\/\/43\.134\.180\.249:3000/g, "") : `${API_BASE}${invoice.bukti_transfer}`}
+                    title="Bukti Transfer PDF"
+                    width="100%"
+                    height="400px"
+                    style={{ border: "1px solid #ddd", borderRadius: 8 }}
+                  />
+                ) : (
+                  <img
+                    src={invoice.bukti_transfer?.startsWith("http") ? invoice.bukti_transfer.replace(/https?:\/\/43\.134\.180\.249:3000/g, "") : `${API_BASE}${invoice.bukti_transfer}`}
+                    alt="Bukti Transfer"
+                    style={{
+                      maxWidth: "100%",
+                      borderRadius: 8,
+                      border: "1px solid #ddd",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    }}
+                  />
+                )}
               </Box>
             ) : (
               <Typography sx={{ color: "gray" }}>
@@ -116,7 +126,7 @@ const InvoiceProofPage = () => {
             {uploading ? "Mengunggah..." : "Upload Bukti Baru"}
             <input
               type="file"
-              accept="image/*"
+              accept="image/*,application/pdf"
               hidden
               onChange={handleUpload}
             />

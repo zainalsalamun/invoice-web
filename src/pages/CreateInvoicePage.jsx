@@ -1,10 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import Sidebar from "../components/Sidebar";
 import InvoiceForm from "../components/InvoiceForm";
-import InvoicePreview from "../components/InvoicePreview";
 
 const CreateInvoicePage = () => {
-  const [previewData, setPreviewData] = useState(null);
 
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
@@ -28,14 +26,7 @@ const CreateInvoicePage = () => {
             minHeight: "80vh",
           }}
         >
-          {!previewData ? (
-            <InvoiceForm onPreview={(data) => setPreviewData(data)} />
-          ) : (
-            <InvoicePreview
-              data={previewData}
-              onReset={() => setPreviewData(null)}
-            />
-          )}
+          <InvoiceForm />
         </div>
       </div>
     </div>

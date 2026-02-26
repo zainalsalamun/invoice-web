@@ -104,13 +104,8 @@ export const invoiceService = {
   },
 
   async create(data) {
-    try {
-      const res = await apiClient.post("/invoices", data);
-      return res.data;
-    } catch (err) {
-      console.error("Gagal buat invoice:", err);
-      return null;
-    }
+    const res = await apiClient.post("/invoices", data);
+    return res.data;
   },
 
   async delete(id) {
@@ -148,7 +143,7 @@ export const invoiceService = {
       return [];
     }
   },
-  
+
 
 };
 

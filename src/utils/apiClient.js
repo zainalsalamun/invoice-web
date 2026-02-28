@@ -23,14 +23,24 @@ apiClient.interceptors.request.use(
 
 apiClient.interceptors.response.use(
   (response) => {
-    // Transformasi data untuk menghapus IP lama yang mungkin dikirim dari backend
-    if (response.data) {
-      let stringified = JSON.stringify(response.data);
-      const oldUrlPattern = /https?:\/\/43\.134\.180\.249:3000/g;
-      if (oldUrlPattern.test(stringified)) {
-        stringified = stringified.replace(oldUrlPattern, "");
-        response.data = JSON.parse(stringified);
+    // Transformasi data untuk menghapus URL absolute lama/lainnya agar menjadi path relatif
+    const urlPatterns = [
+      /https?:\/\/43\.134\.180\.249:3000/g,
+      /https?:\/\/touch-order-archives-planner\.trycloudflare\.com/g,
+      /https?:\/\/naltech\.ringnet\.web\.id/g
+    ];
+
+    let stringified = JSON.stringify(response.data);
+    let changed = false;
+    urlPatterns.forEach(pattern => {
+      if (pattern.test(stringified)) {
+        stringified = stringified.replace(pattern, "");
+        changed = true;
       }
+    });
+
+    if (changed) {
+      response.data = JSON.parse(stringified);
     }
     return response;
   },

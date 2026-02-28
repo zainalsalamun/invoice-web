@@ -12,6 +12,7 @@ export const customerService = {
   },
 
   async getById(id) {
+    if (!id || id === "null" || id === "undefined") return null;
     try {
       const res = await apiClient.get(`/customers/${id}`);
       return res.data?.data || null;
@@ -35,6 +36,7 @@ export const customerService = {
   },
 
   async update(id, data) {
+    if (!id || id === "null" || id === "undefined") return null;
     try {
       const payload = buildFormData(data);
       const res = await apiClient.put(`/customers/${id}`, payload, {
@@ -48,6 +50,7 @@ export const customerService = {
   },
 
   async remove(id) {
+    if (!id || id === "null" || id === "undefined") return null;
     try {
       const res = await apiClient.delete(`/customers/${id}`);
       return res.data?.message || null;

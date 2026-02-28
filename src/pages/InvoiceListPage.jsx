@@ -49,7 +49,7 @@ const InvoiceListPage = () => {
             const data = await invoiceService.getAll();
             setInvoices(
                 data.map((item) => ({
-                    id: item.id,
+                    id: item._id || item.id,
                     nomorInvoice: item.nomor_invoice,
                     namaPelanggan: item.nama_pelanggan,
                     alamat: item.alamat,

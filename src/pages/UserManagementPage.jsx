@@ -111,7 +111,7 @@ const UserManagementPage = () => {
     setLoading(true);
     try {
       await apiClient.put(
-        `/users/${selectedUser.id}/password`,
+        `/users/${selectedUser._id || selectedUser.id}/password`,
         { new_password: passwordForm.new_password }
       );
       setOpenPasswordDialog(false);
@@ -170,7 +170,7 @@ const UserManagementPage = () => {
             </TableHead>
             <TableBody>
               {users.map((u) => (
-                <TableRow key={u.id} hover>
+                <TableRow key={u._id || u.id} hover>
                   <TableCell>{u.username}</TableCell>
                   <TableCell>
                     {u.role === "super_admin" ? "Super Admin" :
@@ -199,7 +199,7 @@ const UserManagementPage = () => {
                         size="small"
                         color="error"
                         variant="outlined"
-                        onClick={() => handleDelete(u.id)}
+                        onClick={() => handleDelete(u._id || u.id)}
                       >
                         Hapus
                       </Button>

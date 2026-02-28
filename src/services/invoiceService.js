@@ -84,6 +84,10 @@ export const invoiceService = {
   },
 
   async getById(id) {
+    if (!id || id === "null" || id === "undefined") {
+      console.warn("⚠️ getById dipanggil dengan ID tidak valid:", id);
+      return null;
+    }
     try {
       const res = await apiClient.get(`/invoices/${id}`);
       return res.data?.data || null;
@@ -94,6 +98,7 @@ export const invoiceService = {
   },
 
   async updateStatus(id, status_pembayaran) {
+    if (!id || id === "null" || id === "undefined") return null;
     try {
       const res = await apiClient.put(`/invoices/${id}`, { status_pembayaran });
       return res.data?.data || null;
@@ -109,6 +114,7 @@ export const invoiceService = {
   },
 
   async delete(id) {
+    if (!id || id === "null" || id === "undefined") return null;
     try {
       const res = await apiClient.delete(`/invoices/${id}`);
       return res.data?.message || null;
@@ -119,6 +125,7 @@ export const invoiceService = {
   },
 
   async uploadProof(id, file) {
+    if (!id || id === "null" || id === "undefined") return null;
     try {
       const formData = new FormData();
       formData.append("bukti_transfer", file);

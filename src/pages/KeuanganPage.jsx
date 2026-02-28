@@ -82,7 +82,7 @@ const KeuanganPage = () => {
         setPage(0);
     };
 
-    const selectedMethod = summary.find(s => s.id === selectedMethodId);
+    const selectedMethod = summary.find(s => (s._id || s.id) === selectedMethodId);
 
     return (
         <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f4f7fb" }}>
@@ -167,12 +167,12 @@ const KeuanganPage = () => {
 
                                     {/* List of specific methods */}
                                     {summary.map((item) => (
-                                        <React.Fragment key={item.id}>
+                                        <React.Fragment key={item._id || item.id}>
                                             <ListItem
                                                 button
-                                                selected={selectedMethodId === item.id}
+                                                selected={selectedMethodId === (item._id || item.id)}
                                                 onClick={() => {
-                                                    setSelectedMethodId(item.id);
+                                                    setSelectedMethodId(item._id || item.id);
                                                     setPage(0);
                                                 }}
                                                 style={{
@@ -234,7 +234,7 @@ const KeuanganPage = () => {
                                         <TableBody>
                                             {paginatedCustomers.length > 0 ? (
                                                 paginatedCustomers.map((customer) => (
-                                                    <TableRow key={customer.id} hover>
+                                                    <TableRow key={customer._id || customer.id} hover>
                                                         <TableCell>{customer.id_pelanggan || "-"}</TableCell>
                                                         <TableCell style={{ fontWeight: 500 }}>{customer.nama}</TableCell>
                                                         <TableCell>{customer.kategori_pelanggan || "-"}</TableCell>

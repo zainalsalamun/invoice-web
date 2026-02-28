@@ -148,7 +148,7 @@ const DashboardPage = () => {
                   </TableHead>
                   <TableBody>
                     {tasks.slice(0, 5).map((task) => (
-                      <TableRow key={task.id} hover>
+                      <TableRow key={task._id || task.id} hover>
                         <TableCell sx={{ width: 120 }}>{new Date(task.tanggal).toLocaleDateString('id-ID')}</TableCell>
                         <TableCell fontWeight="bold" sx={{ width: 150 }}>{task.nama_pic}</TableCell>
                         <TableCell sx={{ maxWidth: 400 }}>{task.deskripsi}</TableCell>

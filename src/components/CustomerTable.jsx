@@ -23,6 +23,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { Close as CloseIcon, Visibility, Receipt } from "@mui/icons-material";
+import CustomerProfileDrawer from "./CustomerProfileDrawer";
 
 dayjs.locale("id");
 
@@ -46,20 +47,29 @@ const formatTanggal = (iso) => {
 
 const getApiBase = () => {
   const isProd = process.env.NODE_ENV === "production";
-  if (isProd) return ""; // Kosongkan agar menggunakan proxy Vercel
+  if (isProd) return window.location.origin; // Kembali ke domain Vercel untuk proxy
   let url = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
   return url.replace("/api", "");
 };
 
 const API_BASE = getApiBase();
 
-const CustomerTable = ({ data, onEdit, onDelete, onCreateInvoice, userRole }) => {
+const CustomerTable = ({ data, onEdit, onDelete, onCreateInvoice, userRole, onRefresh }) => {
   const canDelete = userRole === "super_admin";
   const canCreateInvoice = ["super_admin", "admin", "kasir"].includes(userRole);
   const navigate = useNavigate();
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [previewImage, setPreviewImage] = React.useState(null);
+  const [openProfile, setOpenProfile] = React.useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = React.useState(null);
+  const [selectedCustomerRow, setSelectedCustomerRow] = React.useState(null);
+
+  const handleOpenProfile = (row) => {
+    setSelectedCustomerId(row.id);
+    setSelectedCustomerRow(row);
+    setOpenProfile(true);
+  };
 
   const handleChangePage = (_, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (e) => {
@@ -85,6 +95,7 @@ const CustomerTable = ({ data, onEdit, onDelete, onCreateInvoice, userRole }) =>
                 <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Harga</TableCell>
                 <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Metode</TableCell>
                 <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Tagihan (Bulan)</TableCell>
+                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Tgl Tagihan</TableCell>
                 <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Jatuh Tempo</TableCell>
                 <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Status Bayar</TableCell>
                 <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Notes</TableCell>
@@ -96,14 +107,27 @@ const CustomerTable = ({ data, onEdit, onDelete, onCreateInvoice, userRole }) =>
 
             <TableBody>
               {paginated.map((row) => (
-                <TableRow key={row.id} hover>
+                <TableRow key={row._id || row.id} hover>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>
                     <Typography variant="caption" color="text.secondary" fontFamily="monospace">
                       {row.id_pelanggan || "-"}
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      onClick={() => handleOpenProfile(row)}
+                      sx={{
+                        cursor: "pointer",
+                        color: "primary.main",
+                        "&:hover": {
+                          textDecoration: "underline",
+                          color: "primary.dark",
+                        },
+                        transition: "color 0.15s",
+                      }}
+                    >
                       {row.nama}
                     </Typography>
                   </TableCell>
@@ -120,6 +144,9 @@ const CustomerTable = ({ data, onEdit, onDelete, onCreateInvoice, userRole }) =>
                     )}
                   </TableCell>
                   <TableCell>{row.last_invoice_periode || row.tagihan_periode_bulan || "-"}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                    {formatTanggal(row.last_invoice_tanggal)}
+                  </TableCell>
                   <TableCell>
                     {formatTanggal(row.tanggal_jatuh_tempo)}
                   </TableCell>
@@ -218,7 +245,7 @@ const CustomerTable = ({ data, onEdit, onDelete, onCreateInvoice, userRole }) =>
                         variant="contained"
                         size="small"
                         color="error"
-                        onClick={() => onDelete(row.id)}
+                        onClick={() => onDelete(row._id || row.id)}
                         sx={{ fontSize: "0.72rem" }}
                       >
                         Hapus
@@ -281,6 +308,23 @@ const CustomerTable = ({ data, onEdit, onDelete, onCreateInvoice, userRole }) =>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Customer Profile Drawer */}
+      <CustomerProfileDrawer
+        open={openProfile}
+        customerId={selectedCustomerId}
+        onClose={() => {
+          setOpenProfile(false);
+          setSelectedCustomerId(null);
+          setSelectedCustomerRow(null);
+        }}
+        onEdit={(customer) => {
+          onEdit && onEdit(customer || selectedCustomerRow);
+        }}
+        onPaymentConfirmed={() => {
+          if (onRefresh) onRefresh();
+        }}
+      />
     </>
   );
 };

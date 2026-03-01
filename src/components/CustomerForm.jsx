@@ -79,6 +79,11 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
       : defaultForm
   );
 
+  // PPN toggle: ON jika data awal punya ppn > 0
+  const [ppnEnabled, setPpnEnabled] = useState(
+    initialData ? Number(initialData.ppn || 0) > 0 : false
+  );
+
   // Preview URL untuk gambar bukti transfer yang dipilih
   const [previewUrl, setPreviewUrl] = useState(() => {
     if (!initialData?.bukti_transfer) return null;
@@ -163,10 +168,10 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Maintain single fields for backward compatibility (using first item)
     const firstItem = form.items[0] || {};
     const subtotal = form.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0);
-    const calculatedPpn = subtotal * 0.11;
+    // PPN hanya dihitung jika toggle aktif
+    const calculatedPpn = ppnEnabled ? Math.round(subtotal * 0.11) : 0;
 
     const updatedForm = {
       ...form,
@@ -384,26 +389,49 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
       </Button>
 
       {/* Total Section */}
-      <Box sx={{ mb: 3, p: 2, bgcolor: "#f1f5f9", borderRadius: 2 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-          <Typography variant="body2">Subtotal:</Typography>
-          <Typography variant="body2" fontWeight="bold">
-            Rp {form.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0).toLocaleString("id-ID")}
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-          <Typography variant="body2">PPN (11%):</Typography>
-          <Typography variant="body2" fontWeight="bold">
-            Rp {(form.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0) * 0.11).toLocaleString("id-ID")}
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1, pt: 1, borderTop: "1px solid #cbd5e1" }}>
-          <Typography variant="subtitle1" fontWeight="bold">Total Tagihan:</Typography>
-          <Typography variant="subtitle1" fontWeight="bold" color="primary">
-            Rp {(form.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0) * 1.11).toLocaleString("id-ID")}
-          </Typography>
-        </Box>
-      </Box>
+      {(() => {
+        const subtotal = form.items.reduce((sum, item) => sum + (parseFloat(item.jumlah) || 0), 0);
+        const ppnAmount = ppnEnabled ? Math.round(subtotal * 0.11) : 0;
+        const total = subtotal + ppnAmount;
+        return (
+          <Box sx={{ mb: 3, p: 2, bgcolor: "#f1f5f9", borderRadius: 2 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+              <Typography variant="body2">Subtotal (DPP):</Typography>
+              <Typography variant="body2" fontWeight="bold">
+                Rp {subtotal.toLocaleString("id-ID")}
+              </Typography>
+            </Box>
+            {/* PPN Toggle */}
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={ppnEnabled}
+                    onChange={(e) => setPpnEnabled(e.target.checked)}
+                    size="small"
+                    color="primary"
+                  />
+                }
+                label={
+                  <Typography variant="body2">
+                    PPN 11% {ppnEnabled ? "(dikenakan)" : "(tidak dikenakan)"}
+                  </Typography>
+                }
+                sx={{ m: 0 }}
+              />
+              <Typography variant="body2" fontWeight="bold" color={ppnEnabled ? "text.primary" : "text.disabled"}>
+                {ppnEnabled ? `Rp ${ppnAmount.toLocaleString("id-ID")}` : "-"}
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1, pt: 1, borderTop: "1px solid #cbd5e1" }}>
+              <Typography variant="subtitle1" fontWeight="bold">Total Tagihan:</Typography>
+              <Typography variant="subtitle1" fontWeight="bold" color="primary">
+                Rp {total.toLocaleString("id-ID")}
+              </Typography>
+            </Box>
+          </Box>
+        );
+      })()}
 
       <Grid container spacing={2} sx={{ mb: 2 }}>
         {/* Metode Pembayaran */}

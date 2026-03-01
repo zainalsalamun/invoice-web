@@ -190,6 +190,7 @@ const CustomerPage = () => {
             <CustomerTable
               data={filteredCustomers}
               userRole={user?.role}
+              onRefresh={fetchData}
               onEdit={(row) => {
                 setEditing(row);
                 setShowForm(true);

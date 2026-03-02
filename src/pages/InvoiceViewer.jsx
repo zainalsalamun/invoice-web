@@ -32,19 +32,19 @@ const InvoiceViewer = () => {
     const items =
       Array.isArray(data.items) && data.items.length > 0
         ? data.items.map((it, idx) => ({
-            no: idx + 1,
-            keterangan: it.keterangan || it.layanan || rawLayanan || "-",
-            harga: Number(it.harga || it.harga_satuan || 0),
-            qty: Number(it.qty || it.jumlah || 1),
-          }))
+          no: idx + 1,
+          keterangan: it.keterangan || it.layanan || rawLayanan || "-",
+          harga: Number(it.harga || it.harga_satuan || 0),
+          qty: Number(it.qty || it.jumlah || 1),
+        }))
         : [
-            {
-              no: 1,
-              keterangan: rawLayanan || "Layanan Internet",
-              harga: Number(rawHargaPaket || rawTotal - rawPpn || 0),
-              qty: 1,
-            },
-          ];
+          {
+            no: 1,
+            keterangan: rawLayanan || "Layanan Internet",
+            harga: Number(rawHargaPaket || rawTotal - rawPpn || 0),
+            qty: 1,
+          },
+        ];
 
     // hitung DPP (sum harga * qty)
     let dpp =
@@ -57,16 +57,13 @@ const InvoiceViewer = () => {
       data.vat != null
         ? Number(data.vat)
         : rawPpn
-        ? Number(rawPpn)
-        : Math.round(dpp * 0.11);
+          ? Number(rawPpn)
+          : Math.round(dpp * 0.11);
 
-    // hitung total
-    let totalTagihan =
-      data.total_tagihan != null
-        ? Number(data.total_tagihan)
-        : rawTotal
-        ? Number(rawTotal)
-        : dpp + vat;
+    // hitung total: selalu DPP + VAT
+    // rawTotal/data.total di database hanya menyimpan DPP (sebelum PPN),
+    // jadi tidak bisa digunakan langsung sebagai total akhir.
+    const totalTagihan = dpp + vat;
 
     return {
       id: data.id,
@@ -86,50 +83,35 @@ const InvoiceViewer = () => {
     };
   };
 
-  // 🔄 Load invoice (state -> localStorage -> API)
+  // 🔄 Load invoice: prioritas invoiceId dari URL, fallback ke location.state
   useEffect(() => {
     const loadInvoice = async () => {
-      // 1. dari navigate state
-      if (location.state?.data) {
-        const data = normalizeInvoice(location.state.data);
-        setInvoice(data);
-        localStorage.setItem("lastInvoice", JSON.stringify(data));
-        return;
-      }
-
-      // 2. dari localStorage (kalau refresh)
-      const stored = localStorage.getItem("lastInvoice");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setInvoice(parsed);
-          return;
-        } catch {
-          // ignore parsing error
-        }
-      }
-
-      // 3. dari backend (kalau akses langsung /invoices/:id.pdf)
+      // 1. Selalu coba fetch dari API dulu jika ada invoiceId di URL
+      //    Ini memastikan data selalu fresh dan sesuai ID yang diklik
       if (invoiceId) {
         try {
           const res = await invoiceService.getById(invoiceId);
           if (res) {
-            const data = normalizeInvoice(res);
-            setInvoice(data);
-            localStorage.setItem("lastInvoice", JSON.stringify(data));
+            setInvoice(normalizeInvoice(res));
             return;
           }
         } catch (e) {
-          console.error("Gagal ambil invoice:", e);
+          console.error("Gagal ambil invoice dari API:", e);
         }
       }
 
-      // fallback: balik ke dashboard
+      // 2. Fallback ke location.state jika tidak ada invoiceId atau API gagal
+      if (location.state?.data) {
+        setInvoice(normalizeInvoice(location.state.data));
+        return;
+      }
+
+      // 3. Tidak ada data sama sekali → balik ke dashboard
       navigate("/");
     };
 
     loadInvoice();
-  }, [location.state, invoiceId, navigate]);
+  }, [invoiceId, location.state, navigate]);
 
   if (!invoice) {
     return (

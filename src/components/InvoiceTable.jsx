@@ -43,7 +43,7 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp, userRole, onDelet
 
   const confirmDelete = () => {
     if (selectedInvoice) {
-      onDelete(selectedInvoice.id);
+      onDelete(selectedInvoice._id || selectedInvoice.id);
       setOpenDeleteDialog(false);
     }
   };
@@ -66,9 +66,9 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp, userRole, onDelet
             </TableHead>
 
             <TableBody>
-              {paginatedData.map((row, i) => (
+              {paginatedData.map((row) => (
                 <TableRow
-                  key={i}
+                  key={row._id || row.id}
                   hover
                   sx={{
                     backgroundColor:

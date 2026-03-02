@@ -42,6 +42,7 @@ const defaultForm = {
   paket_layanan: "",
   ppn: "",
   tanggal_jatuh_tempo: "",
+  tanggal_tagihan: "",
   metode_pembayaran_id: "",
   aktif: true,
   notes: "",
@@ -53,7 +54,15 @@ const defaultForm = {
 
 const toInputDate = (iso) => {
   if (!iso) return "";
-  return iso.split("T")[0];
+  // Ambil 10 karakter pertama (YYYY-MM-DD) langsung dari string
+  // TANPA melalui new Date() agar tidak ada timezone offset
+  if (typeof iso === "string") return iso.slice(0, 10);
+  // Jika sudah Date object, pakai metode lokal agar tidak shift
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 };
 
 const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
@@ -68,6 +77,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         paket_layanan: initialData.paket_layanan ?? "",
         ppn: initialData.ppn ?? "",
         tanggal_jatuh_tempo: toInputDate(initialData.tanggal_jatuh_tempo),
+        tanggal_tagihan: toInputDate(initialData.tanggal_tagihan || initialData.last_invoice_tanggal),
         notes: initialData.notes ?? "",
         status_pembayaran: initialData.status_pembayaran ?? "BELUM LUNAS",
         tagihan_periode_bulan: initialData.tagihan_periode_bulan ?? "",
@@ -279,6 +289,20 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
             fullWidth
             size="small"
             placeholder="cth: Januari 2024"
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            label="Tanggal Tagihan"
+            name="tanggal_tagihan"
+            value={form.tanggal_tagihan}
+            onChange={handleChange}
+            fullWidth
+            size="small"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            helperText="Tanggal invoice diterbitkan"
           />
         </Grid>
 

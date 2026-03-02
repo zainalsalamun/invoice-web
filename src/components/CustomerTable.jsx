@@ -38,7 +38,11 @@ const formatRupiah = (value) => {
 
 const formatTanggal = (iso) => {
   if (!iso) return "-";
-  return new Date(iso).toLocaleDateString("id-ID", {
+  // Parse YYYY-MM-DD secara manual agar tidak terkena timezone offset
+  const str = typeof iso === "string" ? iso.slice(0, 10) : new Date(iso).toISOString().slice(0, 10);
+  const [y, m, d] = str.split("-").map(Number);
+  const date = new Date(y, m - 1, d); // local date, no UTC shift
+  return date.toLocaleDateString("id-ID", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -145,7 +149,7 @@ const CustomerTable = ({ data, onEdit, onDelete, onCreateInvoice, userRole, onRe
                   </TableCell>
                   <TableCell>{row.last_invoice_periode || row.tagihan_periode_bulan || "-"}</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                    {formatTanggal(row.last_invoice_tanggal)}
+                    {formatTanggal(row.tanggal_tagihan || row.last_invoice_tanggal)}
                   </TableCell>
                   <TableCell>
                     {formatTanggal(row.tanggal_jatuh_tempo)}

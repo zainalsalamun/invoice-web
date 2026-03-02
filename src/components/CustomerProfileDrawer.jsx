@@ -7,7 +7,6 @@ import {
     Box,
     Typography,
     Chip,
-    Divider,
     IconButton,
     Avatar,
     Skeleton,

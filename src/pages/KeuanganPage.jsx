@@ -176,16 +176,16 @@ const KeuanganPage = () => {
                                                     setPage(0);
                                                 }}
                                                 style={{
-                                                    backgroundColor: selectedMethodId === item.id ? "rgba(33, 150, 243, 0.08)" : "transparent",
-                                                    borderLeft: selectedMethodId === item.id ? "4px solid #2196F3" : "4px solid transparent",
+                                                    backgroundColor: selectedMethodId === (item._id || item.id) ? "rgba(33, 150, 243, 0.08)" : "transparent",
+                                                    borderLeft: selectedMethodId === (item._id || item.id) ? "4px solid #2196F3" : "4px solid transparent",
                                                     padding: "16px 20px"
                                                 }}
                                             >
-                                                <ListItemIcon style={{ minWidth: 40, color: selectedMethodId === item.id ? "#2196F3" : "#757575" }}>
+                                                <ListItemIcon style={{ minWidth: 40, color: selectedMethodId === (item._id || item.id) ? "#2196F3" : "#757575" }}>
                                                     {getMethodIcon(item.metode)}
                                                 </ListItemIcon>
                                                 <ListItemText
-                                                    primary={<Typography style={{ fontWeight: selectedMethodId === item.id ? 600 : 500, fontSize: 14 }}>{item.metode || "Tidak Ada"}</Typography>}
+                                                    primary={<Typography style={{ fontWeight: selectedMethodId === (item._id || item.id) ? 600 : 500, fontSize: 14 }}>{item.metode || "Tidak Ada"}</Typography>}
                                                     secondary={<Typography style={{ fontSize: 12, color: "#757575" }}>{formatRupiah(item.total_tagihan)}</Typography>}
                                                 />
                                             </ListItem>

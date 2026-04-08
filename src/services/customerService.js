@@ -71,8 +71,9 @@ function buildFormData(data) {
   if (data.nomor_wa) fd.append("nomor_wa", data.nomor_wa);
   if (data.paket) fd.append("paket", data.paket);
   if (data.paket_layanan) fd.append("paket_layanan", data.paket_layanan);
-  if (data.ppn) fd.append("ppn", parseFloat(data.ppn) || 0);
+  if (data.ppn !== undefined) fd.append("ppn", parseFloat(data.ppn) || 0);
   if (data.tanggal_jatuh_tempo) fd.append("tanggal_jatuh_tempo", data.tanggal_jatuh_tempo);
+  if (data.tanggal_tagihan) fd.append("tanggal_tagihan", data.tanggal_tagihan);
   if (data.harga_langganan !== undefined) fd.append("harga_langganan", parseFloat(data.harga_langganan) || 0);
   if (data.metode_pembayaran_id) fd.append("metode_pembayaran_id", data.metode_pembayaran_id);
   if (data.notes) fd.append("notes", data.notes);

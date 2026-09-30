@@ -21,14 +21,17 @@ import App from "./App";
 import "./styles.css";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
+import { ThemeModeProvider } from "./context/ThemeModeContext";
 
 dayjs.locale("id");
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <BrowserRouter>
-    <SnackbarProvider maxSnack={3} autoHideDuration={3000}>
-      <App />
-    </SnackbarProvider>
+    <ThemeModeProvider>
+      <SnackbarProvider maxSnack={3} autoHideDuration={3000}>
+        <App />
+      </SnackbarProvider>
+    </ThemeModeProvider>
   </BrowserRouter>
 );

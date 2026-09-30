@@ -1,6 +1,11 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
-import DashboardPage from "./pages/DashboardPage";
+import { Route, Routes } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
+import OperationalDashboardPage from "./pages/OperationalDashboardPage";
+import PlansPage from "./pages/PlansPage";
+import AssetsPage from "./pages/AssetsPage";
+import SystemRequestsPage from "./pages/SystemRequestsPage";
+import ReportsPage from "./pages/ReportsPage";
 import CreateInvoicePage from "./pages/CreateInvoicePage";
 import InvoiceViewer from "./pages/InvoiceViewer";
 import CustomerPage from "./pages/CustomerPage";
@@ -9,126 +14,40 @@ import SettingsPage from "./pages/SettingsPage";
 import MetodePembayaranPage from "./pages/MetodePembayaranPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import LoginPage from "./pages/LoginPage";
-import ProtectedRoute from "./components/ProtectedRoute";
 import InvoiceDetailPage from "./pages/InvoiceDetailPage";
 import InvoiceProofPage from "./pages/InvoiceProofPage";
 import KeuanganPage from "./pages/KeuanganPage";
 import ChatTrackingPage from "./pages/ChatTrackingPage";
 import InvoiceListPage from "./pages/InvoiceListPage";
 
-const App = () => {
-  return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
+const allRoles = ["super_admin", "admin", "admin_junior", "kasir", "teknisi", "programmer", "management"];
+const customerRoles = ["super_admin", "admin", "admin_junior", "teknisi", "management"];
+const billingRoles = ["super_admin", "admin", "admin_junior", "kasir", "teknisi", "management"];
+const managementRoles = ["super_admin", "admin", "admin_junior", "kasir", "management"];
 
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "kasir", "teknisi"]}>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
+const secure = (roles, page) => <ProtectedRoute allowedRoles={roles}>{page}</ProtectedRoute>;
 
-      <Route
-        path="/invoices"
-        element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "kasir", "teknisi"]}>
-            <InvoiceListPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/invoices/new"
-        element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "kasir"]}>
-            <CreateInvoicePage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/invoices/:invoiceId.pdf"
-        element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "kasir", "teknisi"]}>
-            <InvoiceViewer />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/customers"
-        element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "teknisi"]}>
-            <CustomerPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/users"
-        element={
-          <ProtectedRoute allowedRoles={["super_admin"]}>
-            <UserManagementPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "kasir", "teknisi"]}>
-            <SettingsPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/metode-pembayaran"
-        element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior"]}>
-            <MetodePembayaranPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/chat-tracking"
-        element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior"]}>
-            <ChatTrackingPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route path="*" element={<NotFoundPage />} />
-
-      <Route
-        path="/invoices/detail/:id"
-        element={
-          <ProtectedRoute allowedRoles={["admin", "kasir"]}>
-            <InvoiceDetailPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route path="/invoices/:id/proof" element={<InvoiceProofPage />} />
-
-      <Route
-        path="/keuangan"
-        element={
-          <ProtectedRoute allowedRoles={["super_admin", "admin", "admin_junior", "kasir"]}>
-            <KeuanganPage />
-          </ProtectedRoute>
-        }
-      />
-
-
-    </Routes>
-
-
-  );
-};
+const App = () => (
+  <Routes>
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/" element={secure(allRoles, <OperationalDashboardPage />)} />
+    <Route path="/customers" element={secure(customerRoles, <CustomerPage />)} />
+    <Route path="/plans" element={secure(allRoles, <PlansPage />)} />
+    <Route path="/invoices" element={secure(billingRoles, <InvoiceListPage />)} />
+    <Route path="/invoices/new" element={secure(["super_admin", "admin", "admin_junior", "kasir"], <CreateInvoicePage />)} />
+    <Route path="/invoices/:invoiceId.pdf" element={secure(billingRoles, <InvoiceViewer />)} />
+    <Route path="/invoices/detail/:id" element={secure(["super_admin", "admin", "admin_junior", "kasir"], <InvoiceDetailPage />)} />
+    <Route path="/invoices/:id/proof" element={secure(billingRoles, <InvoiceProofPage />)} />
+    <Route path="/chat-tracking" element={secure(allRoles, <ChatTrackingPage />)} />
+    <Route path="/assets" element={secure(customerRoles, <AssetsPage />)} />
+    <Route path="/system-requests" element={secure(allRoles, <SystemRequestsPage />)} />
+    <Route path="/reports" element={secure(managementRoles, <ReportsPage />)} />
+    <Route path="/keuangan" element={secure(managementRoles, <KeuanganPage />)} />
+    <Route path="/metode-pembayaran" element={secure(["super_admin", "admin", "admin_junior"], <MetodePembayaranPage />)} />
+    <Route path="/users" element={secure(["super_admin"], <UserManagementPage />)} />
+    <Route path="/settings" element={secure(allRoles, <SettingsPage />)} />
+    <Route path="*" element={<NotFoundPage />} />
+  </Routes>
+);
 
 export default App;

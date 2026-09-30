@@ -1,10 +1,22 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
     font-family: Arial, sans-serif;
-    background: #f7f9fc;
-    color: #333;
+    background: transparent;
     margin: 0;
     padding: 0;
   }
+
+button.MuiButton-root,
+button.MuiIconButton-root {
+  margin-top: 0;
+}
   
   .container {
     max-width: 800px;
@@ -30,7 +42,7 @@ body {
     border-radius: 6px;
   }
   
-  button {
+  button:not(.MuiButtonBase-root) {
     margin-top: 20px;
     padding: 10px 20px;
     border: none;
@@ -41,7 +53,7 @@ body {
     cursor: pointer;
   }
   
-  button:hover {
+  button:not(.MuiButtonBase-root):hover {
     background: #0056b3;
   }
   
@@ -277,16 +289,15 @@ body {
 
 body {
   font-family: "Inter", Arial, sans-serif;
-  background: #f4f6f9;
+  background: transparent;
   margin: 0;
 }
 
 h2 {
   font-weight: 600;
-  color: #333;
+  color: inherit;
 }
 
 .MuiDrawer-paper::-webkit-scrollbar {
   display: none;
 }
-

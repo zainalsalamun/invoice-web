@@ -7,6 +7,7 @@ import {
   Button,
   CircularProgress,
 } from "@mui/material";
+import { AttachFileOutlined, CloudUploadOutlined, ReceiptLongOutlined } from "@mui/icons-material";
 import Sidebar from "../components/Sidebar";
 import { invoiceService } from "../services/invoiceService";
 
@@ -54,10 +55,10 @@ const InvoiceProofPage = () => {
     try {
       const res = await invoiceService.uploadProof(id, file);
       if (res?.success) {
-        alert("✅ Bukti pembayaran berhasil diupload!");
+        alert("Bukti pembayaran berhasil diupload!");
         await fetchInvoice();
       } else {
-        alert("❌ Upload gagal, coba lagi.");
+        alert("Upload gagal, coba lagi.");
       }
     } catch (err) {
       console.error(err);
@@ -82,8 +83,8 @@ const InvoiceProofPage = () => {
       <Sidebar active="dashboard" />
       <Box sx={{ flexGrow: 1, p: 4 }}>
         <Paper sx={{ p: 4, borderRadius: 3, boxShadow: 3, maxWidth: 600 }}>
-          <Typography variant="h6" sx={{ mb: 3, fontWeight: "bold" }}>
-            🧾 Bukti Pembayaran
+          <Typography variant="h6" sx={{ mb: 3, fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+            <ReceiptLongOutlined aria-hidden="true" /> Bukti Pembayaran
           </Typography>
 
           <Typography><b>Nomor Invoice:</b> {invoice.nomor_invoice}</Typography>
@@ -93,7 +94,9 @@ const InvoiceProofPage = () => {
           <Box sx={{ my: 3 }}>
             {invoice.bukti_transfer ? (
               <Box>
-                <Typography sx={{ mb: 1 }}>📎 Bukti yang diupload:</Typography>
+                <Typography sx={{ mb: 1, display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <AttachFileOutlined aria-hidden="true" /> Bukti yang diupload:
+                </Typography>
                 {invoice.bukti_transfer?.endsWith(".pdf") ? (
                   <iframe
                     src={getBuktiUrl(invoice.bukti_transfer)}
@@ -127,6 +130,7 @@ const InvoiceProofPage = () => {
             component="label"
             color="primary"
             disabled={uploading}
+            startIcon={<CloudUploadOutlined />}
             sx={{ textTransform: "none" }}
           >
             {uploading ? "Mengunggah..." : "Upload Bukti Baru"}

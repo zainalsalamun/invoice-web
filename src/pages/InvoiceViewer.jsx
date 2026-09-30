@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Button, Box, Typography, Divider } from "@mui/material";
+import { ArrowBack, PictureAsPdfOutlined } from "@mui/icons-material";
 import logoRingnet from "../assets/logoringnet.png";
 import { generatePDF } from "../utils/pdfGenerator";
 import { invoiceService } from "../services/invoiceService";
@@ -482,11 +483,12 @@ const InvoiceViewer = () => {
             variant="contained"
             color="primary"
             onClick={() => generatePDF(invoice)}
+            startIcon={<PictureAsPdfOutlined />}
           >
-            📄 Generate PDF
+            Generate PDF
           </Button>
-          <Button variant="outlined" onClick={() => navigate(-1)}>
-            ⬅️ Kembali
+          <Button variant="outlined" onClick={() => navigate(-1)} startIcon={<ArrowBack />}>
+            Kembali
           </Button>
         </Box>
       </Box>

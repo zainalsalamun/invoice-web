@@ -9,6 +9,7 @@ import {
   CircularProgress,
   Chip,
 } from "@mui/material";
+import { AttachFileOutlined, ErrorOutline, ReceiptLongOutlined } from "@mui/icons-material";
 import Sidebar from "../components/Sidebar";
 import { invoiceService } from "../services/invoiceService";
 
@@ -39,7 +40,7 @@ const InvoiceDetailPage = () => {
         const data = await invoiceService.getById(id);
         setInvoice(data);
       } catch (error) {
-        console.error("❌ Gagal mengambil invoice:", error);
+        console.error("Gagal mengambil invoice:", error);
       } finally {
         setLoading(false);
       }
@@ -72,15 +73,15 @@ const InvoiceDetailPage = () => {
           justifyContent: "center",
         }}
       >
-        <Typography color="error" fontSize={18}>
-          Invoice tidak ditemukan ❌
+        <Typography color="error" fontSize={18} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <ErrorOutline aria-hidden="true" /> Invoice tidak ditemukan
         </Typography>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#f9fafb" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       <Sidebar active="invoices" />
 
       <Box sx={{ flexGrow: 1, p: 4 }}>
@@ -103,11 +104,13 @@ const InvoiceDetailPage = () => {
             boxShadow: 3,
             maxWidth: 800,
             mx: "auto",
-            backgroundColor: "#fff",
+            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "divider",
           }}
         >
-          <Typography variant="h5" sx={{ mb: 3, fontWeight: "bold" }}>
-            🧾 Detail Invoice
+          <Typography variant="h5" sx={{ mb: 3, fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+            <ReceiptLongOutlined aria-hidden="true" /> Detail Invoice
           </Typography>
 
           <Box sx={{ mb: 2 }}>
@@ -164,14 +167,15 @@ const InvoiceDetailPage = () => {
                 variant="h6"
                 sx={{ mb: 1, fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}
               >
-                📎 Bukti Transfer
+                <AttachFileOutlined aria-hidden="true" /> Bukti Transfer
               </Typography>
               <Box
                 sx={{
                   p: 2,
-                  border: "1px solid #ddd",
+                  border: "1px solid",
+                  borderColor: "divider",
                   borderRadius: 2,
-                  backgroundColor: "#fafafa",
+                  bgcolor: (theme) => theme.palette.mode === "dark" ? "#141720" : "#fafafa",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "flex-start",

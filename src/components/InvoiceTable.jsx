@@ -54,7 +54,7 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp, userRole, onDelet
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ backgroundColor: "#f4f6f8" }}>
+              <TableRow>
                 <TableCell><b>Nomor Invoice</b></TableCell>
                 <TableCell><b>Nama Pelanggan</b></TableCell>
                 <TableCell><b>Periode</b></TableCell>
@@ -95,7 +95,7 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp, userRole, onDelet
                       "-"
                     )}
                     {row.tanggalPembayaran && (
-                      <div style={{ fontSize: "0.7rem", color: "#666" }}>
+                      <div style={{ fontSize: "0.7rem", color: "var(--muted-text, #8b91a0)" }}>
                         Tgl Bayar: {row.tanggalPembayaran}
                       </div>
                     )}

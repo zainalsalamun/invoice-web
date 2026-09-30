@@ -13,6 +13,7 @@ import {
     Alert,
     Slide,
 } from "@mui/material";
+import { AssessmentOutlined } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import InvoiceTable from "../components/InvoiceTable";
@@ -67,7 +68,7 @@ const InvoiceListPage = () => {
                 }))
             );
         } catch (err) {
-            console.error("❌ Gagal ambil data invoice:", err);
+            console.error("Gagal ambil data invoice:", err);
             setSnackbar({
                 open: true,
                 message: "Gagal memuat data dari server.",
@@ -159,14 +160,14 @@ const InvoiceListPage = () => {
         if (res?.success) {
             setSnackbar({
                 open: true,
-                message: "✅ Bukti pembayaran berhasil diupload!",
+                message: "Bukti pembayaran berhasil diupload!",
                 severity: "success",
             });
             fetchInvoices();
         } else {
             setSnackbar({
                 open: true,
-                message: "❌ Gagal upload bukti pembayaran.",
+                message: "Gagal upload bukti pembayaran.",
                 severity: "error",
             });
         }
@@ -178,22 +179,22 @@ const InvoiceListPage = () => {
             if (res) {
                 setSnackbar({
                     open: true,
-                    message: "✅ Invoice berhasil dihapus!",
+                    message: "Invoice berhasil dihapus!",
                     severity: "success",
                 });
                 fetchInvoices();
             } else {
                 setSnackbar({
                     open: true,
-                    message: "❌ Gagal menghapus invoice.",
+                    message: "Gagal menghapus invoice.",
                     severity: "error",
                 });
             }
         } catch (err) {
-            console.error("❌ Gagal hapus invoice:", err);
+            console.error("Gagal hapus invoice:", err);
             setSnackbar({
                 open: true,
-                message: "❌ Gagal menghapus invoice.",
+                message: "Gagal menghapus invoice.",
                 severity: "error",
             });
         }
@@ -203,7 +204,9 @@ const InvoiceListPage = () => {
         <Box sx={{ display: "flex", minHeight: "100vh" }}>
             <Sidebar active="/invoices" />
             <Box sx={{ flexGrow: 1, p: 4 }}>
-                <h2 style={{ marginBottom: 20 }}>📊 Daftar Invoice Pelanggan</h2>
+                <Typography variant="h5" component="h1" sx={{ mb: 2.5, fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
+                    <AssessmentOutlined aria-hidden="true" /> Daftar Invoice Pelanggan
+                </Typography>
 
                 {/* Filter Bar */}
                 <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
@@ -291,7 +294,7 @@ const InvoiceListPage = () => {
                         { title: "Belum Lunas", value: summary.totalBelum, color: "#ffc107", textColor: "#333" },
                         { title: "Total Tagihan", value: `Rp ${summary.totalNominal.toLocaleString("id-ID")}`, color: "#6f42c1", textColor: "white" },
                     ].map((card, index) => (
-                        <Grid item xs={12} sm={6} md={3} key={index}>
+                        <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
                             <Card
                                 sx={{
                                     bgcolor: card.color,

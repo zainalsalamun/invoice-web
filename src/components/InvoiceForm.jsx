@@ -30,6 +30,8 @@ import {
   Inventory as PackageIcon,
   Lock as LockIcon,
   CheckCircle as CheckIcon,
+  SaveOutlined,
+  WarningAmberOutlined,
 } from "@mui/icons-material";
 import AlertDialog from "./AlertDialog";
 import { invoiceService } from "../services/invoiceService";
@@ -226,7 +228,7 @@ const InvoiceForm = () => {
     <>
       <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 860, mx: "auto" }}>
         {/* ── STEP 1: Pilih Pelanggan ── */}
-        <Paper elevation={0} sx={{ border: "1px solid #e8e8e8", borderRadius: 2, p: 3, mb: 3 }}>
+        <Paper elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 3, mb: 3 }}>
           <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
             1 · Pilih Pelanggan
           </Typography>
@@ -268,7 +270,7 @@ const InvoiceForm = () => {
               sx={{
                 mt: 2.5,
                 p: 2,
-                bgcolor: "#f0f7ff",
+                bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(100,181,246,.1)" : "#f0f7ff",
                 borderRadius: 2,
                 border: "1px solid #bbdefb",
               }}
@@ -316,7 +318,7 @@ const InvoiceForm = () => {
               <Divider sx={{ mb: 1.5 }} />
 
               <Grid container spacing={1.5}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <InfoBadge
                     icon={<LocationIcon fontSize="small" />}
                     label="Alamat"
@@ -329,7 +331,7 @@ const InvoiceForm = () => {
                     highlight="#2e7d32"
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <InfoBadge
                     icon={<PackageIcon fontSize="small" />}
                     label="Paket Layanan"
@@ -350,7 +352,8 @@ const InvoiceForm = () => {
         <Paper
           elevation={0}
           sx={{
-            border: "1px solid #e8e8e8",
+            border: "1px solid",
+            borderColor: "divider",
             borderRadius: 2,
             p: 3,
             mb: 3,
@@ -374,12 +377,12 @@ const InvoiceForm = () => {
           </Box>
 
           {/* Tabel item */}
-          <Box sx={{ border: "1px solid #f0f0f0", borderRadius: 1.5, overflow: "hidden" }}>
+          <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1.5, overflow: "hidden" }}>
             <Box
               sx={{
                 display: "grid",
                 gridTemplateColumns: "1fr 120px 60px 130px",
-                bgcolor: "#f7f8fa",
+                bgcolor: (theme) => theme.palette.mode === "dark" ? "#222631" : "#f7f8fa",
                 px: 2,
                 py: 1,
               }}
@@ -404,8 +407,9 @@ const InvoiceForm = () => {
                     gridTemplateColumns: "1fr 120px 60px 130px",
                     px: 2,
                     py: 1.2,
-                    borderTop: idx > 0 ? "1px solid #f0f0f0" : "none",
-                    bgcolor: idx % 2 === 0 ? "#fff" : "#fcfcfc",
+                    borderTop: idx > 0 ? "1px solid" : "none",
+                    borderColor: "divider",
+                    bgcolor: (theme) => idx % 2 === 0 ? "background.paper" : (theme.palette.mode === "dark" ? "#181b24" : "#fcfcfc"),
                   }}
                 >
                   <Typography variant="body2">{it.deskripsi || "-"}</Typography>
@@ -468,7 +472,8 @@ const InvoiceForm = () => {
         <Paper
           elevation={0}
           sx={{
-            border: "1px solid #e8e8e8",
+            border: "1px solid",
+            borderColor: "divider",
             borderRadius: 2,
             p: 3,
             mb: 3,
@@ -482,7 +487,7 @@ const InvoiceForm = () => {
 
           <Grid container spacing={2}>
             {/* Periode — Bulan */}
-            <Grid item xs={6} sm={3}>
+            <Grid size={{ xs: 6, sm: 3 }}>
               <TextField
                 select
                 label="Bulan Tagihan"
@@ -506,7 +511,7 @@ const InvoiceForm = () => {
             </Grid>
 
             {/* Periode — Tahun */}
-            <Grid item xs={6} sm={3}>
+            <Grid size={{ xs: 6, sm: 3 }}>
               <TextField
                 select
                 label="Tahun"
@@ -525,7 +530,7 @@ const InvoiceForm = () => {
             </Grid>
 
             {/* Jatuh Tempo */}
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Tanggal Jatuh Tempo"
                 type="date"
@@ -543,7 +548,7 @@ const InvoiceForm = () => {
             </Grid>
 
             {/* Status Pembayaran */}
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 select
                 label="Status Pembayaran"
@@ -581,8 +586,9 @@ const InvoiceForm = () => {
           <Paper
             elevation={0}
             sx={{
-              border: "1px solid #e0f2f1",
-              bgcolor: "#f0fdf4",
+              border: "1px solid",
+              borderColor: (theme) => theme.palette.mode === "dark" ? "rgba(74,222,128,.28)" : "#e0f2f1",
+              bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(74,222,128,.08)" : "#f0fdf4",
               borderRadius: 2,
               p: 3,
               mb: 3,
@@ -603,7 +609,7 @@ const InvoiceForm = () => {
                 ["Total Tagihan", formatRp(totalTagihan)],
                 ["Status", statusPembayaran],
               ].map(([k, v]) => (
-                <Grid item xs={6} sm={4} key={k}>
+                <Grid size={{ xs: 6, sm: 4 }} key={k}>
                   <Typography variant="caption" color="text.secondary">{k}</Typography>
                   <Typography variant="body2" fontWeight={600}>{v}</Typography>
                 </Grid>
@@ -628,8 +634,9 @@ const InvoiceForm = () => {
             disabled={!selectedCustomer || loading}
             onClick={handleSubmit}
             sx={{ textTransform: "none", fontWeight: 700, px: 4, flexGrow: 1 }}
+            startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <SaveOutlined />}
           >
-            {loading ? "💾 Menyimpan..." : "💾 Terbitkan Invoice"}
+            {loading ? "Menyimpan..." : "Terbitkan Invoice"}
           </Button>
         </Box>
       </Box>
@@ -643,7 +650,7 @@ const InvoiceForm = () => {
       {/* ── Dialog: Invoice duplikat periode ── */}
       <Dialog open={showDuplicateDialog} onClose={() => setShowDuplicateDialog(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1, pb: 1 }}>
-          <span style={{ fontSize: 22 }}>⚠️</span> Invoice Sudah Ada
+          <WarningAmberOutlined color="warning" aria-hidden="true" /> Invoice Sudah Ada
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>

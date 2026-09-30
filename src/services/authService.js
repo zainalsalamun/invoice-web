@@ -1,12 +1,17 @@
 import apiClient from "../utils/apiClient";
 
 export const authService = {
-  async login(username, password) {
+  async login(username, password, rememberMe = true) {
     try {
       const res = await apiClient.post("/auth/login", { username, password });
       if (res.data.success) {
-        localStorage.setItem("token", res.data.token);
-        localStorage.setItem("user", JSON.stringify(res.data.user));
+        const storage = rememberMe ? localStorage : sessionStorage;
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+        storage.setItem("token", res.data.token);
+        storage.setItem("user", JSON.stringify(res.data.user));
         return res.data;
       }
       return null;
@@ -30,17 +35,20 @@ export const authService = {
   logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
   },
 
   getCurrentUser() {
     try {
-      return JSON.parse(localStorage.getItem("user")) || null;
+      const user = localStorage.getItem("user") || sessionStorage.getItem("user");
+      return JSON.parse(user) || null;
     } catch {
       return null;
     }
   },
 
   isAuthenticated() {
-    return !!localStorage.getItem("token");
+    return !!(localStorage.getItem("token") || sessionStorage.getItem("token"));
   },
 };

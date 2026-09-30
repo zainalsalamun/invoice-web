@@ -4,15 +4,18 @@ import axios from "axios";
 
 
 const isProd = process.env.NODE_ENV === "production";
+// Backend Full Scope lokal berjalan di 2102. Variabel khusus tetap dapat
+// digunakan jika developer membutuhkan target lokal yang berbeda.
+const developmentApiUrl = process.env.REACT_APP_FULL_SCOPE_API_URL || "http://127.0.0.1:2102/api";
 
 const apiClient = axios.create({
   // Gunakan /api di production (Vercel Proxy), atau REACT_APP_API_URL di development
-  baseURL: isProd ? "/api" : (process.env.REACT_APP_API_URL || "/api"),
+  baseURL: isProd ? "/api" : developmentApiUrl,
 });
 
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -54,6 +57,8 @@ apiClient.interceptors.response.use(
       // Hapus token dan user secara manual untuk menghindari circular dependency
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
 
       localStorage.setItem("sessionExpired", "true");
       window.location.href = "/login";

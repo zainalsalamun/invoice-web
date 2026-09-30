@@ -23,7 +23,8 @@ import {
     Tooltip,
     TablePagination,
 } from "@mui/material";
-import { Edit, Delete, Add, UploadFile, Search } from "@mui/icons-material";
+import { alpha, useTheme } from "@mui/material/styles";
+import { Edit, Delete, Add, UploadFile, Search, ChatOutlined } from "@mui/icons-material";
 import Sidebar from "../components/Sidebar";
 import { chatTrackingService } from "../services/chatTrackingService";
 import { authService } from "../services/authService";
@@ -32,11 +33,13 @@ import { userService } from "../services/userServices";
 
 
 const ChatTrackingPage = () => {
+    const theme = useTheme();
+    const darkMode = theme.palette.mode === "dark";
     const [list, setList] = useState([]);
     const [loading, setLoading] = useState(true);
     const user = authService.getCurrentUser();
     const canDelete = user?.role === "super_admin";
-    const canEdit = ["super_admin", "admin", "admin_junior"].includes(user?.role);
+    const canEdit = ["super_admin", "admin", "admin_junior", "teknisi"].includes(user?.role);
 
     // Dialog State
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -72,7 +75,7 @@ const ChatTrackingPage = () => {
 
         // Hanya Super Admin yang bisa melihat semua tugas
         // Admin & Admin Junior hanya bisa melihat tugas mereka sendiri
-        if (user?.role !== "super_admin" && user?.id) {
+        if (["admin", "admin_junior", "teknisi"].includes(user?.role) && user?.id) {
             params.admin_id = user.id;
         }
 
@@ -87,7 +90,7 @@ const ChatTrackingPage = () => {
 
 
     const fetchAdmins = async () => {
-        if (user) {
+        if (["super_admin", "admin", "admin_junior"].includes(user?.role)) {
             const data = await userService.getAll();
             setAdmins(data.filter(u => ["admin", "super_admin"].includes(u.role)));
         }
@@ -115,7 +118,7 @@ const ChatTrackingPage = () => {
         } else {
             setEditing(null);
             // Pre-fill PIC and admin_id for non-super_admin
-            const isStaff = ["admin", "admin_junior"].includes(user?.role);
+            const isStaff = ["admin", "admin_junior", "teknisi"].includes(user?.role);
             setForm({
                 nama_pic: isStaff ? user.username : "",
                 tanggal: new Date().toISOString().split('T')[0],
@@ -253,30 +256,30 @@ const ChatTrackingPage = () => {
     // Set colors based on PIC
     const getPicColor = (name) => {
         const n = name?.toLowerCase() || '';
-        if (n.includes('anggi')) return '#e0e7ff';
-        if (n.includes('prima')) return '#ffe4e6';
-        if (n.includes('arin')) return '#ccfbf1';
-        return '#f3f4f6';
+        if (n.includes('anggi')) return darkMode ? alpha('#818cf8', .16) : '#e0e7ff';
+        if (n.includes('prima')) return darkMode ? alpha('#fb7185', .14) : '#ffe4e6';
+        if (n.includes('arin')) return darkMode ? alpha('#2dd4bf', .14) : '#ccfbf1';
+        return darkMode ? alpha('#94a3b8', .1) : '#f3f4f6';
     };
 
     const getProgressColor = (prog) => {
         const p = prog?.toLowerCase() || '';
-        if (p.includes('sudah selesai')) return { bg: '#dcfce7', text: '#15803d' }; // Green
-        if (p.includes('sedang diproses')) return { bg: '#dbeafe', text: '#1e40af' }; // Blue
-        if (p.includes('belum selesai')) return { bg: '#fee2e2', text: '#b91c1c' }; // Red
-        return { bg: '#f3f4f6', text: '#374151' }; // Default Gray
+        if (p.includes('sudah selesai')) return { bg: darkMode ? alpha('#22c55e', .16) : '#dcfce7', text: darkMode ? '#86efac' : '#15803d' };
+        if (p.includes('sedang diproses')) return { bg: darkMode ? alpha('#60a5fa', .16) : '#dbeafe', text: darkMode ? '#93c5fd' : '#1e40af' };
+        if (p.includes('belum selesai')) return { bg: darkMode ? alpha('#f87171', .16) : '#fee2e2', text: darkMode ? '#fca5a5' : '#b91c1c' };
+        return { bg: darkMode ? alpha('#94a3b8', .1) : '#f3f4f6', text: darkMode ? '#cbd5e1' : '#374151' };
     };
 
     return (
         <Box sx={{ display: "flex", minHeight: "100vh" }}>
             <Sidebar active="/chat-tracking" />
 
-            <Box sx={{ flexGrow: 1, p: 4, minWidth: 0, overflowX: 'hidden' }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-                    <Typography variant="h5" fontWeight="bold">
-                        💬 {user?.role === "super_admin" ? "Chat Tracking Management" : "Daftar Tugas Saya"}
+            <Box sx={{ flexGrow: 1, p: { xs: 2, md: 4 }, minWidth: 0, overflowX: 'hidden', bgcolor: "background.default" }}>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+                    <Typography variant="h5" fontWeight="bold" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <ChatOutlined aria-hidden="true" /> {user?.role === "super_admin" ? "Chat Tracking Management" : "Daftar Tugas Saya"}
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
                         <TextField
                             size="small"
                             placeholder="Cari No Task..."
@@ -314,20 +317,20 @@ const ChatTrackingPage = () => {
                 <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
                     <Table size="small">
                         <TableHead>
-                            <TableRow sx={{ bgcolor: "#dbeafe" }}>
-                                <TableCell align="center" sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>No</TableCell>
-                                <TableCell sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>No Task</TableCell>
-                                <TableCell sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>Kategori/Nama</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>Tanggal & Bulan</TableCell>
-                                <TableCell sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>
+                            <TableRow>
+                                <TableCell align="center">No</TableCell>
+                                <TableCell>No Task</TableCell>
+                                <TableCell>Kategori/Nama</TableCell>
+                                <TableCell align="center">Tanggal & Bulan</TableCell>
+                                <TableCell>
                                     Assign Ke Admin
                                 </TableCell>
-                                <TableCell sx={{ fontWeight: "bold", border: '1px solid #cbd5e1', width: '35%' }}>Deskripsi</TableCell>
-                                <TableCell sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>Progress</TableCell>
-                                <TableCell sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>Keterangan</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>Jam Mulai</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>Jam Selesai</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: "bold", border: '1px solid #cbd5e1' }}>Aksi</TableCell>
+                                <TableCell sx={{ width: '35%' }}>Deskripsi</TableCell>
+                                <TableCell>Progress</TableCell>
+                                <TableCell>Keterangan</TableCell>
+                                <TableCell align="center">Jam Mulai</TableCell>
+                                <TableCell align="center">Jam Selesai</TableCell>
+                                <TableCell align="center">Aksi</TableCell>
 
                             </TableRow>
                         </TableHead>
@@ -348,22 +351,22 @@ const ChatTrackingPage = () => {
                                             key={row.id}
                                             hover
                                             sx={{
-                                                bgcolor: isMyTask ? "#f0fdf4" : "inherit",
+                                                bgcolor: isMyTask ? alpha(theme.palette.success.main, darkMode ? .08 : .06) : "inherit",
                                                 borderLeft: isMyTask ? "4px solid #22c55e" : "none"
                                             }}
                                         >
-                                            <TableCell align="center" sx={{ border: '1px solid #e2e8f0', fontWeight: 500 }}>
+                                            <TableCell align="center" sx={{ border: '1px solid', borderColor: 'divider', fontWeight: 500 }}>
                                                 {page * rowsPerPage + index + 1}
                                             </TableCell>
-                                            <TableCell sx={{ border: '1px solid #e2e8f0', fontWeight: "bold", color: "#64748b" }}>
+                                            <TableCell sx={{ border: '1px solid', borderColor: 'divider', fontWeight: "bold", color: "text.secondary" }}>
                                                 {row.nomor_task || "-"}
                                             </TableCell>
 
-                                            <TableCell sx={{ border: '1px solid #e2e8f0', color: '#4f46e5', fontWeight: 600, bgcolor: getPicColor(row.nama_pic) }}>
+                                            <TableCell sx={{ borderColor: 'divider', color: darkMode ? '#a99fff' : '#4f46e5', fontWeight: 600, bgcolor: getPicColor(row.nama_pic) }}>
                                                 {row.nama_pic}
                                             </TableCell>
 
-                                            <TableCell align="center" sx={{ border: '1px solid #e2e8f0' }}>
+                                            <TableCell align="center" sx={{ border: '1px solid', borderColor: 'divider' }}>
                                                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
                                                     <Typography sx={{ fontWeight: 'bold', fontSize: 14 }}>
                                                         {formatTanggalHari(row.tanggal)}
@@ -374,17 +377,18 @@ const ChatTrackingPage = () => {
                                                 </Box>
                                             </TableCell>
 
-                                            <TableCell sx={{ border: '1px solid #e2e8f0', fontWeight: 600 }}>
+                                            <TableCell sx={{ border: '1px solid', borderColor: 'divider', fontWeight: 600 }}>
                                                 <Typography variant="body2" sx={{ fontWeight: 'bold', color: row.admin_username ? '#059669' : '#94a3b8' }}>
                                                     {row.admin_username || "Belum diassign"}
                                                 </Typography>
                                             </TableCell>
 
-                                            <TableCell sx={{ border: '1px solid #e2e8f0', fontSize: 13 }}>
+                                            <TableCell sx={{ border: '1px solid', borderColor: 'divider', fontSize: 13 }}>
                                                 {row.deskripsi}
                                             </TableCell>
                                             <TableCell sx={{
-                                                border: '1px solid #e2e8f0',
+                                                border: '1px solid',
+                                                borderColor: 'divider',
                                                 bgcolor: getProgressColor(row.progress).bg,
                                                 color: getProgressColor(row.progress).text,
                                                 fontWeight: "bold",
@@ -393,17 +397,17 @@ const ChatTrackingPage = () => {
                                             }}>
                                                 {row.progress}
                                             </TableCell>
-                                            <TableCell sx={{ border: '1px solid #e2e8f0', fontSize: 13 }}>
+                                            <TableCell sx={{ border: '1px solid', borderColor: 'divider', fontSize: 13 }}>
                                                 {row.keterangan || "-"}
                                             </TableCell>
-                                            <TableCell align="center" sx={{ border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 'bold' }}>
+                                            <TableCell align="center" sx={{ border: '1px solid', borderColor: 'divider', fontSize: 12, fontWeight: 'bold' }}>
                                                 {formatJam(row.created_at)}
                                             </TableCell>
-                                            <TableCell align="center" sx={{ border: '1px solid #e2e8f0', fontSize: 12, fontWeight: 'bold', color: row.finished_at ? '#15803d' : '#94a3b8' }}>
+                                            <TableCell align="center" sx={{ border: '1px solid', borderColor: 'divider', fontSize: 12, fontWeight: 'bold', color: row.finished_at ? (darkMode ? '#86efac' : '#15803d') : 'text.secondary' }}>
                                                 {row.finished_at ? formatJam(row.finished_at) : "--:--"}
                                             </TableCell>
 
-                                            <TableCell align="center" sx={{ border: '1px solid #e2e8f0', whiteSpace: "nowrap" }}>
+                                            <TableCell align="center" sx={{ border: '1px solid', borderColor: 'divider', whiteSpace: "nowrap" }}>
                                                 {canEdit ? (
                                                     <Tooltip title="Edit">
                                                         <IconButton size="small" color="primary" onClick={() => handleOpenDialog(row)}>

@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Button, Typography } from "@mui/material";
+import { ArrowBack, ArrowForward } from "@mui/icons-material";
 
 const PaginationControl = ({ page, totalPages, onChange }) => {
   return (
@@ -9,8 +10,9 @@ const PaginationControl = ({ page, totalPages, onChange }) => {
         size="small"
         disabled={page === 1}
         onClick={() => onChange(page - 1)}
+        startIcon={<ArrowBack />}
       >
-        ⬅️ Prev
+        Sebelumnya
       </Button>
 
       <Typography variant="body2">
@@ -22,8 +24,9 @@ const PaginationControl = ({ page, totalPages, onChange }) => {
         size="small"
         disabled={page === totalPages}
         onClick={() => onChange(page + 1)}
+        endIcon={<ArrowForward />}
       >
-        Next ➡️
+        Berikutnya
       </Button>
     </Box>
   );

@@ -20,15 +20,16 @@ import {
     Chip,
     CircularProgress,
 } from "@mui/material";
-import { Edit, Delete, Add } from "@mui/icons-material";
+import { Edit, Delete, Add, PaymentOutlined, WarningAmberOutlined } from "@mui/icons-material";
 import Sidebar from "../components/Sidebar";
 import { metodePembayaranService } from "../services/metodePembayaranService";
+import { authService } from "../services/authService";
 import { notifySuccess, notifyError } from "../utils/notify";
 
 const MetodePembayaranPage = () => {
     const [list, setList] = useState([]);
     const [loading, setLoading] = useState(true);
-    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const currentUser = authService.getCurrentUser() || {};
     const canDelete = currentUser?.role === "super_admin";
 
     // Dialog state
@@ -72,7 +73,7 @@ const MetodePembayaranPage = () => {
                 notifySuccess("Metode pembayaran berhasil diperbarui!");
             } else {
                 await metodePembayaranService.create(namaInput.trim());
-                notifySuccess("🎉 Metode pembayaran baru ditambahkan!");
+                notifySuccess("Metode pembayaran baru ditambahkan!");
             }
             setDialogOpen(false);
             fetchData();
@@ -103,7 +104,7 @@ const MetodePembayaranPage = () => {
         <Box sx={{ display: "flex", minHeight: "100vh" }}>
             <Sidebar active="metode-pembayaran" />
 
-            <Box sx={{ flexGrow: 1, p: 4, minWidth: 0, overflowX: "hidden" }}>
+            <Box sx={{ flexGrow: 1, p: { xs: 2, md: 4 }, minWidth: 0, overflowX: "hidden", bgcolor: "background.default" }}>
                 {/* Header */}
                 <Box
                     sx={{
@@ -113,8 +114,8 @@ const MetodePembayaranPage = () => {
                         mb: 3,
                     }}
                 >
-                    <Typography variant="h5" fontWeight="bold">
-                        💳 Metode Pembayaran
+                    <Typography variant="h5" fontWeight="bold" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <PaymentOutlined aria-hidden="true" /> Metode Pembayaran
                     </Typography>
                     <Button
                         variant="contained"
@@ -137,12 +138,12 @@ const MetodePembayaranPage = () => {
                     sx={{ borderRadius: 2, boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}
                 >
                     <Table>
-                        <TableHead sx={{ bgcolor: "primary.main" }}>
+                        <TableHead>
                             <TableRow>
-                                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>No</TableCell>
-                                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Nama Metode</TableCell>
-                                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Dibuat</TableCell>
-                                <TableCell align="center" sx={{ color: "#fff", fontWeight: "bold" }}>
+                                <TableCell>No</TableCell>
+                                <TableCell>Nama Metode</TableCell>
+                                <TableCell>Dibuat</TableCell>
+                                <TableCell align="center">
                                     Aksi
                                 </TableCell>
                             </TableRow>
@@ -221,8 +222,9 @@ const MetodePembayaranPage = () => {
                 fullWidth
                 maxWidth="xs"
             >
-                <DialogTitle fontWeight="bold">
-                    {editTarget ? "✏️ Edit Metode Pembayaran" : "➕ Tambah Metode Pembayaran"}
+                <DialogTitle fontWeight="bold" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    {editTarget ? <Edit aria-hidden="true" /> : <Add aria-hidden="true" />}
+                    {editTarget ? "Edit Metode Pembayaran" : "Tambah Metode Pembayaran"}
                 </DialogTitle>
                 <DialogContent>
                     <TextField
@@ -259,16 +261,16 @@ const MetodePembayaranPage = () => {
                 maxWidth="xs"
                 fullWidth
             >
-                <DialogTitle fontWeight="bold" color="error.main">
-                    🗑️ Konfirmasi Hapus
+                <DialogTitle fontWeight="bold" color="error.main" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Delete aria-hidden="true" /> Konfirmasi Hapus
                 </DialogTitle>
                 <DialogContent>
                     <Typography>
                         Yakin ingin menghapus metode pembayaran{" "}
                         <strong>"{deleteTarget?.nama}"</strong>?
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                        ⚠️ Tidak bisa dihapus jika masih digunakan oleh pelanggan.
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 1 }}>
+                        <WarningAmberOutlined sx={{ fontSize: 16 }} aria-hidden="true" /> Tidak bisa dihapus jika masih digunakan oleh pelanggan.
                     </Typography>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 2 }}>

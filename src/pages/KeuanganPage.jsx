@@ -14,15 +14,18 @@ import {
     Box,
     CircularProgress,
     List,
-    ListItem,
+    ListItemButton,
     ListItemText,
     ListItemIcon,
     Divider,
     TablePagination
 } from "@mui/material";
-import { CreditCard, AccountBalance, Payments, Money } from "@mui/icons-material";
+import { alpha, useTheme } from "@mui/material/styles";
+import { CreditCard, AccountBalance, Payments, Money, AccountBalanceWalletOutlined } from "@mui/icons-material";
 
 const KeuanganPage = () => {
+    const theme = useTheme();
+    const darkMode = theme.palette.mode === "dark";
     const [summary, setSummary] = useState([]);
     const [customers, setCustomers] = useState([]);
     const [stats, setStats] = useState(null);
@@ -85,7 +88,7 @@ const KeuanganPage = () => {
     const selectedMethod = summary.find(s => (s._id || s.id) === selectedMethodId);
 
     return (
-        <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f4f7fb" }}>
+        <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
             <Sidebar active="/keuangan" />
             <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", minWidth: 0, overflowX: "hidden" }}>
                 <Box
@@ -97,98 +100,98 @@ const KeuanganPage = () => {
                         justifyContent: "space-between",
                     }}
                 >
-                    <Typography variant="h5" fontWeight="bold">
-                        💰 Laporan Keuangan
+                    <Typography variant="h5" fontWeight="bold" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <AccountBalanceWalletOutlined aria-hidden="true" /> Laporan Keuangan
                     </Typography>
                 </Box>
 
-                <div style={{ padding: "0 24px 24px" }}>
+                <Box sx={{ px: { xs: 2, md: 3 }, pb: 3 }}>
                     {/* Global Stats */}
                     {stats && (
-                        <div style={{ display: "flex", gap: 16, marginBottom: 24 }}>
-                            <Card style={{ flex: 1, boxShadow: "0 4px 10px rgba(0,0,0,0.05)", borderRadius: 12 }}>
+                        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }, gap: 2, mb: 3 }}>
+                            <Card sx={{ boxShadow: darkMode ? "0 10px 24px rgba(0,0,0,.22)" : "0 4px 10px rgba(0,0,0,0.05)", borderRadius: 3 }}>
                                 <CardContent>
-                                    <Typography variant="subtitle2" color="textSecondary">Total Pendapatan</Typography>
-                                    <Typography variant="h5" style={{ fontWeight: 600, color: "#2196F3" }}>
+                                    <Typography variant="subtitle2" color="text.secondary">Total Pendapatan</Typography>
+                                    <Typography variant="h5" sx={{ fontWeight: 700, color: darkMode ? "#64b5f6" : "#1976d2" }}>
                                         {formatRupiah(stats.total_tagihan_semua)}
                                     </Typography>
-                                    <Typography variant="body2" color="textSecondary" style={{ marginTop: 8 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                                         Dari {stats.total_pelanggan} pelanggan
                                     </Typography>
                                 </CardContent>
                             </Card>
-                            <Card style={{ flex: 1, boxShadow: "0 4px 10px rgba(0,0,0,0.05)", borderRadius: 12 }}>
+                            <Card sx={{ boxShadow: darkMode ? "0 10px 24px rgba(0,0,0,.22)" : "0 4px 10px rgba(0,0,0,0.05)", borderRadius: 3 }}>
                                 <CardContent>
-                                    <Typography variant="subtitle2" color="textSecondary">Pendapatan Aktif</Typography>
-                                    <Typography variant="h5" style={{ fontWeight: 600, color: "#4CAF50" }}>
+                                    <Typography variant="subtitle2" color="text.secondary">Pendapatan Aktif</Typography>
+                                    <Typography variant="h5" sx={{ fontWeight: 700, color: darkMode ? "#81c784" : "#2e7d32" }}>
                                         {formatRupiah(stats.total_tagihan_aktif)}
                                     </Typography>
-                                    <Typography variant="body2" color="textSecondary" style={{ marginTop: 8 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                                         Dari {stats.total_aktif} pelanggan aktif
                                     </Typography>
                                 </CardContent>
                             </Card>
-                        </div>
+                        </Box>
                     )}
 
-                    <div style={{ display: "flex", gap: 24 }}>
+                    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0,1fr)", lg: "280px minmax(0,1fr)" }, gap: 3 }}>
                         {/* Sidebar Keuangan */}
-                        <Paper style={{ width: 280, flexShrink: 0, borderRadius: 12, boxShadow: "0 4px 10px rgba(0,0,0,0.05)", overflow: "hidden" }}>
-                            <div style={{ padding: "16px 20px", backgroundColor: "#f8fafc", borderBottom: "1px solid #edf2f7" }}>
-                                <Typography variant="h6" style={{ fontSize: 16, fontWeight: 600 }}>Pilih Metode</Typography>
-                            </div>
+                        <Paper sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", boxShadow: darkMode ? "0 10px 24px rgba(0,0,0,.2)" : "0 4px 10px rgba(0,0,0,0.05)", overflow: "hidden" }}>
+                            <Box sx={{ px: 2.5, py: 2, bgcolor: darkMode ? "#20242f" : "#f8fafc", borderBottom: "1px solid", borderColor: "divider" }}>
+                                <Typography variant="h6" sx={{ fontSize: 16, fontWeight: 700 }}>Pilih Metode</Typography>
+                            </Box>
                             {loading ? (
                                 <div style={{ padding: 20, textAlign: "center" }}><CircularProgress size={30} /></div>
                             ) : (
                                 <List component="nav" style={{ padding: 0 }}>
                                     {/* Option: All Methods */}
-                                    <ListItem
-                                        button
+                                    <ListItemButton
                                         selected={selectedMethodId === null}
                                         onClick={() => {
                                             setSelectedMethodId(null);
                                             setPage(0);
                                         }}
-                                        style={{
-                                            backgroundColor: selectedMethodId === null ? "rgba(33, 150, 243, 0.08)" : "transparent",
-                                            borderLeft: selectedMethodId === null ? "4px solid #2196F3" : "4px solid transparent",
-                                            padding: "16px 20px"
+                                        sx={{
+                                            bgcolor: selectedMethodId === null ? alpha(theme.palette.primary.main, darkMode ? .16 : .08) : "transparent",
+                                            borderLeft: selectedMethodId === null ? `4px solid ${theme.palette.primary.main}` : "4px solid transparent",
+                                            px: 2.5, py: 2,
+                                            "&.Mui-selected, &.Mui-selected:hover": { bgcolor: alpha(theme.palette.primary.main, darkMode ? .16 : .08) },
                                         }}
                                     >
-                                        <ListItemIcon style={{ minWidth: 40, color: selectedMethodId === null ? "#2196F3" : "#757575" }}>
+                                        <ListItemIcon sx={{ minWidth: 40, color: selectedMethodId === null ? "primary.main" : "text.secondary" }}>
                                             <Money />
                                         </ListItemIcon>
                                         <ListItemText
                                             primary={<Typography style={{ fontWeight: selectedMethodId === null ? 600 : 500, fontSize: 14 }}>Semua Metode</Typography>}
-                                            secondary={<Typography style={{ fontSize: 12, color: "#757575" }}>Tampilkan Semua</Typography>}
+                                            secondary={<Typography color="text.secondary" sx={{ fontSize: 12 }}>Tampilkan Semua</Typography>}
                                         />
-                                    </ListItem>
+                                    </ListItemButton>
                                     <Divider />
 
                                     {/* List of specific methods */}
                                     {summary.map((item) => (
                                         <React.Fragment key={item._id || item.id}>
-                                            <ListItem
-                                                button
+                                            <ListItemButton
                                                 selected={selectedMethodId === (item._id || item.id)}
                                                 onClick={() => {
                                                     setSelectedMethodId(item._id || item.id);
                                                     setPage(0);
                                                 }}
-                                                style={{
-                                                    backgroundColor: selectedMethodId === (item._id || item.id) ? "rgba(33, 150, 243, 0.08)" : "transparent",
-                                                    borderLeft: selectedMethodId === (item._id || item.id) ? "4px solid #2196F3" : "4px solid transparent",
-                                                    padding: "16px 20px"
+                                                sx={{
+                                                    bgcolor: selectedMethodId === (item._id || item.id) ? alpha(theme.palette.primary.main, darkMode ? .16 : .08) : "transparent",
+                                                    borderLeft: selectedMethodId === (item._id || item.id) ? `4px solid ${theme.palette.primary.main}` : "4px solid transparent",
+                                                    px: 2.5, py: 2,
+                                                    "&.Mui-selected, &.Mui-selected:hover": { bgcolor: alpha(theme.palette.primary.main, darkMode ? .16 : .08) },
                                                 }}
                                             >
-                                                <ListItemIcon style={{ minWidth: 40, color: selectedMethodId === (item._id || item.id) ? "#2196F3" : "#757575" }}>
+                                                <ListItemIcon sx={{ minWidth: 40, color: selectedMethodId === (item._id || item.id) ? "primary.main" : "text.secondary" }}>
                                                     {getMethodIcon(item.metode)}
                                                 </ListItemIcon>
                                                 <ListItemText
                                                     primary={<Typography style={{ fontWeight: selectedMethodId === (item._id || item.id) ? 600 : 500, fontSize: 14 }}>{item.metode || "Tidak Ada"}</Typography>}
-                                                    secondary={<Typography style={{ fontSize: 12, color: "#757575" }}>{formatRupiah(item.total_tagihan)}</Typography>}
+                                                    secondary={<Typography color="text.secondary" sx={{ fontSize: 12 }}>{formatRupiah(item.total_tagihan)}</Typography>}
                                                 />
-                                            </ListItem>
+                                            </ListItemButton>
                                             <Divider />
                                         </React.Fragment>
                                     ))}
@@ -197,32 +200,32 @@ const KeuanganPage = () => {
                         </Paper>
 
                         {/* Main Content (Full Customers Table) */}
-                        <Paper style={{ flexGrow: 1, borderRadius: 12, boxShadow: "0 4px 10px rgba(0,0,0,0.05)", overflow: "hidden" }}>
-                            <div style={{ padding: "20px 24px", borderBottom: "1px solid #edf2f7", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <Paper sx={{ minWidth: 0, borderRadius: 3, border: "1px solid", borderColor: "divider", boxShadow: darkMode ? "0 10px 24px rgba(0,0,0,.2)" : "0 4px 10px rgba(0,0,0,0.05)", overflow: "hidden" }}>
+                            <Box sx={{ px: 3, py: 2.5, borderBottom: "1px solid", borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                 <div>
                                     <Typography variant="h6" style={{ fontSize: 18, fontWeight: 600 }}>
                                         {selectedMethodId ? `Pelanggan: ${selectedMethod?.metode}` : "Semua Pelanggan"}
                                     </Typography>
-                                    <Typography variant="body2" color="textSecondary" style={{ marginTop: 4 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mt: .5 }}>
                                         Total {filteredCustomers.length} Pelanggan
                                     </Typography>
                                 </div>
                                 {selectedMethodId && (
                                     <div style={{ textAlign: "right" }}>
-                                        <Typography variant="subtitle2" color="textSecondary">Tagihan Metode Ini</Typography>
-                                        <Typography variant="h6" style={{ fontWeight: 600, color: "#2196F3" }}>
+                                        <Typography variant="subtitle2" color="text.secondary">Tagihan Metode Ini</Typography>
+                                        <Typography variant="h6" sx={{ fontWeight: 700, color: "primary.main" }}>
                                             {formatRupiah(selectedMethod.total_tagihan)}
                                         </Typography>
                                     </div>
                                 )}
-                            </div>
+                            </Box>
 
                             {loading ? (
                                 <div style={{ padding: 40, textAlign: "center" }}><CircularProgress /></div>
                             ) : (
                                 <div style={{ overflowX: "auto" }}>
                                     <Table>
-                                        <TableHead style={{ backgroundColor: "#f8fafc" }}>
+                                        <TableHead>
                                             <TableRow>
                                                 <TableCell style={{ fontWeight: 600 }}>ID Pelanggan</TableCell>
                                                 <TableCell style={{ fontWeight: 600 }}>Nama</TableCell>
@@ -257,7 +260,7 @@ const KeuanganPage = () => {
                                                 ))
                                             ) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={5} align="center" style={{ padding: 40, color: "#999" }}>
+                                                    <TableCell colSpan={5} align="center" sx={{ p: 5, color: "text.secondary" }}>
                                                         Belum ada data pelanggan.
                                                     </TableCell>
                                                 </TableRow>
@@ -277,10 +280,10 @@ const KeuanganPage = () => {
                                 </div>
                             )}
                         </Paper>
-                    </div>
-                </div>
+                    </Box>
+                </Box>
             </div>
-        </div>
+        </Box>
     );
 };
 

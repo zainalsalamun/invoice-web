@@ -16,6 +16,7 @@ import {
   ToggleButtonGroup,
   ToggleButton,
 } from "@mui/material";
+import { AssessmentOutlined, CalendarMonthOutlined, QueryStatsOutlined } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import InvoiceTable from "../components/InvoiceTable";
@@ -88,7 +89,7 @@ const DashboardPage = () => {
         }))
       );
     } catch (err) {
-      console.error("❌ Gagal ambil data invoice:", err);
+      console.error("Gagal ambil data invoice:", err);
       setSnackbar({
         open: true,
         message: "Gagal memuat data dari server.",
@@ -113,7 +114,7 @@ const DashboardPage = () => {
         }))
       );
     } catch (err) {
-      console.error("❌ Gagal ambil data chart:", err);
+      console.error("Gagal ambil data chart:", err);
     }
   };
 
@@ -203,7 +204,7 @@ const DashboardPage = () => {
     if (res?.success) {
       setSnackbar({
         open: true,
-        message: "✅ Bukti pembayaran berhasil diupload!",
+        message: "Bukti pembayaran berhasil diupload!",
         severity: "success",
       });
       fetchInvoices();
@@ -211,7 +212,7 @@ const DashboardPage = () => {
     } else {
       setSnackbar({
         open: true,
-        message: "❌ Gagal upload bukti pembayaran.",
+        message: "Gagal upload bukti pembayaran.",
         severity: "error",
       });
     }
@@ -223,7 +224,7 @@ const DashboardPage = () => {
       if (res) {
         setSnackbar({
           open: true,
-          message: "✅ Invoice berhasil dihapus!",
+          message: "Invoice berhasil dihapus!",
           severity: "success",
         });
         fetchInvoices();
@@ -231,15 +232,15 @@ const DashboardPage = () => {
       } else {
         setSnackbar({
           open: true,
-          message: "❌ Gagal menghapus invoice.",
+          message: "Gagal menghapus invoice.",
           severity: "error",
         });
       }
     } catch (err) {
-      console.error("❌ Gagal hapus invoice:", err);
+      console.error("Gagal hapus invoice:", err);
       setSnackbar({
         open: true,
-        message: "❌ Gagal menghapus invoice.",
+        message: "Gagal menghapus invoice.",
         severity: "error",
       });
     }
@@ -249,7 +250,9 @@ const DashboardPage = () => {
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar active="dashboard" />
       <Box sx={{ flexGrow: 1, p: 4 }}>
-        <h2 style={{ marginBottom: 20 }}>📊 Daftar Invoice Pelanggan</h2>
+        <Typography variant="h5" component="h1" sx={{ mb: 2.5, fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
+          <AssessmentOutlined aria-hidden="true" /> Daftar Invoice Pelanggan
+        </Typography>
 
         {/* Filter Bar */}
         <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
@@ -370,8 +373,8 @@ const DashboardPage = () => {
               alignItems: "center",
             }}
           >
-            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-              📈 Statistik Invoice Bulanan
+            <Typography variant="h6" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+              <QueryStatsOutlined aria-hidden="true" /> Statistik Invoice Bulanan
             </Typography>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -464,8 +467,8 @@ const DashboardPage = () => {
                     0
                   );
                   return (
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      📅 <b>Ringkasan Tahun {selectedYear}</b>:{" "}
+                    <Typography variant="body1" sx={{ fontWeight: 500, display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5, flexWrap: "wrap" }}>
+                      <CalendarMonthOutlined sx={{ fontSize: 19 }} aria-hidden="true" /> <b>Ringkasan Tahun {selectedYear}</b>:{" "}
                       <span style={{ color: "#007bff" }}>
                         {totalInvoice} Invoice
                       </span>{" "}

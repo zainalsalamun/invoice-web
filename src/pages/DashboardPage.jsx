@@ -25,6 +25,9 @@ import {
   Receipt,
   Payment,
   ErrorOutline,
+  HomeOutlined,
+  ListAltOutlined,
+  HistoryOutlined,
 } from "@mui/icons-material";
 
 const DashboardPage = () => {
@@ -81,7 +84,7 @@ const DashboardPage = () => {
 
       <Box sx={{ flexGrow: 1, p: { xs: 3, md: 5 }, minWidth: 0, overflowX: "hidden" }}>
         <Typography variant="h4" fontWeight="bold" sx={{ mb: 1, color: "#1e293b", display: "flex", alignItems: "center", gap: 2 }}>
-          🏠 Dashboard Utama
+          <HomeOutlined aria-hidden="true" /> Dashboard Utama
         </Typography>
         <Typography variant="body1" sx={{ mb: 4, color: "#64748b" }}>
           Selamat datang kembali, <b>{user?.username}</b>. Berikut ringkasan aktivitas sistem hari ini.
@@ -95,7 +98,7 @@ const DashboardPage = () => {
           <Box sx={{ width: "100%", maxWidth: "1400px", mx: "auto" }}>
             {/* --- SECTION 1: TASK TRACKING --- */}
             <Typography variant="h6" fontWeight="bold" sx={{ mb: 2.5, color: "#334155", display: 'flex', alignItems: 'center', gap: 1, px: 0.5 }}>
-              📋 Ringkasan Tugas (Chat Tracking)
+              <ListAltOutlined aria-hidden="true" /> Ringkasan Tugas (Chat Tracking)
             </Typography>
             <Grid container spacing={3} sx={{ mb: 6 }}>
               <Grid item xs={12} sm={6} md={3}>
@@ -114,7 +117,7 @@ const DashboardPage = () => {
 
             {/* --- SECTION 2: INVOICE SUMMARY --- */}
             <Typography variant="h6" fontWeight="bold" sx={{ mb: 2.5, color: "#334155", display: 'flex', alignItems: 'center', gap: 1, px: 0.5 }}>
-              🧾 Ringkasan Invoice & Keuangan
+              <Receipt aria-hidden="true" /> Ringkasan Invoice & Keuangan
             </Typography>
             <Grid container spacing={3} sx={{ mb: 6 }}>
               <Grid item xs={12} sm={6} md={3}>
@@ -133,7 +136,7 @@ const DashboardPage = () => {
 
             {/* --- SECTION 3: RECENT ACTIVITIES --- */}
             <Typography variant="h6" fontWeight="bold" sx={{ mb: 2.5, color: "#334155", display: 'flex', alignItems: 'center', gap: 1, px: 0.5 }}>
-              🕒 Tugas Terbaru
+              <HistoryOutlined aria-hidden="true" /> Tugas Terbaru
             </Typography>
             <Paper sx={{ width: "100%", borderRadius: 3, boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", overflow: "hidden" }}>
               <TableContainer sx={{ width: "100%" }}>

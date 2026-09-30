@@ -8,17 +8,25 @@ import {
   Button,
   Alert,
 } from "@mui/material";
+import { KeyOutlined, SaveOutlined } from "@mui/icons-material";
 import { userService } from "../services/userService";
 
 const ChangePasswordDialog = ({ open, onClose, user }) => {
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [message, setMessage] = useState(null);
+  const [messageSeverity, setMessageSeverity] = useState("error");
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
-    if (!newPassword) return setMessage("Password tidak boleh kosong");
-    if (newPassword !== confirm) return setMessage("Konfirmasi tidak cocok");
+    if (!newPassword) {
+      setMessageSeverity("error");
+      return setMessage("Password tidak boleh kosong");
+    }
+    if (newPassword !== confirm) {
+      setMessageSeverity("error");
+      return setMessage("Konfirmasi tidak cocok");
+    }
 
     setLoading(true);
     const res = await userService.updatePassword(user.id, {
@@ -27,21 +35,25 @@ const ChangePasswordDialog = ({ open, onClose, user }) => {
     setLoading(false);
 
     if (res?.success) {
-      setMessage("✅ Password berhasil diubah!");
+      setMessageSeverity("success");
+      setMessage("Password berhasil diubah!");
       setNewPassword("");
       setConfirm("");
       setTimeout(onClose, 1000);
     } else {
-      setMessage("❌ Gagal ubah password");
+      setMessageSeverity("error");
+      setMessage("Gagal mengubah password");
     }
   };
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>🔑 Ganti Password untuk {user?.username}</DialogTitle>
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <KeyOutlined aria-hidden="true" /> Ganti Password untuk {user?.username}
+      </DialogTitle>
       <DialogContent>
         {message && (
-          <Alert severity={message.includes("✅") ? "success" : "error"} sx={{ mb: 2 }}>
+          <Alert severity={messageSeverity} sx={{ mb: 2 }}>
             {message}
           </Alert>
         )}
@@ -63,7 +75,7 @@ const ChangePasswordDialog = ({ open, onClose, user }) => {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Batal</Button>
-        <Button onClick={handleSave} disabled={loading} variant="contained" color="primary">
+        <Button onClick={handleSave} disabled={loading} variant="contained" color="primary" startIcon={<SaveOutlined />}>
           {loading ? "Menyimpan..." : "Simpan"}
         </Button>
       </DialogActions>

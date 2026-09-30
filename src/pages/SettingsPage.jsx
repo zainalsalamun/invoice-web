@@ -13,7 +13,7 @@ import {
   Chip,
   Divider,
 } from "@mui/material";
-import { Person, ExitToApp } from "@mui/icons-material";
+import { Person, ExitToApp, SettingsOutlined } from "@mui/icons-material";
 import { authService } from "../services/authService";
 import { useNavigate } from "react-router-dom";
 
@@ -50,7 +50,7 @@ const SettingsPage = () => {
   };
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#f8f9fa" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       <Sidebar active="/settings" />
 
       <Box
@@ -66,8 +66,8 @@ const SettingsPage = () => {
       >
         {/* Header Section */}
         <Box sx={{ width: "100%", maxWidth: 600, mb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1, color: "#1e293b", fontSize: "1.1rem" }}>
-            ⚙️ Pengaturan Akun
+          <Typography variant="h6" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1, color: "text.primary", fontSize: "1.1rem" }}>
+            <SettingsOutlined aria-hidden="true" /> Pengaturan Akun
           </Typography>
         </Box>
 
@@ -77,8 +77,10 @@ const SettingsPage = () => {
             width: "100%",
             maxWidth: 600,
             borderRadius: 3,
-            boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
-            background: "#fff",
+            boxShadow: (theme) => theme.palette.mode === "dark" ? "0 16px 36px rgba(0,0,0,.28)" : "0 10px 25px rgba(0,0,0,0.05)",
+            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "divider",
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",
@@ -101,14 +103,14 @@ const SettingsPage = () => {
               <Person sx={{ fontSize: 35 }} />
             </Avatar>
 
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#1e293b", lineHeight: 1.2 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary", lineHeight: 1.2 }}>
               {user?.username || "Username"}
             </Typography>
             <Chip
               label={getRoleLabel(user?.role)}
               sx={{
-                bgcolor: "#f3e8ff",
-                color: "#7c3aed",
+                bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(128,114,255,.18)" : "#f3e8ff",
+                color: (theme) => theme.palette.mode === "dark" ? "#a99fff" : "#7c3aed",
                 fontWeight: "bold",
                 fontSize: "0.65rem",
                 px: 0.5,
@@ -123,19 +125,19 @@ const SettingsPage = () => {
           {/* Information Sections */}
           <Box sx={{ width: "100%", mb: 3 }}>
             <Box sx={{ mb: 2.5 }}>
-              <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
                 IDENTITAS LOGIN
               </Typography>
-              <Typography variant="body2" sx={{ color: "#334155", mt: 0.5, fontWeight: 500 }}>
+              <Typography variant="body2" sx={{ color: "text.primary", mt: 0.5, fontWeight: 500 }}>
                 {user?.username}
               </Typography>
             </Box>
 
             <Box>
-              <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
                 HAK AKSES SISTEM
               </Typography>
-              <Typography variant="body2" sx={{ color: "#334155", mt: 0.5, fontWeight: 500 }}>
+              <Typography variant="body2" sx={{ color: "text.primary", mt: 0.5, fontWeight: 500 }}>
                 {getRoleDescription(user?.role)}
               </Typography>
             </Box>
@@ -164,7 +166,7 @@ const SettingsPage = () => {
         </Paper>
 
         {/* Footer Version */}
-        <Typography variant="body2" sx={{ mt: 4, color: "#94a3b8", textAlign: "center" }}>
+        <Typography variant="body2" sx={{ mt: 4, color: "text.secondary", textAlign: "center" }}>
           Versi Aplikasi: 2.1.0-stable | Ringnet Customer Management
         </Typography>
       </Box>
@@ -177,12 +179,12 @@ const SettingsPage = () => {
       >
         <DialogTitle sx={{ fontWeight: "bold" }}>Konfirmasi Logout</DialogTitle>
         <DialogContent>
-          <Typography sx={{ color: "#475569" }}>
+          <Typography color="text.secondary">
             Apakah Anda yakin ingin keluar dari sistem Ringnet?
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 2, pt: 1 }}>
-          <Button onClick={() => setOpenLogout(false)} sx={{ color: "#64748b", fontWeight: "bold" }}>
+          <Button onClick={() => setOpenLogout(false)} color="inherit" sx={{ fontWeight: "bold" }}>
             Batal
           </Button>
           <Button

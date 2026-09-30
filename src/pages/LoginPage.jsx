@@ -8,13 +8,25 @@ import {
   Alert,
   CircularProgress,
   Snackbar,
+  Checkbox,
+  FormControlLabel,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
+import { VisibilityOutlined, VisibilityOffOutlined } from "@mui/icons-material";
 import { authService } from "../services/authService";
 import { useNavigate } from "react-router-dom";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ username: "", password: "" });
+  const [form, setForm] = useState({
+    username: localStorage.getItem("ringnet-remembered-username") || "",
+    password: "",
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(
+    () => localStorage.getItem("ringnet-remember-me") !== "false"
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sessionExpired, setSessionExpired] = useState(false);
@@ -35,9 +47,15 @@ const LoginPage = () => {
     setError("");
     setLoading(true);
 
-    const res = await authService.login(form.username, form.password);
+    const res = await authService.login(form.username, form.password, rememberMe);
 
     if (res?.success) {
+      localStorage.setItem("ringnet-remember-me", String(rememberMe));
+      if (rememberMe) {
+        localStorage.setItem("ringnet-remembered-username", form.username);
+      } else {
+        localStorage.removeItem("ringnet-remembered-username");
+      }
       navigate("/");
     } else {
       setError(res?.message || "Login gagal, periksa kembali kredensial Anda.");
@@ -111,11 +129,38 @@ const LoginPage = () => {
             fullWidth
             label="Password"
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             variant="outlined"
             value={form.password}
             onChange={handleChange}
-            sx={{ mb: 3 }}
+            autoComplete="current-password"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                    onClick={() => setShowPassword((visible) => !visible)}
+                    onMouseDown={(event) => event.preventDefault()}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{ mb: 1 }}
+          />
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={rememberMe}
+                onChange={(event) => setRememberMe(event.target.checked)}
+                color="primary"
+              />
+            }
+            label="Ingat saya"
+            sx={{ display: "flex", width: "fit-content", mb: 1.5, ml: 0 }}
           />
 
           <Button
@@ -160,7 +205,7 @@ const LoginPage = () => {
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert severity="warning" sx={{ width: "100%" }}>
-          ⚠️ Sesi Anda telah berakhir. Silakan login ulang.
+          Sesi Anda telah berakhir. Silakan login ulang.
         </Alert>
       </Snackbar>
     </Box>

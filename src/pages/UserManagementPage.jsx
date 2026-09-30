@@ -24,6 +24,7 @@ import {
 } from "@mui/material";
 import Sidebar from "../components/Sidebar";
 import apiClient from "../utils/apiClient";
+import { authService } from "../services/authService";
 
 const UserManagementPage = () => {
   const [users, setUsers] = useState([]);
@@ -35,7 +36,7 @@ const UserManagementPage = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
   const [loading, setLoading] = useState(false);
 
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const currentUser = authService.getCurrentUser() || {};
   const canDelete = currentUser?.role === "super_admin";
 
   // 🔹 Ambil data user
@@ -128,17 +129,17 @@ const UserManagementPage = () => {
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar active="users" />
 
-      <Box sx={{ flexGrow: 1, p: 4, minWidth: 0, overflowX: "hidden" }}>
+      <Box sx={{ flexGrow: 1, p: { xs: 2, md: 4 }, minWidth: 0, overflowX: "hidden", bgcolor: "background.default" }}>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: "bold" }}>
           Manajemen User
         </Typography>
 
         <Card sx={{ mb: 3, borderRadius: 2, boxShadow: 2 }}>
           <CardContent
-            sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+            sx={{ display: "flex", flexWrap: "wrap", gap: 2, justifyContent: "space-between", alignItems: "center" }}
           >
             <Typography variant="body1">
-              Kelola akun <b>Admin</b>, <b>Kasir</b>, dan <b>Teknisi</b> untuk sistem Ringnet
+              Kelola akun dan hak akses tim operasional RingNet.
             </Typography>
             {canDelete && (
               <Button
@@ -160,7 +161,7 @@ const UserManagementPage = () => {
         {/* 🔹 Table User */}
         <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 2 }}>
           <Table>
-            <TableHead sx={{ backgroundColor: "#f4f6f8" }}>
+            <TableHead>
               <TableRow>
                 <TableCell><b>Username</b></TableCell>
                 <TableCell><b>Role</b></TableCell>
@@ -177,7 +178,9 @@ const UserManagementPage = () => {
                       u.role === "admin" ? "Admin" :
                         u.role === "admin_junior" ? "Admin Junior" :
                           u.role === "kasir" ? "Kasir" :
-                            "Teknisi"}
+                            u.role === "teknisi" ? "Teknisi" :
+                              u.role === "programmer" ? "Programmer" :
+                                u.role === "management" ? "Management" : u.role}
                   </TableCell>
                   <TableCell>
                     {u.created_at
@@ -255,6 +258,8 @@ const UserManagementPage = () => {
               <MenuItem value="admin_junior">Admin Junior</MenuItem>
               <MenuItem value="kasir">Kasir</MenuItem>
               <MenuItem value="teknisi">Teknisi</MenuItem>
+              <MenuItem value="programmer">Programmer</MenuItem>
+              <MenuItem value="management">Management</MenuItem>
               {canDelete && (
                 <MenuItem value="super_admin">Super Admin</MenuItem>
               )}

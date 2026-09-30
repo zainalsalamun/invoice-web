@@ -28,6 +28,10 @@ import {
     WhatsApp as WhatsAppIcon,
     OpenInNew as OpenInNewIcon,
     CheckCircle as CheckCircleIcon,
+    NotesOutlined,
+    DeleteOutline,
+    UploadFileOutlined,
+    CheckCircleOutline,
 } from "@mui/icons-material";
 import { customerService } from "../services/customerService";
 import { invoiceService } from "../services/invoiceService";
@@ -72,7 +76,8 @@ const InfoRow = ({ label, value, valueColor, mono }) => (
             gridTemplateColumns: "160px 1fr",
             alignItems: "flex-start",
             py: 0.85,
-            borderBottom: "1px solid #f0f0f0",
+            borderBottom: "1px solid",
+            borderColor: "divider",
             "&:last-child": { borderBottom: 0 },
         }}
     >
@@ -105,6 +110,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
     const [selectedMetode, setSelectedMetode] = useState("");
     const [tanggalBayar, setTanggalBayar] = useState("");
     const [confirmMsg, setConfirmMsg] = useState("");
+    const [confirmStatus, setConfirmStatus] = useState("");
     const [buktiFile, setBuktiFile] = useState(null);       // file object
     const [buktiPreview, setBuktiPreview] = useState(null); // URL preview
 
@@ -169,6 +175,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
         setSelectedMetode(inv.metode_pembayaran_id || "");
         setTanggalBayar(dayjs().format("YYYY-MM-DD"));
         setConfirmMsg("");
+        setConfirmStatus("");
         setBuktiFile(null);
         setBuktiPreview(null);
         try {
@@ -200,7 +207,8 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                 buktiFile: buktiFile || null,
             });
 
-            setConfirmMsg(`✅ Invoice ${confirmInvoice.nomor_invoice} berhasil ditandai Lunas!`);
+            setConfirmStatus("success");
+            setConfirmMsg(`Invoice ${confirmInvoice.nomor_invoice} berhasil ditandai Lunas!`);
             await fetchCustomerInvoices();
             await fetchCustomerDetail();
             // Beritahu parent agar refresh tabel utama
@@ -209,11 +217,13 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                 setConfirmDialog(false);
                 setConfirmInvoice(null);
                 setConfirmMsg("");
+                setConfirmStatus("");
                 setBuktiFile(null);
                 setBuktiPreview(null);
             }, 1200);
         } catch {
-            setConfirmMsg("❌ Gagal mengkonfirmasi. Coba lagi.");
+            setConfirmStatus("error");
+            setConfirmMsg("Gagal mengkonfirmasi. Coba lagi.");
         } finally {
             setLoadingLunas(false);
         }
@@ -262,8 +272,9 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                         display: "flex",
                         alignItems: "center",
                         gap: 2,
-                        borderBottom: "1px solid #e8e8e8",
-                        bgcolor: "#fff",
+                        borderBottom: "1px solid",
+                        borderColor: "divider",
+                        bgcolor: "background.paper",
                     }}
                 >
                     {loading ? (
@@ -357,8 +368,9 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                     <Box
                         sx={{
                             display: "flex",
-                            bgcolor: "#f7f8fa",
-                            borderBottom: "1px solid #e8e8e8",
+                            bgcolor: (theme) => theme.palette.mode === "dark" ? "#222631" : "#f7f8fa",
+                            borderBottom: "1px solid",
+                            borderColor: "divider",
                         }}
                     >
                         {[
@@ -373,7 +385,8 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                     flex: 1,
                                     textAlign: "center",
                                     py: 1.5,
-                                    borderRight: i < 3 ? "1px solid #e8e8e8" : "none",
+                                    borderRight: i < 3 ? "1px solid" : "none",
+                                    borderColor: "divider",
                                 }}
                             >
                                 <Typography variant="subtitle1" fontWeight={700} color={i === 1 ? "success.main" : i === 2 ? "error.main" : "text.primary"}>
@@ -388,7 +401,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                 )}
 
                 {/* ── BODY ───────────────────────────────────────────── */}
-                <DialogContent sx={{ p: 0, bgcolor: "#fff" }}>
+                <DialogContent sx={{ p: 0, bgcolor: "background.paper" }}>
                     {loading ? (
                         <Box sx={{ p: 3 }}>
                             <Stack spacing={1.5}>
@@ -408,7 +421,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                 }}
                             >
                                 {/* Kolom Kiri — Informasi Pelanggan */}
-                                <Box sx={{ p: 3, borderRight: { sm: "1px solid #f0f0f0" } }}>
+                                <Box sx={{ p: 3, borderRight: { sm: "1px solid" }, borderColor: "divider" }}>
                                     <Typography
                                         variant="caption"
                                         fontWeight={700}
@@ -438,7 +451,9 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                     {customer.notes && (
                                         <Box sx={{ mt: 2, p: 1.5, bgcolor: "#fffde7", borderRadius: 1.5, border: "1px solid #ffe082" }}>
                                             <Typography variant="caption" color="text.secondary" sx={{ mb: 0.3, display: "block" }}>
-                                                📝 Catatan
+                                                <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                                                    <NotesOutlined sx={{ fontSize: 15 }} aria-hidden="true" /> Catatan
+                                                </Box>
                                             </Typography>
                                             <Typography variant="body2" sx={{ fontStyle: "italic", color: "#555", lineHeight: 1.5 }}>
                                                 {customer.notes}
@@ -497,7 +512,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                                         py: 0.4,
                                                         px: 1,
                                                         borderRadius: 1,
-                                                        bgcolor: idx % 2 === 0 ? "#f5f7fa" : "transparent",
+                                                        bgcolor: (theme) => idx % 2 === 0 ? (theme.palette.mode === "dark" ? "#20242e" : "#f5f7fa") : "transparent",
                                                     }}
                                                 >
                                                     <Typography variant="caption" color="text.secondary">
@@ -523,7 +538,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                                         py: 0.4,
                                                         px: 1,
                                                         borderRadius: 1,
-                                                        bgcolor: idx % 2 === 0 ? "#f5f7fa" : "transparent",
+                                                        bgcolor: (theme) => idx % 2 === 0 ? (theme.palette.mode === "dark" ? "#20242e" : "#f5f7fa") : "transparent",
                                                     }}
                                                 >
                                                     <Typography variant="caption" color="text.secondary">
@@ -540,7 +555,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                             </Box>
 
                             {/* ── RIWAYAT INVOICE ─────────────────────────── */}
-                            <Box sx={{ borderTop: "1px solid #e8e8e8" }}>
+                            <Box sx={{ borderTop: "1px solid", borderColor: "divider" }}>
                                 <Box sx={{ px: 3, pt: 2, pb: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                                     <Typography
                                         variant="caption"
@@ -560,7 +575,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                     <Box sx={{ overflowX: "auto" }}>
                                         <Table size="small">
                                             <TableHead>
-                                                <TableRow sx={{ bgcolor: "#f7f8fa" }}>
+                                                <TableRow sx={{ bgcolor: (theme) => theme.palette.mode === "dark" ? "#222631" : "#f7f8fa" }}>
                                                     <TableCell sx={{ fontWeight: 700, fontSize: "0.75rem", color: "text.secondary", py: 1.2, pl: 3 }}>
                                                         Nomor Invoice
                                                     </TableCell>
@@ -707,7 +722,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                     {confirmInvoice && (
                         <Stack spacing={2}>
                             {/* Info invoice */}
-                            <Box sx={{ p: 1.5, bgcolor: "#f0fdf4", borderRadius: 2, border: "1px solid #bbf7d0" }}>
+                            <Box sx={{ p: 1.5, bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(74,222,128,.08)" : "#f0fdf4", borderRadius: 2, border: "1px solid", borderColor: (theme) => theme.palette.mode === "dark" ? "rgba(74,222,128,.25)" : "#bbf7d0" }}>
                                 <Typography variant="body2" fontWeight={700} color="success.dark">
                                     {confirmInvoice.nomor_invoice}
                                 </Typography>
@@ -764,8 +779,9 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                                 maxHeight: 180,
                                                 objectFit: "contain",
                                                 borderRadius: 2,
-                                                border: "1px solid #e2e8f0",
-                                                bgcolor: "#f8fafc",
+                                                border: "1px solid",
+                                                borderColor: "divider",
+                                                bgcolor: (theme) => theme.palette.mode === "dark" ? "#171a23" : "#f8fafc",
                                             }}
                                         />
                                         <Button
@@ -787,10 +803,10 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                                 textTransform: "none",
                                             }}
                                         >
-                                            ✕ Hapus
+                                            <DeleteOutline sx={{ fontSize: 15, mr: 0.4 }} aria-hidden="true" /> Hapus
                                         </Button>
-                                        <Typography variant="caption" color="success.main" sx={{ display: "block", mt: 0.5, fontWeight: 600 }}>
-                                            ✓ {buktiFile?.name}
+                                        <Typography variant="caption" color="success.main" sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5, fontWeight: 600 }}>
+                                            <CheckCircleOutline sx={{ fontSize: 15 }} aria-hidden="true" /> {buktiFile?.name}
                                         </Typography>
                                     </Box>
                                 ) : (
@@ -807,13 +823,13 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                             border: "2px dashed #cbd5e1",
                                             borderRadius: 2,
                                             cursor: "pointer",
-                                            bgcolor: "#f8fafc",
+                                            bgcolor: (theme) => theme.palette.mode === "dark" ? "#171a23" : "#f8fafc",
                                             transition: "all 0.2s",
                                             "&:hover": { borderColor: "#2563eb", bgcolor: "#eff6ff" },
                                             gap: 0.5,
                                         }}
                                     >
-                                        <Typography fontSize="1.6rem">🧾</Typography>
+                                        <UploadFileOutlined sx={{ fontSize: "1.8rem", color: "text.secondary" }} aria-hidden="true" />
                                         <Typography variant="body2" fontWeight={600} color="text.secondary">
                                             Klik untuk upload bukti transfer
                                         </Typography>
@@ -835,7 +851,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                             {confirmMsg && (
                                 <Typography
                                     variant="body2"
-                                    color={confirmMsg.startsWith("✅") ? "success.main" : "error"}
+                                    color={confirmStatus === "success" ? "success.main" : "error"}
                                     sx={{ fontWeight: 600, textAlign: "center" }}
                                 >
                                     {confirmMsg}
@@ -850,7 +866,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                     <Button
                         variant="outlined"
                         size="small"
-                        onClick={() => { setConfirmDialog(false); setConfirmMsg(""); }}
+                        onClick={() => { setConfirmDialog(false); setConfirmMsg(""); setConfirmStatus(""); }}
                         disabled={loadingLunas}
                         sx={{ textTransform: "none", borderRadius: 2 }}
                     >
@@ -861,7 +877,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                         color="success"
                         size="small"
                         onClick={handleConfirmLunas}
-                        disabled={loadingLunas || !!confirmMsg.startsWith("✅")}
+                        disabled={loadingLunas || confirmStatus === "success"}
                         startIcon={
                             loadingLunas
                                 ? <CircularProgress size={14} color="inherit" />

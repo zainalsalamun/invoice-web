@@ -20,7 +20,15 @@ import {
   IconButton,
   Avatar,
 } from "@mui/material";
-import { Add as AddIcon, PhotoCamera, Close, PictureAsPdf } from "@mui/icons-material";
+import {
+  Add as AddIcon,
+  PhotoCamera,
+  Close,
+  PictureAsPdf,
+  EditOutlined,
+  PersonAddAltOutlined,
+  SaveOutlined,
+} from "@mui/icons-material";
 import { metodePembayaranService } from "../services/metodePembayaranService";
 import { notifySuccess, notifyError } from "../utils/notify";
 
@@ -222,8 +230,9 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         boxShadow: 3,
       }}
     >
-      <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-        {initialData ? "✏️ Edit Pelanggan" : "➕ Tambah Pelanggan Baru"}
+      <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+        {initialData ? <EditOutlined aria-hidden="true" /> : <PersonAddAltOutlined aria-hidden="true" />}
+        {initialData ? "Edit Pelanggan" : "Tambah Pelanggan Baru"}
       </Typography>
       <Divider sx={{ mb: 3 }} />
 
@@ -232,7 +241,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         Informasi Dasar
       </Typography>
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <TextField
             label="ID Pelanggan"
             name="id_pelanggan"
@@ -243,7 +252,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
             placeholder="cth: CUST-001"
           />
         </Grid>
-        <Grid item xs={12} sm={8}>
+        <Grid size={{ xs: 12, sm: 8 }}>
           <TextField
             label="Nama Pelanggan"
             name="nama"
@@ -255,7 +264,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
           />
         </Grid>
 
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             label="Nomor WhatsApp"
             name="nomor_wa"
@@ -267,7 +276,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
           />
         </Grid>
 
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             label="Kategori Pelanggan"
             name="kategori_pelanggan"
@@ -280,7 +289,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         </Grid>
 
 
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             label="Tagihan Periode Bulan"
             name="tagihan_periode_bulan"
@@ -292,7 +301,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
           />
         </Grid>
 
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             label="Tanggal Tagihan"
             name="tanggal_tagihan"
@@ -306,7 +315,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
           />
         </Grid>
 
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <FormControl fullWidth size="small">
             <InputLabel id="status-label">Status Pembayaran</InputLabel>
             <Select
@@ -322,7 +331,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
           </FormControl>
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={12}>
           <TextField
             label="Alamat"
             name="alamat"
@@ -335,7 +344,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
           />
         </Grid>
 
-        <Grid item xs={12}>
+        <Grid size={12}>
           <TextField
             label="Notes / Catatan"
             name="notes"
@@ -359,7 +368,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
 
       {form.items.map((item, index) => (
         <Grid container spacing={2} key={index} sx={{ mb: 2, alignItems: "center" }}>
-          <Grid item xs={12} sm={5}>
+          <Grid size={{ xs: 12, sm: 5 }}>
             <TextField
               label="Deskripsi Paket"
               value={item.deskripsi}
@@ -369,7 +378,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
               placeholder="cth: Paket 20 Mbps"
             />
           </Grid>
-          <Grid item xs={12} sm={3}>
+          <Grid size={{ xs: 12, sm: 3 }}>
             <TextField
               label="Harga (Rp)"
               type="number"
@@ -380,7 +389,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
               inputProps={{ min: 0 }}
             />
           </Grid>
-          <Grid item xs={12} sm={2}>
+          <Grid size={{ xs: 12, sm: 2 }}>
             <TextField
               label="Qty"
               type="number"
@@ -391,7 +400,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
               inputProps={{ min: 1 }}
             />
           </Grid>
-          <Grid item xs={12} sm={2} sx={{ display: "flex", gap: 1 }}>
+          <Grid size={{ xs: 12, sm: 2 }} sx={{ display: "flex", gap: 1 }}>
             <Typography variant="body2" sx={{ alignSelf: "center", minWidth: 80, fontWeight: "bold" }}>
               Rp {(parseFloat(item.jumlah) || 0).toLocaleString()}
             </Typography>
@@ -418,7 +427,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         const ppnAmount = ppnEnabled ? Math.round(subtotal * 0.11) : 0;
         const total = subtotal + ppnAmount;
         return (
-          <Box sx={{ mb: 3, p: 2, bgcolor: "#f1f5f9", borderRadius: 2 }}>
+          <Box sx={{ mb: 3, p: 2, bgcolor: (theme) => theme.palette.mode === "dark" ? "#20242f" : "#f1f5f9", borderRadius: 2 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
               <Typography variant="body2">Subtotal (DPP):</Typography>
               <Typography variant="body2" fontWeight="bold">
@@ -459,7 +468,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
 
       <Grid container spacing={2} sx={{ mb: 2 }}>
         {/* Metode Pembayaran */}
-        <Grid item xs={12} sm={7}>
+        <Grid size={{ xs: 12, sm: 7 }}>
           <FormControl fullWidth size="small">
             <InputLabel id="metode-label">Metode Bayar</InputLabel>
             <Select
@@ -491,14 +500,14 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         </Grid>
 
         {/* Status Aktif */}
-        <Grid item xs={12} sm={5} sx={{ display: "flex", alignItems: "center" }}>
+        <Grid size={{ xs: 12, sm: 5 }} sx={{ display: "flex", alignItems: "center" }}>
           <FormControlLabel
             control={
               <Switch checked={form.aktif} onChange={handleSwitch} color="success" />
             }
             label={
               <Typography variant="body2" fontWeight={500}>
-                {form.aktif ? "✅ Aktif" : "❌ Nonaktif"}
+                {form.aktif ? "Aktif" : "Nonaktif"}
               </Typography>
             }
           />
@@ -512,7 +521,7 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         Tanggal
       </Typography>
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             label="Tanggal Jatuh Tempo"
             name="tanggal_jatuh_tempo"
@@ -545,14 +554,14 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
             <Box sx={{ position: "relative", display: "inline-block" }}>
               {form.bukti_transfer?.type === "application/pdf" || (typeof form.bukti_transfer === "string" && form.bukti_transfer.endsWith(".pdf")) ? (
-                <Box sx={{ width: 120, height: 90, border: "2px solid #e0e0e0", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 1, bgcolor: "#f5f5f5" }}>
+                <Box sx={{ width: 120, height: 90, border: "2px solid", borderColor: "divider", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 1, bgcolor: (theme) => theme.palette.mode === "dark" ? "#171a23" : "#f5f5f5" }}>
                   <PictureAsPdf sx={{ fontSize: 40, color: "error.main" }} />
                 </Box>
               ) : (
                 <Avatar
                   src={previewUrl}
                   variant="rounded"
-                  sx={{ width: 120, height: 90, border: "2px solid #e0e0e0" }}
+                  sx={{ width: 120, height: 90, border: "2px solid", borderColor: "divider" }}
                 />
               )}
               <IconButton
@@ -609,8 +618,8 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         <Button variant="outlined" onClick={onCancel}>
           Batal
         </Button>
-        <Button variant="contained" type="submit">
-          💾 Simpan
+        <Button variant="contained" type="submit" startIcon={<SaveOutlined />}>
+          Simpan
         </Button>
       </Box>
 
@@ -621,7 +630,9 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         fullWidth
         maxWidth="xs"
       >
-        <DialogTitle fontWeight="bold">➕ Tambah Metode Pembayaran</DialogTitle>
+        <DialogTitle fontWeight="bold" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <AddIcon aria-hidden="true" /> Tambah Metode Pembayaran
+        </DialogTitle>
         <DialogContent>
           <TextField
             autoFocus

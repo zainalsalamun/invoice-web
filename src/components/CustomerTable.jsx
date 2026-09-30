@@ -22,7 +22,7 @@ import {
   Box,
   Tooltip,
 } from "@mui/material";
-import { Close as CloseIcon, Visibility, Receipt } from "@mui/icons-material";
+import { Close as CloseIcon, Visibility, Receipt, InboxOutlined } from "@mui/icons-material";
 import CustomerProfileDrawer from "./CustomerProfileDrawer";
 
 dayjs.locale("id");
@@ -89,21 +89,21 @@ const CustomerTable = ({ data, onEdit, onDelete, onCreateInvoice, userRole, onRe
         <TableContainer>
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ backgroundColor: "#1976d2" }}>
-                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>ID</TableCell>
-                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Nama</TableCell>
-                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Kategori</TableCell>
-                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Paket</TableCell>
-                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>PPN</TableCell>
-                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>WA</TableCell>
-                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Harga</TableCell>
-                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Metode</TableCell>
-                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Tagihan (Bulan)</TableCell>
-                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Tgl Tagihan</TableCell>
-                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Jatuh Tempo</TableCell>
-                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Status Bayar</TableCell>
-                <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Notes</TableCell>
-                <TableCell align="center" sx={{ color: "#fff", fontWeight: "bold" }}>
+              <TableRow>
+                <TableCell>ID</TableCell>
+                <TableCell>Nama</TableCell>
+                <TableCell>Kategori</TableCell>
+                <TableCell>Paket</TableCell>
+                <TableCell>PPN</TableCell>
+                <TableCell>WA</TableCell>
+                <TableCell>Harga</TableCell>
+                <TableCell>Metode</TableCell>
+                <TableCell>Tagihan (Bulan)</TableCell>
+                <TableCell>Tgl Tagihan</TableCell>
+                <TableCell>Jatuh Tempo</TableCell>
+                <TableCell>Status Bayar</TableCell>
+                <TableCell>Notes</TableCell>
+                <TableCell align="center">
                   Aksi
                 </TableCell>
               </TableRow>
@@ -262,7 +262,9 @@ const CustomerTable = ({ data, onEdit, onDelete, onCreateInvoice, userRole, onRe
               {data.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={13} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                    📭 Tidak ada data pelanggan.
+                    <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
+                      <InboxOutlined aria-hidden="true" /> Tidak ada data pelanggan.
+                    </Box>
                   </TableCell>
                 </TableRow>
               )}

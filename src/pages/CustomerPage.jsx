@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Button, Typography, TextField, MenuItem, Select, InputLabel, FormControl, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@mui/material";
+import { Add, PeopleAltOutlined } from "@mui/icons-material";
 import Sidebar from "../components/Sidebar";
 import CustomerTable from "../components/CustomerTable";
 import CustomerForm from "../components/CustomerForm";
@@ -61,7 +62,7 @@ const CustomerPage = () => {
         notifySuccess("Pelanggan berhasil diperbarui!");
       } else {
         await customerService.create(formData);
-        notifySuccess("🎉 Pelanggan baru berhasil ditambahkan!");
+        notifySuccess("Pelanggan baru berhasil ditambahkan!");
       }
       setShowForm(false);
       setEditing(null);
@@ -81,7 +82,7 @@ const CustomerPage = () => {
     if (customerToDelete) {
       try {
         await customerService.remove(customerToDelete);
-        notifyInfo("🗑️ Pelanggan berhasil dihapus");
+        notifyInfo("Pelanggan berhasil dihapus");
         fetchData();
       } catch (err) {
         console.error("Gagal hapus pelanggan:", err);
@@ -96,9 +97,9 @@ const CustomerPage = () => {
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar active="customers" />
 
-      <Box sx={{ flexGrow: 1, p: 4, minWidth: 0, overflowX: 'hidden' }}>
-        <Typography variant="h5" sx={{ mb: 3, fontWeight: "bold" }}>
-          👥 Manajemen Pelanggan
+      <Box sx={{ flexGrow: 1, p: { xs: 2, md: 4 }, minWidth: 0, overflowX: 'hidden', bgcolor: "background.default" }}>
+        <Typography variant="h5" sx={{ mb: 3, fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+          <PeopleAltOutlined aria-hidden="true" /> Manajemen Pelanggan
         </Typography>
 
         {showForm ? (
@@ -123,8 +124,9 @@ const CustomerPage = () => {
                   height: 40
                 }}
                 onClick={() => setShowForm(true)}
+                startIcon={<Add />}
               >
-                ➕ Tambah Pelanggan
+                Tambah Pelanggan
               </Button>
 
               <TextField

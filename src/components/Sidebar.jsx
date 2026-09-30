@@ -1,413 +1,220 @@
-// import React from "react";
-// import { useNavigate, useLocation } from "react-router-dom";
-// import {
-//   Dashboard,
-//   ReceiptLong,
-//   People,
-//   Settings,
-// } from "@mui/icons-material";
-// import { authService } from "../services/authService";
-
-// const Sidebar = ({ active }) => {
-//   const navigate = useNavigate();
-//   const location = useLocation();
-//   const user = authService.getCurrentUser();
-
-//   const isActive = (path) =>
-//     location.pathname === path || (active && active === path);
-
-//   const roleColors = {
-//     admin: "#FF5252",
-//     kasir: "#4CAF50",
-//     teknisi: "#2196F3",
-//   };
-
-//   const menu = [
-//     { label: "Dashboard", icon: <Dashboard />, path: "/" },
-//     { label: "Invoices", icon: <ReceiptLong />, path: "/invoices/new" },
-//     { label: "Customers", icon: <People />, path: "/customers" },
-//     { label: "Users", icon: <People />, path: "/users", roles: ["admin"] },
-//     { label: "Settings", icon: <Settings />, path: "/settings" },
-//   ];
-
-//   return (
-//     <div
-//       style={{
-//         width: 240,
-//         background: "linear-gradient(180deg, #4facfe 0%, #0052d4 100%)",
-//         color: "#fff",
-//         padding: "24px 0",
-//         display: "flex",
-//         flexDirection: "column",
-//         alignItems: "center",
-//         boxShadow: "3px 0 10px rgba(0,0,0,0.15)",
-//         minHeight: "100vh",
-//       }}
-//     >
-//       {/* 🔹 Logo & User Info */}
-//       <div
-//         style={{
-//           textAlign: "center",
-//           width: "100%",
-//           marginBottom: 28,
-//         }}
-//       >
-//         <img
-//           src={require("../assets/logoringnet.png")}
-//           alt="Ringnet"
-//           style={{
-//             width: 90,
-//             marginBottom: 10,
-//             background: "#fff",
-//             padding: 8,
-//             borderRadius: 12,
-//             boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
-//           }}
-//         />
-//         <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
-//           Ringnet Admin
-//         </h3>
-
-//         {/* 🔸 Info User */}
-//         <div style={{ marginTop: 12 }}>
-//           <p
-//             style={{
-//               margin: 0,
-//               fontWeight: "bold",
-//               fontSize: 14,
-//               color: "#fff",
-//             }}
-//           >
-//             {user?.username || "-"}
-//           </p>
-//           <span
-//             style={{
-//               fontSize: 12,
-//               fontWeight: 500,
-//               backgroundColor: roleColors[user?.role] || "#999",
-//               padding: "4px 10px",
-//               borderRadius: 20,
-//               color: "#fff",
-//               textTransform: "capitalize",
-//             }}
-//           >
-//             {user?.role || "Guest"}
-//           </span>
-//         </div>
-//       </div>
-
-//       {/* 🔹 Navigation Menu */}
-//       <div style={{ flexGrow: 1, width: "100%" }}>
-//         {menu
-//           .filter((item) => !item.roles || item.roles.includes(user?.role))
-//           .map((item, i) => (
-//             <div
-//               key={i}
-//               onClick={() => navigate(item.path)}
-//               style={{
-//                 width: "100%",
-//                 padding: "12px 28px",
-//                 display: "flex",
-//                 alignItems: "center",
-//                 gap: 12,
-//                 backgroundColor: isActive(item.path)
-//                   ? "rgba(255, 255, 255, 0.25)"
-//                   : "transparent",
-//                 cursor: "pointer",
-//                 transition: "0.3s",
-//                 color: isActive(item.path)
-//                   ? "#fff"
-//                   : "rgba(255,255,255,0.85)",
-//               }}
-//               onMouseEnter={(e) =>
-//                 (e.currentTarget.style.backgroundColor =
-//                   "rgba(255,255,255,0.15)")
-//               }
-//               onMouseLeave={(e) =>
-//                 (e.currentTarget.style.backgroundColor = isActive(item.path)
-//                   ? "rgba(255, 255, 255, 0.25)"
-//                   : "transparent")
-//               }
-//             >
-//               {item.icon}
-//               <span style={{ fontWeight: 500 }}>{item.label}</span>
-//             </div>
-//           ))}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Sidebar;
-
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
-  Dashboard,
-  ReceiptLong,
-  People,
-  Settings,
-  Group,
-  CreditCard,
-  AccountBalanceWallet,
-  Chat,
-  ExpandMore,
-  ExpandLess,
+  AccountBalanceWalletOutlined,
+  AssessmentOutlined,
+  BuildOutlined,
+  ChevronLeft,
+  DarkModeOutlined,
+  DashboardOutlined,
+  DevicesOutlined,
+  Inventory2Outlined,
+  LightModeOutlined,
+  LogoutOutlined,
+  ManageAccountsOutlined,
+  Menu as MenuIcon,
+  PeopleAltOutlined,
+  ReceiptLongOutlined,
+  SettingsOutlined,
+  SupportAgentOutlined,
+  WifiOutlined,
 } from "@mui/icons-material";
-import { Collapse, Box } from "@mui/material";
+import {
+  Avatar,
+  Box,
+  Chip,
+  Divider,
+  Drawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Stack,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { authService } from "../services/authService";
+import { useThemeMode } from "../context/ThemeModeContext";
+import logoRingnet from "../assets/logoringnet.png";
 
-const Sidebar = ({ active }) => {
+const drawerWidth = 264;
+const allRoles = ["super_admin", "admin", "admin_junior", "kasir", "teknisi", "programmer", "management"];
+
+const mainMenu = [
+  { label: "Dashboard", icon: DashboardOutlined, path: "/", roles: allRoles },
+  { label: "Pelanggan", icon: PeopleAltOutlined, path: "/customers", roles: ["super_admin", "admin", "admin_junior", "teknisi", "management"] },
+  { label: "Paket & Layanan", icon: WifiOutlined, path: "/plans", roles: allRoles },
+  { label: "Invoice & Pembayaran", icon: ReceiptLongOutlined, path: "/invoices", roles: allRoles },
+  { label: "Pekerjaan", icon: BuildOutlined, path: "/chat-tracking", roles: allRoles },
+  { label: "Alat Pelanggan", icon: Inventory2Outlined, path: "/assets", roles: ["super_admin", "admin", "admin_junior", "teknisi", "management"] },
+  { label: "Request Sistem", icon: SupportAgentOutlined, path: "/system-requests", roles: allRoles },
+  { label: "Laporan", icon: AssessmentOutlined, path: "/reports", roles: ["super_admin", "admin", "admin_junior", "kasir", "management"] },
+  { label: "Pengaturan", icon: SettingsOutlined, path: "/settings", roles: ["super_admin", "admin", "admin_junior", "kasir", "teknisi", "programmer", "management"] },
+];
+
+const utilityMenu = [
+  { label: "Keuangan", icon: AccountBalanceWalletOutlined, path: "/keuangan", roles: ["super_admin", "admin", "admin_junior", "kasir", "management"] },
+  { label: "Metode Bayar", icon: DevicesOutlined, path: "/metode-pembayaran", roles: ["super_admin", "admin", "admin_junior"] },
+  { label: "Pengguna", icon: ManageAccountsOutlined, path: "/users", roles: ["super_admin"] },
+];
+
+const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const muiTheme = useTheme();
+  const desktop = useMediaQuery(muiTheme.breakpoints.up("md"));
+  const { mode, toggleMode } = useThemeMode();
+  const darkMode = mode === "dark";
+  const [mobileOpen, setMobileOpen] = useState(false);
   const user = authService.getCurrentUser();
-  const [openInvoices, setOpenInvoices] = useState(
-    location.pathname.startsWith("/invoices") || (active && active.startsWith("/invoices"))
+
+  const isActive = (path) => path === "/"
+    ? location.pathname === "/"
+    : location.pathname === path || location.pathname.startsWith(`${path}/`);
+
+  const go = (path) => {
+    navigate(path);
+    setMobileOpen(false);
+  };
+
+  const logout = () => {
+    authService.logout();
+    navigate("/login");
+  };
+
+  const renderMenu = (items) => (
+    <List dense sx={{ px: 1.5, py: 0.5 }}>
+      {items
+        .filter((item) => item.roles.includes(user?.role))
+        .map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.path);
+          return (
+            <ListItemButton
+              key={item.path}
+              onClick={() => go(item.path)}
+              selected={active}
+              sx={{
+                borderRadius: 2.5,
+                mb: 0.35,
+                py: 0.85,
+                color: active ? "#fff" : darkMode ? "#cbd0df" : "rgba(255,255,255,.78)",
+                "&.Mui-selected": { bgcolor: darkMode ? "rgba(112, 92, 255, .28)" : "rgba(255,255,255,.16)" },
+                "&.Mui-selected:hover": { bgcolor: darkMode ? "rgba(112, 92, 255, .34)" : "rgba(255,255,255,.2)" },
+                "&:hover": { bgcolor: darkMode ? "rgba(255,255,255,.07)" : "rgba(255,255,255,.12)" },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 38, color: "inherit" }}><Icon fontSize="small" /></ListItemIcon>
+              <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: 13.5, fontWeight: active ? 700 : 500 }} />
+            </ListItemButton>
+          );
+        })}
+    </List>
   );
 
-  const isActive = (path) =>
-    location.pathname === path || (active && active === path);
+  const content = (
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column", color: "#fff" }}>
+      <Stack alignItems="center" sx={{ px: 2, py: 1.5, position: "relative" }}>
+        <Box
+          component="img"
+          src={logoRingnet}
+          alt="RingNet Internet Service Provider"
+          sx={{
+            display: "block",
+            width: 168,
+            maxWidth: "100%",
+            height: "auto",
+            bgcolor: "#fff",
+            borderRadius: 2.5,
+            p: 0.75,
+            boxShadow: darkMode
+              ? "0 8px 24px rgba(0,0,0,.32)"
+              : "0 8px 22px rgba(28,20,92,.2)",
+          }}
+        />
+        <Typography
+          variant="caption"
+          sx={{ mt: 0.5, color: darkMode ? "#9298aa" : "rgba(255,255,255,.68)", letterSpacing: 0.4 }}
+        >
+          Operations Portal
+        </Typography>
+        {!desktop && (
+          <IconButton
+            size="small"
+            aria-label="Tutup menu"
+            onClick={() => setMobileOpen(false)}
+            sx={{ color: "#fff", position: "absolute", top: 8, right: 8, bgcolor: "rgba(0,0,0,.22)", "&:hover": { bgcolor: "rgba(0,0,0,.32)" } }}
+          >
+            <ChevronLeft />
+          </IconButton>
+        )}
+      </Stack>
 
-  const roleColors = {
-    super_admin: "#7c3aed",
-    admin: "#FF5252",
-    admin_junior: "#f59e0b",
-    kasir: "#4CAF50",
-    teknisi: "#2196F3",
-  };
+      <Divider sx={{ borderColor: "rgba(255,255,255,.1)" }} />
+      <Box sx={{ overflowY: "auto", flex: 1, py: 1 }}>
+        {renderMenu(mainMenu)}
+        <Typography variant="overline" sx={{ display: "block", px: 3, pt: 1.5, color: darkMode ? "#747b90" : "rgba(255,255,255,.45)", fontSize: 10 }}>Administrasi</Typography>
+        {renderMenu(utilityMenu)}
+      </Box>
 
-  const roleLabels = {
-    super_admin: "Super Admin",
-    admin: "Admin",
-    admin_junior: "Admin Junior",
-    kasir: "Kasir",
-    teknisi: "Teknisi",
-  };
-
-  const menuByRole = {
-    super_admin: [
-      { label: "Dashboard", icon: <Dashboard />, path: "/" },
-      {
-        label: "Invoices",
-        icon: <ReceiptLong />,
-        path: "/invoices", // Parent path
-        children: [
-          { label: "Daftar Invoice", path: "/invoices" },
-          { label: "Buat Invoice", path: "/invoices/new" },
-        ],
-      },
-      { label: "Customers", icon: <Group />, path: "/customers" },
-      { label: "Metode Pembayaran", icon: <CreditCard />, path: "/metode-pembayaran" },
-      { label: "Keuangan", icon: <AccountBalanceWallet />, path: "/keuangan" },
-      { label: "Chat Tracking", icon: <Chat />, path: "/chat-tracking" },
-      { label: "Users", icon: <People />, path: "/users" },
-      { label: "Settings", icon: <Settings />, path: "/settings" },
-    ],
-    admin: [
-      { label: "Dashboard", icon: <Dashboard />, path: "/" },
-      {
-        label: "Invoices",
-        icon: <ReceiptLong />,
-        path: "/invoices",
-        children: [
-          { label: "Daftar Invoice", path: "/invoices" },
-          { label: "Buat Invoice", path: "/invoices/new" },
-        ],
-      },
-      { label: "Customers", icon: <Group />, path: "/customers" },
-      { label: "Metode Pembayaran", icon: <CreditCard />, path: "/metode-pembayaran" },
-      { label: "Keuangan", icon: <AccountBalanceWallet />, path: "/keuangan" },
-      { label: "Chat Tracking", icon: <Chat />, path: "/chat-tracking" },
-      { label: "Settings", icon: <Settings />, path: "/settings" },
-    ],
-    admin_junior: [
-      { label: "Dashboard", icon: <Dashboard />, path: "/" },
-      {
-        label: "Invoices",
-        icon: <ReceiptLong />,
-        path: "/invoices",
-        children: [
-          { label: "Daftar Invoice", path: "/invoices" },
-          { label: "Buat Invoice", path: "/invoices/new" },
-        ],
-      },
-      { label: "Customers", icon: <Group />, path: "/customers" },
-      { label: "Metode Pembayaran", icon: <CreditCard />, path: "/metode-pembayaran" },
-      { label: "Keuangan", icon: <AccountBalanceWallet />, path: "/keuangan" },
-      { label: "Chat Tracking", icon: <Chat />, path: "/chat-tracking" },
-    ],
-    kasir: [
-      { label: "Dashboard", icon: <Dashboard />, path: "/" },
-      {
-        label: "Invoices",
-        icon: <ReceiptLong />,
-        path: "/invoices",
-        children: [
-          { label: "Daftar Invoice", path: "/invoices" },
-          { label: "Buat Invoice", path: "/invoices/new" },
-        ],
-      },
-      { label: "Keuangan", icon: <AccountBalanceWallet />, path: "/keuangan" },
-      { label: "Settings", icon: <Settings />, path: "/settings" },
-    ],
-    teknisi: [
-      { label: "Dashboard", icon: <Dashboard />, path: "/" },
-      { label: "Customers", icon: <Group />, path: "/customers" },
-      { label: "Settings", icon: <Settings />, path: "/settings" },
-    ],
-  };
-
-  const menu = menuByRole[user?.role] || [];
+      <Divider sx={{ borderColor: "rgba(255,255,255,.1)" }} />
+      <Stack direction="row" alignItems="center" spacing={1.2} sx={{ p: 1.75 }}>
+        <Avatar sx={{ width: 34, height: 34, bgcolor: "rgba(255,255,255,.18)", fontSize: 14 }}>
+          {(user?.username || "U").slice(0, 1).toUpperCase()}
+        </Avatar>
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Typography variant="body2" noWrap fontWeight={650}>{user?.username || "Pengguna"}</Typography>
+          <Chip
+            size="small"
+            label={(user?.role || "guest").replaceAll("_", " ")}
+            sx={{ height: 18, bgcolor: "rgba(255,255,255,.12)", color: "rgba(255,255,255,.75)", fontSize: 9 }}
+          />
+        </Box>
+        <Tooltip title={mode === "light" ? "Gunakan mode gelap" : "Gunakan mode terang"}>
+          <IconButton size="small" onClick={toggleMode} sx={{ color: "#fff" }}>
+            {mode === "light" ? <DarkModeOutlined fontSize="small" /> : <LightModeOutlined fontSize="small" />}
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Keluar"><IconButton size="small" onClick={logout} sx={{ color: "#fff" }}><LogoutOutlined fontSize="small" /></IconButton></Tooltip>
+      </Stack>
+    </Box>
+  );
 
   return (
-    <Box sx={{ width: 240, minWidth: 240, flexShrink: 0 }}>
-      <div
-        style={{
-          width: 240,
-          minWidth: 240,
-          background: "linear-gradient(180deg, #4facfe 0%, #0052d4 100%)",
-          color: "#fff",
-          padding: "24px 0",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          boxShadow: "3px 0 10px rgba(0,0,0,0.15)",
-          height: "100vh",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          zIndex: 1000,
-          overflowY: "auto",
-          boxSizing: "border-box"
+    <>
+      {!desktop && (
+        <IconButton
+          aria-label="Buka menu"
+          onClick={() => setMobileOpen(true)}
+          sx={{ position: "fixed", zIndex: 1300, bottom: 20, right: 20, color: "#fff", bgcolor: "#5b4be8", boxShadow: 4, "&:hover": { bgcolor: "#4939d2" } }}
+        >
+          <MenuIcon />
+        </IconButton>
+      )}
+      <Drawer
+        variant={desktop ? "permanent" : "temporary"}
+        open={desktop || mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: drawerWidth,
+            border: 0,
+            borderRight: darkMode ? "1px solid #272b38" : 0,
+            background: darkMode
+              ? "linear-gradient(180deg, #181b25 0%, #12151e 55%, #0d0f16 100%)"
+              : "linear-gradient(180deg, #5f4bea 0%, #4432bd 55%, #2c237f 100%)",
+          },
         }}
       >
-        <div
-          style={{
-            textAlign: "center",
-            width: "100%",
-            marginBottom: 28,
-          }}
-        >
-          <img
-            src={require("../assets/logoringnet.png")}
-            alt="Ringnet"
-            style={{
-              width: 70,
-              marginBottom: 10,
-              background: "#fff",
-              padding: 6,
-              borderRadius: 10,
-              boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
-            }}
-          />
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
-            Ringnet Admin
-          </h3>
-
-          <div style={{ marginTop: 12 }}>
-            <p
-              style={{
-                margin: 0,
-                fontWeight: "bold",
-                fontSize: 14,
-                color: "#fff",
-              }}
-            >
-              {user?.username || "-"}
-            </p>
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 500,
-                backgroundColor: roleColors[user?.role] || "#999",
-                padding: "4px 10px",
-                borderRadius: 20,
-                color: "#fff",
-                textTransform: "capitalize",
-              }}
-            >
-              {roleLabels[user?.role] || user?.role || "Guest"}
-            </span>
-          </div>
-        </div>
-
-        <div style={{ flexGrow: 1, width: "100%" }}>
-          {menu.map((item, i) => {
-            const hasChildren = item.children && item.children.length > 0;
-            const isParentActive = hasChildren && (location.pathname.startsWith(item.path) || (active && active.startsWith(item.path)));
-
-            return (
-              <div key={i}>
-                <div
-                  onClick={() => {
-                    if (hasChildren) {
-                      setOpenInvoices(!openInvoices);
-                    } else {
-                      navigate(item.path);
-                    }
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "12px 28px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    backgroundColor: !hasChildren && isActive(item.path)
-                      ? "rgba(255, 255, 255, 0.25)"
-                      : "transparent",
-                    cursor: "pointer",
-                    transition: "0.3s",
-                    color: (!hasChildren && isActive(item.path)) || (hasChildren && isParentActive)
-                      ? "#fff"
-                      : "rgba(255,255,255,0.85)",
-                    boxSizing: "border-box"
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)")
-                  }
-                  onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = !hasChildren && isActive(item.path)
-                    ? "rgba(255, 255, 255, 0.25)"
-                    : "transparent")
-                  }
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    {item.icon}
-                    <span style={{ fontWeight: 500 }}>{item.label}</span>
-                  </div>
-                  {hasChildren && (openInvoices ? <ExpandLess size={18} /> : <ExpandMore size={18} />)}
-                </div>
-
-                {hasChildren && (
-                  <Collapse in={openInvoices} timeout="auto" unmountOnExit>
-                    <div style={{ backgroundColor: "rgba(0,0,0,0.1)", paddingBottom: 8 }}>
-                      {item.children.map((child, ci) => (
-                        <div
-                          key={ci}
-                          onClick={() => navigate(child.path)}
-                          style={{
-                            padding: "10px 28px 10px 64px",
-                            cursor: "pointer",
-                            fontSize: 14,
-                            color: isActive(child.path) ? "#fff" : "rgba(255,255,255,0.7)",
-                            backgroundColor: isActive(child.path) ? "rgba(255,255,255,0.1)" : "transparent",
-                            transition: "0.2s"
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.color = "#fff"}
-                          onMouseLeave={(e) => e.currentTarget.style.color = isActive(child.path) ? "#fff" : "rgba(255,255,255,0.7)"}
-                        >
-                          {child.label}
-                        </div>
-                      ))}
-                    </div>
-                  </Collapse>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </Box>
+        {content}
+      </Drawer>
+    </>
   );
 };
 

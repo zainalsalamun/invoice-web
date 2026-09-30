@@ -25,6 +25,71 @@ const reportDefinitions = [
 
 const money = (value) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(value || 0));
 
+const assetLabels = {
+  STOCK: "Stok",
+  INSTALLED: "Terpasang",
+  LOANED: "Dipinjam",
+  REPAIR: "Perbaikan",
+  LOST: "Hilang",
+  RETIRED: "Tidak Aktif",
+  "TANPA STATUS": "Tanpa Status",
+};
+
+const requestLabels = {
+  NEW: "Baru",
+  ANALYSIS: "Analisis",
+  IN_PROGRESS: "Dikerjakan",
+  READY_REVIEW: "Siap Review",
+  REVISION: "Revisi",
+  APPROVED: "Disetujui",
+  RELEASED: "Dirilis",
+  CLOSED: "Ditutup",
+  REJECTED: "Ditolak",
+  "TANPA STATUS": "Tanpa Status",
+};
+
+const titleCase = (value) => String(value || "Tanpa data")
+  .trim()
+  .toLocaleLowerCase("id-ID")
+  .replace(/(^|\s)\S/g, (letter) => letter.toLocaleUpperCase("id-ID"));
+
+const normalizeLabel = (reportKey, label) => {
+  const clean = String(label || "Tanpa data").trim();
+  const upper = clean.toUpperCase();
+  if (reportKey === "invoices") {
+    if (upper === "LUNAS") return "Lunas";
+    if (upper === "BELUM LUNAS") return "Belum Lunas";
+  }
+  if (reportKey === "works" && upper === "TANPA PIC") return "Tanpa PIC";
+  if (reportKey === "assets") return assetLabels[upper] || titleCase(clean);
+  if (reportKey === "requests") return requestLabels[upper] || titleCase(clean.replaceAll("_", " "));
+  return titleCase(clean);
+};
+
+const normalizeReportData = (source) => {
+  const normalized = { ...source };
+  reportDefinitions.forEach((report) => {
+    const grouped = new Map();
+    (source?.[report.key] || []).forEach((item) => {
+      const label = normalizeLabel(report.key, item.label);
+      const key = label.toLocaleLowerCase("id-ID");
+      const current = grouped.get(key) || { label, value: 0 };
+      current.value += Number(item.value || 0);
+      if (item.amount !== undefined) current.amount = Number(current.amount || 0) + Number(item.amount || 0);
+      if (item.done !== undefined) current.done = Number(current.done || 0) + Number(item.done || 0);
+      grouped.set(key, current);
+    });
+    normalized[report.key] = Array.from(grouped.values()).sort((a, b) => b.value - a.value || a.label.localeCompare(b.label, "id-ID"));
+  });
+  return normalized;
+};
+
+const csvCell = (value) => {
+  const text = String(value ?? "");
+  const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
+  return `"${safe.replaceAll('"', '""')}"`;
+};
+
 const ReportsPage = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -32,16 +97,46 @@ const ReportsPage = () => {
 
   useEffect(() => {
     operationalService.getReportsOverview()
-      .then(setData)
+      .then((result) => setData(normalizeReportData(result)))
       .catch((err) => setError(err.response?.data?.message || "Laporan belum dapat dimuat. Periksa koneksi backend."))
       .finally(() => setLoading(false));
   }, []);
 
   const exportCsv = () => {
     if (!data) return;
-    const rows = [["Laporan", "Label", "Jumlah", "Nilai", "Selesai"]];
-    reportDefinitions.forEach((report) => (data[report.key] || []).forEach((item) => rows.push([report.title, item.label, item.value, item.amount || "", item.done || ""])));
-    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
+    const generatedAt = new Date(data.generatedAt || Date.now()).toLocaleString("id-ID");
+    const rows = [["Kategori Laporan", "Rincian", "Jumlah", "Total Nilai (Rp)", "Selesai", "Belum Selesai", "Persentase Selesai", "Waktu Data"]];
+
+    reportDefinitions.forEach((report) => {
+      const items = data[report.key] || [];
+      items.forEach((item) => {
+        const total = Number(item.value || 0);
+        const done = item.done === undefined ? "" : Number(item.done || 0);
+        rows.push([
+          report.title,
+          item.label,
+          total,
+          item.amount === undefined ? "" : Number(item.amount || 0),
+          done,
+          done === "" ? "" : Math.max(total - done, 0),
+          done === "" || total === 0 ? "" : `${((done / total) * 100).toFixed(2)}%`,
+          generatedAt,
+        ]);
+      });
+
+      rows.push([
+        report.title,
+        "TOTAL",
+        items.reduce((sum, item) => sum + Number(item.value || 0), 0),
+        items.some((item) => item.amount !== undefined) ? items.reduce((sum, item) => sum + Number(item.amount || 0), 0) : "",
+        items.some((item) => item.done !== undefined) ? items.reduce((sum, item) => sum + Number(item.done || 0), 0) : "",
+        items.some((item) => item.done !== undefined) ? items.reduce((sum, item) => sum + Math.max(Number(item.value || 0) - Number(item.done || 0), 0), 0) : "",
+        "",
+        generatedAt,
+      ]);
+    });
+
+    const csv = `\uFEFF${rows.map((row) => row.map(csvCell).join(",")).join("\r\n")}`;
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const anchor = document.createElement("a");
     anchor.href = url;

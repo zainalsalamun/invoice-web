@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
     Box,
     Button,
@@ -22,24 +22,31 @@ import {
     FormControl,
     Tooltip,
     TablePagination,
+    Alert,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
-import { Edit, Delete, Add, UploadFile, Search, ChatOutlined } from "@mui/icons-material";
+import { Edit, Delete, Add, UploadFile, Search, Clear, ChatOutlined, FactCheckOutlined } from "@mui/icons-material";
 import Sidebar from "../components/Sidebar";
+import ChatTrackingImportReviewDialog from "./ChatTrackingImportReviewDialog";
 import { chatTrackingService } from "../services/chatTrackingService";
 import { authService } from "../services/authService";
 import { notifySuccess, notifyError, notifyInfo } from "../utils/notify";
 import { userService } from "../services/userServices";
+import { buildChatTrackingPayload, isChatTrackingFormValid } from "./chatTrackingForm";
 
 
 const ChatTrackingPage = () => {
     const theme = useTheme();
     const darkMode = theme.palette.mode === "dark";
     const [list, setList] = useState([]);
+    const [totalRows, setTotalRows] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState("");
+    const requestSequence = useRef(0);
     const user = authService.getCurrentUser();
     const canDelete = user?.role === "super_admin";
     const canEdit = ["super_admin", "admin", "admin_junior", "teknisi"].includes(user?.role);
+    const canImport = ["super_admin", "admin"].includes(user?.role);
 
     // Dialog State
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -59,9 +66,17 @@ const ChatTrackingPage = () => {
 
 
     const [importOpen, setImportOpen] = useState(false);
+    const [reviewOpen, setReviewOpen] = useState(false);
+    const [reviewBatchId, setReviewBatchId] = useState(null);
     const [importText, setImportText] = useState("");
     const [importing, setImporting] = useState(false);
+    const [importYear, setImportYear] = useState("");
+    const [importStartRow, setImportStartRow] = useState("3");
+    const [importPreview, setImportPreview] = useState(null);
+    const [stagedBatchId, setStagedBatchId] = useState(null);
     const [searchNoTask, setSearchNoTask] = useState("");
+    const [activeSearch, setActiveSearch] = useState("");
+    const [progressFilter, setProgressFilter] = useState("");
 
     // Pagination State
     const [page, setPage] = useState(0);
@@ -69,8 +84,10 @@ const ChatTrackingPage = () => {
     const [admins, setAdmins] = useState([]);
 
 
-    const fetchData = async () => {
+    const fetchData = async ({ searchTerm = activeSearch, selectedPage = page, pageSize = rowsPerPage, selectedProgress = progressFilter } = {}) => {
+        const requestId = ++requestSequence.current;
         setLoading(true);
+        setLoadError("");
         let params = {};
 
         // Hanya Super Admin yang bisa melihat semua tugas
@@ -79,20 +96,57 @@ const ChatTrackingPage = () => {
             params.admin_id = user.id;
         }
 
-        if (searchNoTask.trim()) {
-            params.nomor_task = searchNoTask.trim();
+        if (searchTerm) {
+            params.nomor_task = searchTerm;
+        }
+        if (selectedProgress) {
+            params.progress = selectedProgress;
         }
 
-        const data = await chatTrackingService.getAll(params);
-        setList(data);
-        setLoading(false);
+        try {
+            const result = await chatTrackingService.getPage({
+                ...params,
+                page: selectedPage + 1,
+                pageSize,
+            });
+            if (requestId !== requestSequence.current) return;
+            const lastPage = Math.max(0, Math.ceil(result.pagination.total / pageSize) - 1);
+            if (selectedPage > lastPage) {
+                setPage(lastPage);
+                fetchData({ searchTerm, selectedPage: lastPage, pageSize, selectedProgress });
+                return;
+            }
+            setList(result.data);
+            setTotalRows(result.pagination.total);
+        } catch (err) {
+            if (requestId !== requestSequence.current) return;
+            setList([]);
+            setTotalRows(0);
+            setLoadError(err.response?.data?.message || "Daftar pekerjaan gagal dimuat. Coba lagi.");
+        } finally {
+            if (requestId === requestSequence.current) setLoading(false);
+        }
+    };
+
+    const handleSearch = () => {
+        const term = searchNoTask.trim();
+        setActiveSearch(term);
+        setPage(0);
+        fetchData({ searchTerm: term, selectedPage: 0 });
+    };
+
+    const handleClearSearch = () => {
+        setSearchNoTask("");
+        setActiveSearch("");
+        setPage(0);
+        fetchData({ searchTerm: "", selectedPage: 0 });
     };
 
 
     const fetchAdmins = async () => {
-        if (["super_admin", "admin", "admin_junior"].includes(user?.role)) {
+        if (canDelete) {
             const data = await userService.getAll();
-            setAdmins(data.filter(u => ["admin", "super_admin"].includes(u.role)));
+            setAdmins(data.filter(u => ["super_admin", "admin", "admin_junior", "teknisi"].includes(u.role)));
         }
     };
 
@@ -133,24 +187,32 @@ const ChatTrackingPage = () => {
     };
 
     const handleSave = async () => {
-        if (!form.nama_pic || !form.tanggal || !form.deskripsi) {
-            notifyError("Harap isi Nama PIC, Tanggal, dan Deskripsi");
+        if (!isChatTrackingFormValid(form, canDelete)) {
+            notifyError(canDelete ? "Harap isi Nama PIC, Tanggal, dan Deskripsi" : "Harap isi Tanggal dan Deskripsi");
             return;
         }
 
         setSaving(true);
         try {
+            const payload = buildChatTrackingPayload(form, canDelete);
             if (editing) {
-                await chatTrackingService.update(editing.id, form);
+                await chatTrackingService.update(editing.id, payload);
                 notifySuccess("Data berhasil diperbarui!");
             } else {
-                await chatTrackingService.create(form);
+                await chatTrackingService.create(payload);
                 notifySuccess("Data baru berhasil ditambahkan!");
             }
             setDialogOpen(false);
             fetchData();
         } catch (err) {
-            notifyError(err.response?.data?.message || "Gagal menyimpan data");
+            if (err.response?.status === 403) {
+                notifyError("Akses ditolak. Akun Anda tidak memiliki izin untuk mengubah pekerjaan ini.");
+            } else if (err.response?.status === 404 && editing) {
+                notifyError("Pekerjaan tidak ditemukan atau bukan lagi tugas Anda. Daftar diperbarui.");
+                fetchData();
+            } else {
+                notifyError(err.response?.data?.message || "Gagal menyimpan data");
+            }
         } finally {
             setSaving(false);
         }
@@ -169,72 +231,58 @@ const ChatTrackingPage = () => {
         }
     };
 
-    const handleImport = async () => {
+    const importPayload = () => ({
+        text: importText,
+        sourceYear: importYear,
+        sourceStartRow: importStartRow,
+    });
+
+    const handleImportPreview = async () => {
         if (!importText.trim()) return notifyError("Data tidak boleh kosong");
 
         setImporting(true);
         try {
-            const lines = importText.trim().split('\n');
-            const dataToImport = [];
-
-            const monthMap = {
-                'januari': '01', 'februari': '02', 'maret': '03', 'april': '04',
-                'mei': '05', 'juni': '06', 'juli': '07', 'agustus': '08',
-                'september': '09', 'oktober': '10', 'november': '11', 'desember': '12',
-                'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'jun': '06', 'jul': '07',
-                'agu': '08', 'sep': '09', 'okt': '10', 'nov': '11', 'des': '12'
-            };
-
-            for (let i = 0; i < lines.length; i++) {
-                const cols = lines[i].split('\t');
-                if (cols.length >= 5) {
-                    if (cols[0].toLowerCase() === 'no' || cols[1].toLowerCase() === 'nama pic') continue;
-
-                    const pic = cols[1]?.trim();
-                    const tgl = cols[2]?.trim()?.padStart(2, '0');
-                    const blnRaw = cols[3]?.trim()?.toLowerCase();
-                    const bln = monthMap[blnRaw] || '01';
-                    const thn = "2025";
-                    const tanggalFormat = `${thn}-${bln}-${tgl}`;
-
-                    const deskripsi = cols[4]?.trim();
-                    const progress = cols[5]?.trim() || 'Belum Selesai';
-                    const keterangan = cols[6]?.trim() || '';
-
-                    if (pic && deskripsi && !isNaN(parseInt(tgl))) {
-                        dataToImport.push({
-                            nama_pic: pic,
-                            tanggal: tanggalFormat,
-                            deskripsi, progress, keterangan
-                        });
-                    }
-                }
-            }
-
-            if (dataToImport.length === 0) {
-                notifyError("Format data tidak sesuai, pastikan copy dari Excel beserta kolomnya");
-                return;
-            }
-
-            const res = await chatTrackingService.bulkCreate(dataToImport);
-            notifySuccess(res?.message || "Data berhasil diimport");
-            setImportOpen(false);
-            setImportText("");
-            fetchData();
+            const preview = await chatTrackingService.previewImport(importPayload());
+            setImportPreview(preview);
+            setStagedBatchId(null);
+            notifyInfo("Pratinjau siap. Periksa jumlah baris dan masalah sebelum menyimpan snapshot.");
         } catch (err) {
-            notifyError(err.response?.data?.message || "Gagal mengimport data");
+            notifyError(err.response?.data?.message || "Gagal membuat pratinjau impor");
         } finally {
             setImporting(false);
         }
     };
 
+    const handleStageImport = async () => {
+        if (!importPreview) return;
+        setImporting(true);
+        try {
+            const result = await chatTrackingService.stageImport(importPayload());
+            setStagedBatchId(result?.data?.batchId || null);
+            notifySuccess(result?.message || "Snapshot tersimpan di staging.");
+        } catch (err) {
+            notifyError(err.response?.data?.message || "Gagal menyimpan snapshot staging");
+        } finally {
+            setImporting(false);
+        }
+    };
+
+    const handleOpenReview = (batchId = null) => {
+        setImportOpen(false);
+        setReviewBatchId(batchId);
+        setReviewOpen(true);
+    };
+
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
+        fetchData({ selectedPage: newPage });
     };
 
     const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
+        const pageSize = parseInt(event.target.value, 10);
+        setRowsPerPage(pageSize);
         setPage(0);
+        fetchData({ selectedPage: 0, pageSize });
     };
 
     // Format Helpers
@@ -285,20 +333,57 @@ const ChatTrackingPage = () => {
                             placeholder="Cari No Task..."
                             value={searchNoTask}
                             onChange={(e) => setSearchNoTask(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && fetchData()}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                             InputProps={{
                                 startAdornment: <Search fontSize="small" sx={{ color: 'text.secondary', mr: 1 }} />,
+                                endAdornment: searchNoTask && (
+                                    <IconButton size="small" aria-label="Bersihkan pencarian" onClick={handleClearSearch}>
+                                        <Clear fontSize="small" />
+                                    </IconButton>
+                                ),
                             }}
                             sx={{ width: 220 }}
                         />
-                        {canDelete && (
+                        <Button variant="outlined" onClick={handleSearch} disabled={loading} sx={{ textTransform: "none", borderRadius: 2 }}>
+                            Cari
+                        </Button>
+                        <FormControl size="small" sx={{ minWidth: 170 }}>
+                            <InputLabel id="chat-progress-filter-label">Progres</InputLabel>
+                            <Select
+                                labelId="chat-progress-filter-label"
+                                value={progressFilter}
+                                label="Progres"
+                                onChange={(event) => {
+                                    const selectedProgress = event.target.value;
+                                    setProgressFilter(selectedProgress);
+                                    setPage(0);
+                                    fetchData({ selectedPage: 0, selectedProgress });
+                                }}
+                            >
+                                <MenuItem value="">Semua progres</MenuItem>
+                                <MenuItem value="Belum Selesai">Belum Selesai</MenuItem>
+                                <MenuItem value="Sedang Diproses">Sedang Diproses</MenuItem>
+                                <MenuItem value="Sudah Selesai">Sudah Selesai</MenuItem>
+                            </Select>
+                        </FormControl>
+                        {canImport && (
+                            <Button
+                                variant="outlined"
+                                startIcon={<FactCheckOutlined />}
+                                onClick={() => handleOpenReview()}
+                                sx={{ fontWeight: "bold", textTransform: "none", borderRadius: 2 }}
+                            >
+                                Lihat Batch Staging
+                            </Button>
+                        )}
+                        {canImport && (
                             <Button
                                 variant="outlined"
                                 startIcon={<UploadFile />}
                                 onClick={() => setImportOpen(true)}
                                 sx={{ fontWeight: "bold", textTransform: "none", borderRadius: 2 }}
                             >
-                                Import Excel
+                                Impor ke Staging
                             </Button>
                         )}
                         {canEdit && (
@@ -314,8 +399,13 @@ const ChatTrackingPage = () => {
                     </Box>
                 </Box>
 
+                {loadError && (
+                    <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" onClick={() => fetchData()}>Coba lagi</Button>}>
+                        {loadError}
+                    </Alert>
+                )}
                 <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
-                    <Table size="small">
+                    <Table size="small" sx={{ minWidth: 1300 }}>
                         <TableHead>
                             <TableRow>
                                 <TableCell align="center">No</TableCell>
@@ -339,12 +429,18 @@ const ChatTrackingPage = () => {
                                 <TableRow>
                                     <TableCell colSpan={11} align="center" sx={{ py: 3 }}>Memuat data...</TableCell>
                                 </TableRow>
+                            ) : loadError ? (
+                                <TableRow>
+                                    <TableCell colSpan={11} align="center" sx={{ py: 3 }}>Daftar belum dapat ditampilkan.</TableCell>
+                                </TableRow>
                             ) : list.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={11} align="center" sx={{ py: 3 }}>Belum ada data Chat Tracking.</TableCell>
+                                    <TableCell colSpan={11} align="center" sx={{ py: 3 }}>
+                                        {activeSearch ? `Tidak ada nomor task yang cocok dengan “${activeSearch}”.` : "Belum ada data Chat Tracking."}
+                                    </TableCell>
                                 </TableRow>
                             ) : (
-                                list.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => {
+                                list.map((row, index) => {
                                     const isMyTask = row.admin_id === user?.id;
                                     return (
                                         <TableRow
@@ -436,7 +532,7 @@ const ChatTrackingPage = () => {
                 <TablePagination
                     rowsPerPageOptions={[15, 25, 50, 100]}
                     component="div"
-                    count={list.length}
+                    count={totalRows}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}
@@ -450,28 +546,42 @@ const ChatTrackingPage = () => {
                 <DialogTitle fontWeight="bold">{editing ? "Edit Chat Tracking" : "Tambah Chat Tracking"}</DialogTitle>
                 <DialogContent dividers>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-                        <FormControl size="small" fullWidth required disabled={!canDelete}>
-                            <InputLabel>Kategori/Nama (PIC)</InputLabel>
-                            <Select
-                                value={form.nama_pic}
+                        {canDelete ? (
+                            <FormControl size="small" fullWidth required>
+                                <InputLabel>Kategori/Nama (PIC)</InputLabel>
+                                <Select
+                                    value={form.nama_pic}
+                                    label="Kategori/Nama (PIC)"
+                                    onChange={(e) => {
+                                        const selectedAdmin = admins.find(a => a.username === e.target.value);
+                                        setForm({
+                                            ...form,
+                                            nama_pic: e.target.value,
+                                            admin_id: selectedAdmin ? selectedAdmin.id : form.admin_id
+                                        });
+                                    }}
+                                >
+                                    <MenuItem value=""><em>-- Pilih PIC --</em></MenuItem>
+                                    {form.nama_pic && !admins.some((adm) => adm.username === form.nama_pic) && (
+                                        <MenuItem value={form.nama_pic}>{form.nama_pic} (PIC saat ini)</MenuItem>
+                                    )}
+                                    {admins.map((adm) => (
+                                        <MenuItem key={adm.id} value={adm.username}>
+                                            {adm.username}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        ) : (
+                            <TextField
                                 label="Kategori/Nama (PIC)"
-                                onChange={(e) => {
-                                    const selectedAdmin = admins.find(a => a.username === e.target.value);
-                                    setForm({
-                                        ...form,
-                                        nama_pic: e.target.value,
-                                        admin_id: selectedAdmin ? selectedAdmin.id : form.admin_id
-                                    });
-                                }}
-                            >
-                                <MenuItem value=""><em>-- Pilih PIC --</em></MenuItem>
-                                {admins.map((adm) => (
-                                    <MenuItem key={adm.id} value={adm.username}>
-                                        {adm.username}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+                                size="small"
+                                value={form.nama_pic || user?.username || ""}
+                                InputProps={{ readOnly: true }}
+                                helperText="PIC ditetapkan oleh sistem; hanya super admin yang dapat mengubahnya."
+                                fullWidth
+                            />
+                        )}
                         <TextField
                             label="Nomor Task"
                             size="small"
@@ -525,21 +635,34 @@ const ChatTrackingPage = () => {
                             fullWidth
                         />
 
-                        <FormControl size="small" fullWidth disabled={!canDelete}>
-                            <InputLabel>Assign Tugas Ke (Admin)</InputLabel>
-                            <Select
-                                value={form.admin_id}
-                                label="Assign Tugas Ke (Admin)"
-                                onChange={(e) => setForm({ ...form, admin_id: e.target.value })}
-                            >
-                                <MenuItem value=""><em>-- Belum diassign --</em></MenuItem>
-                                {admins.map((adm) => (
-                                    <MenuItem key={adm.id} value={adm.id}>
-                                        {adm.username} ({adm.role})
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+                        {canDelete ? (
+                            <FormControl size="small" fullWidth>
+                                <InputLabel>Assign Tugas Ke</InputLabel>
+                                <Select
+                                    value={form.admin_id}
+                                    label="Assign Tugas Ke"
+                                    onChange={(e) => setForm({ ...form, admin_id: e.target.value })}
+                                >
+                                    <MenuItem value=""><em>-- Belum diassign --</em></MenuItem>
+                                    {form.admin_id && !admins.some((adm) => String(adm.id) === String(form.admin_id)) && (
+                                        <MenuItem value={form.admin_id}>Penanggung jawab saat ini</MenuItem>
+                                    )}
+                                    {admins.map((adm) => (
+                                        <MenuItem key={adm.id} value={adm.id}>
+                                            {adm.username} ({adm.role})
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        ) : (
+                            <TextField
+                                label="Ditugaskan kepada"
+                                size="small"
+                                value={editing?.admin_username || user?.username || ""}
+                                InputProps={{ readOnly: true }}
+                                fullWidth
+                            />
+                        )}
                     </Box>
 
                 </DialogContent>
@@ -552,29 +675,104 @@ const ChatTrackingPage = () => {
             </Dialog>
 
             {/* Dialog Import */}
-            <Dialog open={importOpen} onClose={() => setImportOpen(false)} fullWidth maxWidth="md">
-                <DialogTitle fontWeight="bold">Import Data dari Excel / Google Sheet</DialogTitle>
+            <Dialog open={importOpen} onClose={() => setImportOpen(false)} fullWidth maxWidth="lg">
+                <DialogTitle fontWeight="bold">Pratinjau Chat Tracking dari Google Sheets</DialogTitle>
                 <DialogContent dividers>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        Caranya: Buka file Excel atau Google Sheets Anda, lalu blok baris tabel yang ingin Anda pindahkan (mulai dari No, Nama PIC, dst), klik <b>Copy (Ctrl+C)</b>, kemudian klik di dalam kotak di bawah ini dan klik <b>Paste (Ctrl+V)</b>.
+                        Salin delapan kolom A:H: No, Nama PIC, Tanggal, Bulan, Deskripsi, Mulai–End work, Progress, Keterangan. Pilih rentang yang hanya memiliki satu tahun. Maksimal 2.000 baris per batch. Pratinjau dan staging tidak menambah pekerjaan aktif.
                     </Typography>
+                    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2, mb: 2 }}>
+                        <TextField
+                            label="Tahun sumber"
+                            type="number"
+                            value={importYear}
+                            onChange={(e) => { setImportYear(e.target.value); setImportPreview(null); setStagedBatchId(null); }}
+                            inputProps={{ min: 2000, max: 2100 }}
+                            helperText="Wajib untuk tanggal yang hanya berisi angka hari; jangan menebak tahunnya."
+                            fullWidth
+                        />
+                        <TextField
+                            label="Nomor baris pertama di Google Sheets"
+                            type="number"
+                            value={importStartRow}
+                            onChange={(e) => { setImportStartRow(e.target.value); setImportPreview(null); setStagedBatchId(null); }}
+                            inputProps={{ min: 1 }}
+                            helperText="Jika header A3:H3 ikut disalin, isi 3. Jika mulai dari baris data lain, sesuaikan."
+                            fullWidth
+                        />
+                    </Box>
                     <TextField
-                        label="Paste Data Excel Disini"
+                        label="Tempel data A:H di sini"
                         multiline
-                        rows={12}
+                        rows={8}
                         value={importText}
-                        onChange={(e) => setImportText(e.target.value)}
+                        onChange={(e) => { setImportText(e.target.value); setImportPreview(null); setStagedBatchId(null); }}
                         fullWidth
-                        placeholder="1	Anggi	1	Januari	Rekap pembayaran	Sudah Selesai&#10;2	Prima	2	Januari	Merekap arus kas	Sudah Selesai..."
+                        placeholder={"No\tNama PIC\tTanggal\tBulan\tDeskripsi\tMulai–End work\tProgress\tKeterangan\n1\tAnggi\t25\tFebruari\tBuat invoice\t\tSudah Selesai\tTerkirim"}
                     />
+                    {importPreview && (
+                        <Box sx={{ mt: 2 }}>
+                            <Alert severity={importPreview.summary.invalid > 0 ? "warning" : "info"} sx={{ mb: 2 }}>
+                                {importPreview.inScope} baris bermakna: {importPreview.summary.valid} valid, {importPreview.summary.review} perlu tinjau, {importPreview.summary.invalid} tidak valid; {importPreview.summary.excluded} header/baris kosong/nomor saja dikecualikan. Total {importPreview.issueCount} masalah. Belum ada data yang masuk pekerjaan aktif.
+                            </Alert>
+                            {stagedBatchId && (
+                                <Alert severity="success" sx={{ mb: 2 }}>
+                                    Snapshot staging tersimpan dengan ID {stagedBatchId}. Baris bermasalah tetap harus ditinjau sebelum penerapan.
+                                </Alert>
+                            )}
+                            <Typography variant="subtitle2" sx={{ mb: 1 }}>Contoh hasil baca (maksimal 25 baris)</Typography>
+                            <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 240, mb: 2 }}>
+                                <Table size="small" stickyHeader>
+                                    <TableHead><TableRow><TableCell>Baris</TableCell><TableCell>PIC</TableCell><TableCell>Tanggal</TableCell><TableCell>Waktu mentah</TableCell><TableCell>Progress</TableCell><TableCell>Status</TableCell></TableRow></TableHead>
+                                    <TableBody>
+                                        {importPreview.sample.map((row) => (
+                                            <TableRow key={row.sourceRowNo}>
+                                                <TableCell>{row.sourceRowNo}</TableCell>
+                                                <TableCell>{row.normalized?.nama_pic || row.raw.nama_pic || "-"}</TableCell>
+                                                <TableCell>{row.normalized?.tanggal || row.raw.tanggal || "-"}</TableCell>
+                                                <TableCell>{row.normalized?.mulai_end_work_raw || "-"}</TableCell>
+                                                <TableCell>{row.normalized?.progress || row.raw.progress || "-"}</TableCell>
+                                                <TableCell>{row.status}{row.reason ? ` (${row.reason})` : ""}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                            {importPreview.issues.length > 0 && (
+                                <Box sx={{ maxHeight: 180, overflowY: "auto" }}>
+                                    <Typography variant="subtitle2">Masalah pertama{importPreview.issuesTruncated ? " (100 ditampilkan)" : ""}</Typography>
+                                    {importPreview.issues.map((issue, index) => (
+                                        <Typography key={`${issue.sourceRowNo}-${issue.code}-${index}`} variant="body2" color="text.secondary">
+                                            Baris {issue.sourceRowNo}: {issue.message}
+                                        </Typography>
+                                    ))}
+                                </Box>
+                            )}
+                        </Box>
+                    )}
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}>
                     <Button onClick={() => setImportOpen(false)} color="inherit">Batal</Button>
-                    <Button onClick={handleImport} variant="contained" color="success" disabled={importing}>
-                        {importing ? "Mengimport..." : "Mulai Import Data"}
+                    {stagedBatchId && (
+                        <Button onClick={() => handleOpenReview(stagedBatchId)} variant="outlined">
+                            Tinjau Batch Ini
+                        </Button>
+                    )}
+                    <Button onClick={handleImportPreview} variant="outlined" disabled={importing || !importText.trim()}>
+                        {importing ? "Memproses..." : "Buat Pratinjau"}
+                    </Button>
+                    <Button onClick={handleStageImport} variant="contained" disabled={importing || !importPreview || !!stagedBatchId}>
+                        Simpan ke Staging
                     </Button>
                 </DialogActions>
             </Dialog>
+            {canImport && (
+                <ChatTrackingImportReviewDialog
+                    open={reviewOpen}
+                    onClose={() => setReviewOpen(false)}
+                    initialBatchId={reviewBatchId}
+                />
+            )}
         </Box >
     );
 };

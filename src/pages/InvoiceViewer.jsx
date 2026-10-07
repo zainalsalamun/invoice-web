@@ -25,8 +25,8 @@ const InvoiceViewer = () => {
     const rawAlamat = data.alamat || data.alamat_pelanggan || "-";
     const rawLayanan = data.layanan || data.keterangan || "";
     const rawHargaPaket = data.hargaPaket || data.harga_paket || 0;
-    const rawPpn = data.ppn || data.vat || 0;
-    const rawTotal = data.total || data.total_tagihan || 0;
+    const rawPpn = data.ppn ?? data.vat ?? 0;
+    const rawTotal = data.total ?? data.total_tagihan ?? 0;
 
     // items: kalau backend sudah kirim array items pakai itu
     // kalau tidak ada, fallback ke 1 baris dari layanan + harga paket
@@ -54,16 +54,10 @@ const InvoiceViewer = () => {
         : items.reduce((sum, it) => sum + it.harga * it.qty, 0);
 
     // hitung VAT (ppn)
-    let vat =
-      data.vat != null
-        ? Number(data.vat)
-        : rawPpn
-          ? Number(rawPpn)
-          : Math.round(dpp * 0.11);
+    let vat = Number(rawPpn);
 
-    // hitung total: selalu DPP + VAT
-    // rawTotal/data.total di database hanya menyimpan DPP (sebelum PPN),
-    // jadi tidak bisa digunakan langsung sebagai total akhir.
+    // Tampilkan total dari rincian dan PPN yang tersimpan; PPN nol tidak boleh
+    // berubah menjadi 11% hanya karena nilainya falsy.
     const totalTagihan = dpp + vat;
 
     return {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { keuanganService } from "../services/keuanganService";
 import {
@@ -18,38 +19,49 @@ import {
     ListItemText,
     ListItemIcon,
     Divider,
-    TablePagination
+    TablePagination,
+    Alert
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { CreditCard, AccountBalance, Payments, Money, AccountBalanceWalletOutlined } from "@mui/icons-material";
+import FinancialOverview from "../components/FinancialOverview";
+import InvoicePeriodFilter from "../components/InvoicePeriodFilter";
+import { useInvoicePeriod } from "../hooks/useInvoicePeriod";
 
 const KeuanganPage = () => {
+    const navigate = useNavigate();
     const theme = useTheme();
     const darkMode = theme.palette.mode === "dark";
     const [summary, setSummary] = useState([]);
     const [customers, setCustomers] = useState([]);
     const [stats, setStats] = useState(null);
+    const [financial, setFinancial] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
     const [selectedMethodId, setSelectedMethodId] = useState(null);
+    const { period, periods, periodError, selectPeriod } = useInvoicePeriod();
 
     // Pagination state
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     useEffect(() => {
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
+        let active = true;
         setLoading(true);
-        const data = await keuanganService.getSummary();
-        if (data) {
-            setSummary(data.summary || []);
-            setCustomers(data.customers || []);
-            setStats(data.stats || null);
-        }
-        setLoading(false);
-    };
+        setFinancial(null);
+        setError("");
+        keuanganService.getSummary(period)
+            .then((data) => {
+                if (!active || !data) return;
+                setSummary(data.summary || []);
+                setCustomers(data.customers || []);
+                setStats(data.stats || null);
+                setFinancial(data.financial || null);
+            })
+            .catch((err) => { if (active) setError(err.response?.data?.message || "Ringkasan keuangan belum dapat dimuat."); })
+            .finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
+    }, [period]);
 
     const getMethodIcon = (methodName) => {
         if (!methodName) return <Money />;
@@ -106,12 +118,17 @@ const KeuanganPage = () => {
                 </Box>
 
                 <Box sx={{ px: { xs: 2, md: 3 }, pb: 3 }}>
+                    <Box sx={{ mb: 2.5 }}>
+                        <InvoicePeriodFilter period={period} periods={periods} onChange={selectPeriod} error={periodError} note="Filter hanya untuk angka invoice dan pembayaran. Daftar pelanggan serta potensi langganan tetap semua waktu." />
+                    </Box>
+                    {error && <Alert severity="warning" sx={{ mb: 2.5 }}>{error}</Alert>}
+                    <FinancialOverview financial={financial} onOpenReceivables={() => navigate(`/receivables${period ? `?periode=${encodeURIComponent(period)}` : ""}`)} />
                     {/* Global Stats */}
                     {stats && (
-                        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }, gap: 2, mb: 3 }}>
+                        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }, gap: 2, mt: 3, mb: 3 }}>
                             <Card sx={{ boxShadow: darkMode ? "0 10px 24px rgba(0,0,0,.22)" : "0 4px 10px rgba(0,0,0,0.05)", borderRadius: 3 }}>
                                 <CardContent>
-                                    <Typography variant="subtitle2" color="text.secondary">Total Pendapatan</Typography>
+                                    <Typography variant="subtitle2" color="text.secondary">Potensi Tagihan Langganan</Typography>
                                     <Typography variant="h5" sx={{ fontWeight: 700, color: darkMode ? "#64b5f6" : "#1976d2" }}>
                                         {formatRupiah(stats.total_tagihan_semua)}
                                     </Typography>
@@ -122,7 +139,7 @@ const KeuanganPage = () => {
                             </Card>
                             <Card sx={{ boxShadow: darkMode ? "0 10px 24px rgba(0,0,0,.22)" : "0 4px 10px rgba(0,0,0,0.05)", borderRadius: 3 }}>
                                 <CardContent>
-                                    <Typography variant="subtitle2" color="text.secondary">Pendapatan Aktif</Typography>
+                                    <Typography variant="subtitle2" color="text.secondary">Potensi dari Pelanggan Aktif</Typography>
                                     <Typography variant="h5" sx={{ fontWeight: 700, color: darkMode ? "#81c784" : "#2e7d32" }}>
                                         {formatRupiah(stats.total_tagihan_aktif)}
                                     </Typography>
@@ -189,7 +206,7 @@ const KeuanganPage = () => {
                                                 </ListItemIcon>
                                                 <ListItemText
                                                     primary={<Typography style={{ fontWeight: selectedMethodId === (item._id || item.id) ? 600 : 500, fontSize: 14 }}>{item.metode || "Tidak Ada"}</Typography>}
-                                                    secondary={<Typography color="text.secondary" sx={{ fontSize: 12 }}>{formatRupiah(item.total_tagihan)}</Typography>}
+                                            secondary={<Typography color="text.secondary" sx={{ fontSize: 12 }}>Potensi {formatRupiah(item.total_tagihan)}</Typography>}
                                                 />
                                             </ListItemButton>
                                             <Divider />
@@ -212,7 +229,7 @@ const KeuanganPage = () => {
                                 </div>
                                 {selectedMethodId && (
                                     <div style={{ textAlign: "right" }}>
-                                        <Typography variant="subtitle2" color="text.secondary">Tagihan Metode Ini</Typography>
+                                        <Typography variant="subtitle2" color="text.secondary">Potensi Langganan Metode Ini</Typography>
                                         <Typography variant="h6" sx={{ fontWeight: 700, color: "primary.main" }}>
                                             {formatRupiah(selectedMethod.total_tagihan)}
                                         </Typography>
@@ -231,7 +248,7 @@ const KeuanganPage = () => {
                                                 <TableCell style={{ fontWeight: 600 }}>Nama</TableCell>
                                                 <TableCell style={{ fontWeight: 600 }}>Kategori</TableCell>
                                                 <TableCell style={{ fontWeight: 600 }}>Status</TableCell>
-                                                <TableCell align="right" style={{ fontWeight: 600 }}>Tagihan (Rp)</TableCell>
+                                                <TableCell align="right" style={{ fontWeight: 600 }}>Langganan (Rp)</TableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>

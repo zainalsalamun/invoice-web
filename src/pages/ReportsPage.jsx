@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Download } from "@mui/icons-material";
 import {
   Alert,
@@ -14,6 +15,10 @@ import {
 } from "@mui/material";
 import PageLayout from "../components/PageLayout";
 import { operationalService } from "../services/operationalService";
+import FinancialOverview, { financialMetrics } from "../components/FinancialOverview";
+import InvoicePeriodFilter from "../components/InvoicePeriodFilter";
+import { useInvoicePeriod } from "../hooks/useInvoicePeriod";
+import { buildReportCsv, reportCsvFilename } from "../utils/reportCsv";
 
 const reportDefinitions = [
   { key: "customers", title: "Pelanggan per Kategori", description: "Sebaran basis pelanggan berdasarkan segmen." },
@@ -84,69 +89,41 @@ const normalizeReportData = (source) => {
   return normalized;
 };
 
-const csvCell = (value) => {
-  const text = String(value ?? "");
-  const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
-  return `"${safe.replaceAll('"', '""')}"`;
-};
-
 const ReportsPage = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { period, periods, periodError, selectPeriod } = useInvoicePeriod();
 
   useEffect(() => {
-    operationalService.getReportsOverview()
-      .then((result) => setData(normalizeReportData(result)))
-      .catch((err) => setError(err.response?.data?.message || "Laporan belum dapat dimuat. Periksa koneksi backend."))
-      .finally(() => setLoading(false));
-  }, []);
+    let active = true;
+    setLoading(true);
+    setData(null);
+    setError("");
+    operationalService.getReportsOverview(period)
+      .then((result) => { if (active) setData(normalizeReportData(result)); })
+      .catch((err) => { if (active) setError(err.response?.data?.message || "Laporan belum dapat dimuat. Periksa koneksi backend."); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [period]);
 
   const exportCsv = () => {
     if (!data) return;
-    const generatedAt = new Date(data.generatedAt || Date.now()).toLocaleString("id-ID");
-    const rows = [["Kategori Laporan", "Rincian", "Jumlah", "Total Nilai (Rp)", "Selesai", "Belum Selesai", "Persentase Selesai", "Waktu Data"]];
-
-    reportDefinitions.forEach((report) => {
-      const items = data[report.key] || [];
-      items.forEach((item) => {
-        const total = Number(item.value || 0);
-        const done = item.done === undefined ? "" : Number(item.done || 0);
-        rows.push([
-          report.title,
-          item.label,
-          total,
-          item.amount === undefined ? "" : Number(item.amount || 0),
-          done,
-          done === "" ? "" : Math.max(total - done, 0),
-          done === "" || total === 0 ? "" : `${((done / total) * 100).toFixed(2)}%`,
-          generatedAt,
-        ]);
-      });
-
-      rows.push([
-        report.title,
-        "TOTAL",
-        items.reduce((sum, item) => sum + Number(item.value || 0), 0),
-        items.some((item) => item.amount !== undefined) ? items.reduce((sum, item) => sum + Number(item.amount || 0), 0) : "",
-        items.some((item) => item.done !== undefined) ? items.reduce((sum, item) => sum + Number(item.done || 0), 0) : "",
-        items.some((item) => item.done !== undefined) ? items.reduce((sum, item) => sum + Math.max(Number(item.value || 0) - Number(item.done || 0), 0), 0) : "",
-        "",
-        generatedAt,
-      ]);
-    });
-
-    const csv = `\uFEFF${rows.map((row) => row.map(csvCell).join(",")).join("\r\n")}`;
+    const csv = buildReportCsv(data, reportDefinitions, financialMetrics);
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `ringnet-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.download = reportCsvFilename(data.invoicePeriod);
     anchor.click();
     URL.revokeObjectURL(url);
   };
 
   return (
     <PageLayout title="Laporan" description="Ringkasan data operasional untuk evaluasi dan presentasi manajemen." actions={<Button variant="contained" startIcon={<Download />} onClick={exportCsv} disabled={!data}>Export CSV</Button>}>
+      <Box sx={{ mb: 2.5 }}>
+        <InvoicePeriodFilter period={period} periods={periods} onChange={selectPeriod} error={periodError} note="Filter berlaku untuk invoice dan keuangan. Kategori pelanggan, pekerjaan, alat, dan request tetap semua waktu; cakupannya ditandai di CSV." />
+      </Box>
       {loading && <Box sx={{ minHeight: 360, display: "grid", placeItems: "center" }}><CircularProgress /></Box>}
       {error && <Alert severity="warning">{error}</Alert>}
       {data && (
@@ -155,6 +132,7 @@ const ReportsPage = () => {
             <Typography color="text.secondary">Data tersaji langsung dari sistem, tidak lagi perlu direkap manual dari beberapa tab.</Typography>
             <Chip variant="outlined" label={`Diperbarui ${new Date(data.generatedAt).toLocaleString("id-ID")}`} />
           </Stack>
+          <Box sx={{ mb: 2.5 }}><FinancialOverview financial={data.financial} onOpenReceivables={() => navigate(`/receivables${period ? `?periode=${encodeURIComponent(period)}` : ""}`)} /></Box>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "repeat(2, minmax(0, 1fr))" }, gap: 2.5 }}>
             {reportDefinitions.map((report) => {
               const items = data[report.key] || [];

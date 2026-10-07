@@ -8,37 +8,57 @@ import {
   Button,
   CircularProgress,
   Chip,
+  Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from "@mui/material";
-import { AttachFileOutlined, ErrorOutline, ReceiptLongOutlined } from "@mui/icons-material";
+import { AttachFileOutlined, ErrorOutline, ReceiptLongOutlined, PaymentsOutlined } from "@mui/icons-material";
 import Sidebar from "../components/Sidebar";
 import { invoiceService } from "../services/invoiceService";
+import { authService } from "../services/authService";
+import { getInvoiceProofUrl } from "../utils/invoiceProofUrl";
+import { getPaymentDue } from "../utils/invoicePaymentBalance";
+import InvoicePaymentDialog from "../components/InvoicePaymentDialog";
+import InvoicePaymentVoidDialog from "../components/InvoicePaymentVoidDialog";
 
-const getApiBase = () => {
-  const isProd = process.env.NODE_ENV === "production";
-  if (isProd) return ""; // Kosongkan agar menggunakan proxy Vercel
-  let url = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-  return url.replace("/api", "");
-};
+const formatRupiah = (value) => new Intl.NumberFormat("id-ID", {
+  style: "currency", currency: "IDR", maximumFractionDigits: 2,
+}).format(Number(value || 0));
 
-const API_BASE = getApiBase();
-
-const getBuktiUrl = (path) => {
-  if (!path) return "";
-  if (path.startsWith("http")) return path.replace(/https?:\/\/43\.134\.180\.249:3000/g, "");
-  return path.startsWith("/uploads") ? `${API_BASE}${path}` : `${API_BASE}/uploads/bukti_transfer/${path}`;
-};
+const formatDate = (value) => value
+  ? new Date(value).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
+  : "-";
 
 const InvoiceDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [invoice, setInvoice] = useState(null);
+  const [payments, setPayments] = useState([]);
+  const [paymentsError, setPaymentsError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [paymentNotice, setPaymentNotice] = useState("");
+  const [paymentOpenError, setPaymentOpenError] = useState("");
+  const [paymentToVoid, setPaymentToVoid] = useState(null);
+  const canRecordPayment = ["super_admin", "admin", "kasir"].includes(authService.getCurrentUser()?.role);
+  const canVoidPayment = ["super_admin", "admin"].includes(authService.getCurrentUser()?.role);
 
   useEffect(() => {
     const fetchInvoice = async () => {
       try {
         const data = await invoiceService.getById(id);
         setInvoice(data);
+        if (data) {
+          try {
+            setPayments(await invoiceService.getPayments(id));
+          } catch (error) {
+            setPaymentsError(error.response?.data?.message || "Riwayat pembayaran gagal dimuat.");
+          }
+        }
       } catch (error) {
         console.error("Gagal mengambil invoice:", error);
       } finally {
@@ -47,6 +67,43 @@ const InvoiceDetailPage = () => {
     };
     fetchInvoice();
   }, [id]);
+
+  const openPaymentDialog = async () => {
+    setPaymentOpenError("");
+    const current = await invoiceService.getById(id);
+    if (!current) {
+      setPaymentOpenError("Invoice terbaru gagal dimuat. Coba lagi sebelum mencatat pembayaran.");
+      return;
+    }
+    setInvoice(current);
+    if (current.status_pembayaran === "Lunas" || !(getPaymentDue(current) > 0)) {
+      setPaymentOpenError("Saldo invoice sudah lunas atau perlu diperiksa. Pembayaran baru tidak dapat dicatat.");
+      return;
+    }
+    setPaymentDialogOpen(true);
+  };
+
+  const handlePaymentSuccess = async (updatedInvoice, message) => {
+    setInvoice(updatedInvoice);
+    setPaymentNotice(message || "Pembayaran berhasil dicatat.");
+    setPaymentsError("");
+    try {
+      setPayments(await invoiceService.getPayments(id));
+    } catch (error) {
+      setPaymentsError(error.response?.data?.message || "Pembayaran tercatat, tetapi riwayat belum dapat dimuat ulang.");
+    }
+  };
+
+  const handleVoidSuccess = async (updatedInvoice, message) => {
+    setInvoice(updatedInvoice);
+    setPaymentNotice(message || "Pembayaran berhasil dibatalkan.");
+    setPaymentsError("");
+    try {
+      setPayments(await invoiceService.getPayments(id));
+    } catch (error) {
+      setPaymentsError(error.response?.data?.message || "Pembayaran dibatalkan, tetapi riwayat belum dapat dimuat ulang.");
+    }
+  };
 
   if (loading) {
     return (
@@ -80,6 +137,11 @@ const InvoiceDetailPage = () => {
     );
   }
 
+  const total = Number(invoice.total || 0);
+  const paid = Number(invoice.total_bayar || 0);
+  const withheld = Number(invoice.pph23 || 0);
+  const remaining = getPaymentDue(invoice);
+
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       <Sidebar active="invoices" />
@@ -102,16 +164,27 @@ const InvoiceDetailPage = () => {
             p: 4,
             borderRadius: 3,
             boxShadow: 3,
-            maxWidth: 800,
+            maxWidth: 960,
             mx: "auto",
             bgcolor: "background.paper",
             border: "1px solid",
             borderColor: "divider",
           }}
         >
-          <Typography variant="h5" sx={{ mb: 3, fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
-            <ReceiptLongOutlined aria-hidden="true" /> Detail Invoice
-          </Typography>
+          <Box sx={{ mb: 3, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
+            <Typography variant="h5" sx={{ fontWeight: "bold", display: "flex", alignItems: "center", gap: 1 }}>
+              <ReceiptLongOutlined aria-hidden="true" /> Detail Invoice
+            </Typography>
+            {canRecordPayment && invoice.status_pembayaran !== "Lunas" && remaining !== null && remaining > 0 && (
+              <Button variant="contained" startIcon={<PaymentsOutlined />} onClick={openPaymentDialog} sx={{ textTransform: "none" }}>
+                Catat Bayar
+              </Button>
+            )}
+          </Box>
+
+          {paymentNotice && <Alert severity="success" onClose={() => setPaymentNotice("")} sx={{ mb: 2 }}>{paymentNotice}</Alert>}
+          {paymentOpenError && <Alert severity="error" sx={{ mb: 2 }}>{paymentOpenError}</Alert>}
+          {remaining === null && <Alert severity="warning" sx={{ mb: 2 }}>Total invoice atau pembayaran sebelumnya perlu diperiksa sebelum pembayaran baru dicatat.</Alert>}
 
           <Box sx={{ mb: 2 }}>
             <Typography>
@@ -131,16 +204,17 @@ const InvoiceDetailPage = () => {
             </Typography>
             <Typography>
               <b>Total Tagihan:</b>{" "}
-              <b style={{ color: "#007bff" }}>
-                Rp {invoice.total?.toLocaleString("id-ID")}
-              </b>
+              <b>{formatRupiah(total)}</b>
             </Typography>
+            <Typography><b>Sudah Dibayar:</b> {formatRupiah(paid)}</Typography>
+            <Typography><b>PPh23:</b> {formatRupiah(withheld)}</Typography>
+            <Typography><b>Sisa Tagihan:</b> {remaining === null ? "Perlu pemeriksaan total dan PPN" : formatRupiah(remaining)}</Typography>
             <Typography sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <b>Status:</b>{" "}
               <Chip
                 label={invoice.status_pembayaran}
                 color={
-                  invoice.status_pembayaran === "Lunas" ? "success" : "warning"
+                  invoice.status_pembayaran === "Lunas" ? "success" : invoice.status_pembayaran === "Cicil" ? "info" : "warning"
                 }
                 size="small"
               />
@@ -158,6 +232,75 @@ const InvoiceDetailPage = () => {
                 : "-"}
             </Typography>
           </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
+            <PaymentsOutlined aria-hidden="true" /> Riwayat Pembayaran
+          </Typography>
+          {paymentsError ? (
+            <Alert severity="error" sx={{ mb: 2 }}>{paymentsError}</Alert>
+          ) : payments.length === 0 ? (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Belum ada transaksi di riwayat pembayaran baru.
+              {paid > 0 && " Total terbayar yang sudah tersimpan tetap ditampilkan di atas."}
+            </Alert>
+          ) : (
+            <TableContainer sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, mb: 2 }}>
+              <Table size="small" sx={{ minWidth: 900 }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Tanggal</TableCell>
+                    <TableCell align="right">Nominal</TableCell>
+                    <TableCell>Metode</TableCell>
+                    <TableCell>Dicatat oleh</TableCell>
+                    <TableCell>Bukti</TableCell>
+                    <TableCell>Status</TableCell>
+                    {canVoidPayment && <TableCell align="right">Aksi</TableCell>}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {payments.map((payment) => (
+                    <TableRow key={payment.id}>
+                      <TableCell>{formatDate(payment.paid_at)}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700 }}>{formatRupiah(payment.amount)}</TableCell>
+                      <TableCell>{payment.metode_pembayaran_nama || "-"}</TableCell>
+                      <TableCell>{payment.recorded_by_name || "-"}</TableCell>
+                      <TableCell>
+                        {payment.bukti_transfer ? (
+                          <Button size="small" href={getInvoiceProofUrl(payment.bukti_transfer)} target="_blank" rel="noopener noreferrer">
+                            Lihat bukti
+                          </Button>
+                        ) : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {payment.voided_at ? (
+                          <Box>
+                            <Chip size="small" color="default" label="Dibatalkan" />
+                            <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
+                              {formatDate(payment.voided_at)} oleh {payment.voided_by_name || "Petugas"}
+                            </Typography>
+                            <Typography variant="caption" display="block" color="text.secondary">
+                              Alasan: {payment.void_reason}
+                            </Typography>
+                          </Box>
+                        ) : <Chip size="small" color="success" label="Aktif" />}
+                      </TableCell>
+                      {canVoidPayment && (
+                        <TableCell align="right">
+                          {!payment.voided_at && (
+                            <Button size="small" color="error" variant="outlined" onClick={() => setPaymentToVoid(payment)}>
+                              Batalkan
+                            </Button>
+                          )}
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
 
           <Divider sx={{ my: 3 }} />
 
@@ -183,7 +326,7 @@ const InvoiceDetailPage = () => {
               >
                 {invoice.bukti_transfer?.endsWith(".pdf") ? (
                   <iframe
-                    src={getBuktiUrl(invoice.bukti_transfer)}
+                    src={getInvoiceProofUrl(invoice.bukti_transfer)}
                     title="Bukti Transfer PDF"
                     style={{
                       width: "100%",
@@ -197,7 +340,7 @@ const InvoiceDetailPage = () => {
                   />
                 ) : (
                   <img
-                    src={getBuktiUrl(invoice.bukti_transfer)}
+                    src={getInvoiceProofUrl(invoice.bukti_transfer)}
                     alt="Bukti Transfer"
                     style={{
                       width: "100%",
@@ -212,7 +355,7 @@ const InvoiceDetailPage = () => {
                 <Button
                   variant="contained"
                   color="primary"
-                  href={getBuktiUrl(invoice.bukti_transfer)}
+                  href={getInvoiceProofUrl(invoice.bukti_transfer)}
                   target="_blank"
                   sx={{
                     borderRadius: 2,
@@ -236,6 +379,18 @@ const InvoiceDetailPage = () => {
           )}
         </Paper>
       </Box>
+      <InvoicePaymentDialog
+        open={paymentDialogOpen}
+        invoice={invoice}
+        onClose={() => setPaymentDialogOpen(false)}
+        onSuccess={handlePaymentSuccess}
+      />
+      <InvoicePaymentVoidDialog
+        invoiceId={id}
+        payment={paymentToVoid}
+        onClose={() => setPaymentToVoid(null)}
+        onSuccess={handleVoidSuccess}
+      />
     </Box>
   );
 };

@@ -35,6 +35,7 @@ const InvoiceListPage = () => {
     });
     const [invoices, setInvoices] = useState([]);
     const [isFirstLoad, setIsFirstLoad] = useState(true);
+    const [loadError, setLoadError] = useState("");
     const [animateKey, setAnimateKey] = useState(0);
     const [snackbar, setSnackbar] = useState({
         open: false,
@@ -46,6 +47,7 @@ const InvoiceListPage = () => {
     const [selectedInvoice, setSelectedInvoice] = useState(null);
 
     const fetchInvoices = async () => {
+        setLoadError("");
         try {
             const data = await invoiceService.getAll();
             setInvoices(
@@ -69,6 +71,7 @@ const InvoiceListPage = () => {
             );
         } catch (err) {
             console.error("Gagal ambil data invoice:", err);
+            setLoadError("Daftar invoice gagal dimuat. Periksa koneksi lalu coba lagi.");
             setSnackbar({
                 open: true,
                 message: "Gagal memuat data dari server.",
@@ -139,7 +142,7 @@ const InvoiceListPage = () => {
         const totalInvoice = filtered.length;
         const totalLunas = filtered.filter((i) => i.statusPembayaran === "Lunas").length;
         const totalBelum = filtered.filter((i) => i.statusPembayaran === "Belum Lunas").length;
-        const totalNominal = filtered.reduce((sum, i) => sum + (i.total || 0), 0);
+        const totalNominal = filtered.reduce((sum, i) => sum + Number(i.total || 0), 0);
         return { totalInvoice, totalLunas, totalBelum, totalNominal };
     }, [filtered]);
 
@@ -443,11 +446,17 @@ const InvoiceListPage = () => {
                 */}
 
                 {/* Tabel Invoice */}
+                {loadError && (
+                    <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" onClick={fetchInvoices}>Coba lagi</Button>}>
+                        {loadError}
+                    </Alert>
+                )}
                 <Slide key={animateKey} direction="up" in mountOnEnter unmountOnExit>
                     <div>
                         <InvoiceTable
                             data={filtered}
                             onView={handleView}
+                            onHistory={(invoice) => navigate(`/invoices/detail/${invoice.id}`)}
                             onPrint={handlePrint}
                             onSendWhatsApp={handleSendWhatsApp}
                             onUploadProof={handleUploadProof}

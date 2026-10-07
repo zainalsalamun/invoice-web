@@ -6,39 +6,33 @@ import {
   Typography,
   Button,
   CircularProgress,
+  Alert,
 } from "@mui/material";
 import { AttachFileOutlined, CloudUploadOutlined, ReceiptLongOutlined } from "@mui/icons-material";
 import Sidebar from "../components/Sidebar";
 import { invoiceService } from "../services/invoiceService";
-
-const getApiBase = () => {
-  const isProd = process.env.NODE_ENV === "production";
-  if (isProd) return ""; // Kosongkan agar menggunakan proxy Vercel
-  let url = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-  return url.replace("/api", "");
-};
-
-const API_BASE = getApiBase();
-
-const getBuktiUrl = (path) => {
-  if (!path) return "";
-  if (path.startsWith("http")) return path.replace(/https?:\/\/43\.134\.180\.249:3000/g, "");
-  return path.startsWith("/uploads") ? `${API_BASE}${path}` : `${API_BASE}/uploads/bukti_transfer/${path}`;
-};
+import { getInvoiceProofUrl } from "../utils/invoiceProofUrl";
+import { authService } from "../services/authService";
 
 const InvoiceProofPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const canUpload = ["super_admin", "admin", "kasir"].includes(authService.getCurrentUser()?.role);
   const [invoice, setInvoice] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  //   const [filePreview, setFilePreview] = useState(null);
+  const [feedback, setFeedback] = useState(null);
 
   const fetchInvoice = async () => {
     try {
       const data = await invoiceService.getById(id);
       setInvoice(data);
+      if (!data) setFeedback({ severity: "error", message: "Invoice tidak ditemukan atau gagal dimuat." });
     } catch (err) {
       console.error("Gagal memuat data invoice:", err);
+      setFeedback({ severity: "error", message: "Invoice gagal dimuat. Coba kembali ke daftar invoice." });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -51,24 +45,26 @@ const InvoiceProofPage = () => {
     const file = e.target.files[0];
     if (!file) return;
 
+    setFeedback(null);
     setUploading(true);
     try {
       const res = await invoiceService.uploadProof(id, file);
       if (res?.success) {
-        alert("Bukti pembayaran berhasil diupload!");
+        setFeedback({ severity: "success", message: "Bukti berhasil diunggah. Status pembayaran tidak berubah." });
         await fetchInvoice();
       } else {
-        alert("Upload gagal, coba lagi.");
+        setFeedback({ severity: "error", message: "Unggah bukti gagal. Periksa format file dan coba lagi." });
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan saat upload.");
+      setFeedback({ severity: "error", message: "Terjadi kesalahan saat mengunggah bukti." });
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   };
 
-  if (!invoice) {
+  if (loading) {
     return (
       <Box
         sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}
@@ -87,6 +83,13 @@ const InvoiceProofPage = () => {
             <ReceiptLongOutlined aria-hidden="true" /> Bukti Pembayaran
           </Typography>
 
+          {feedback && <Alert severity={feedback.severity} sx={{ mb: 2 }}>{feedback.message}</Alert>}
+
+          {!invoice ? (
+            <Button variant="outlined" onClick={() => navigate("/invoices")}>Kembali ke Daftar Invoice</Button>
+          ) : (
+            <>
+
           <Typography><b>Nomor Invoice:</b> {invoice.nomor_invoice}</Typography>
           <Typography><b>Nama Pelanggan:</b> {invoice.nama_pelanggan}</Typography>
           <Typography><b>Total:</b> Rp {invoice.total?.toLocaleString("id-ID")}</Typography>
@@ -99,7 +102,7 @@ const InvoiceProofPage = () => {
                 </Typography>
                 {invoice.bukti_transfer?.endsWith(".pdf") ? (
                   <iframe
-                    src={getBuktiUrl(invoice.bukti_transfer)}
+                    src={getInvoiceProofUrl(invoice.bukti_transfer)}
                     title="Bukti Transfer PDF"
                     width="100%"
                     height="400px"
@@ -107,7 +110,7 @@ const InvoiceProofPage = () => {
                   />
                 ) : (
                   <img
-                    src={getBuktiUrl(invoice.bukti_transfer)}
+                    src={getInvoiceProofUrl(invoice.bukti_transfer)}
                     alt="Bukti Transfer"
                     style={{
                       maxWidth: "100%",
@@ -125,7 +128,7 @@ const InvoiceProofPage = () => {
             )}
           </Box>
 
-          <Button
+          {canUpload && <Button
             variant="contained"
             component="label"
             color="primary"
@@ -136,11 +139,11 @@ const InvoiceProofPage = () => {
             {uploading ? "Mengunggah..." : "Upload Bukti Baru"}
             <input
               type="file"
-              accept="image/*,application/pdf"
+              accept="image/jpeg,image/png,application/pdf"
               hidden
               onChange={handleUpload}
             />
-          </Button>
+          </Button>}
 
           <Button
             variant="outlined"
@@ -150,6 +153,8 @@ const InvoiceProofPage = () => {
           >
             Kembali
           </Button>
+            </>
+          )}
         </Paper>
       </Box>
     </Box>

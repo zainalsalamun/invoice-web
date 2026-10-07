@@ -74,13 +74,8 @@ import apiClient from "../utils/apiClient";
 
 export const invoiceService = {
   async getAll() {
-    try {
-      const res = await apiClient.get("/invoices");
-      return res.data?.data || [];
-    } catch (err) {
-      console.error("Gagal ambil data invoice:", err);
-      return [];
-    }
+    const res = await apiClient.get("/invoices");
+    return res.data?.data || [];
   },
 
   async getById(id) {
@@ -124,15 +119,15 @@ export const invoiceService = {
     }
   },
 
-  // Konfirmasi pembayaran: update status + upload bukti dalam 1 request
-  async confirmPayment(id, { status_pembayaran, tanggal_pembayaran, metode_pembayaran_id, kurang_bayar, buktiFile }) {
+  // Catat nominal aktual; status dan sisa tagihan dihitung oleh server.
+  async confirmPayment(id, { jumlah_bayar, request_id, tanggal_pembayaran, metode_pembayaran_id, buktiFile }) {
     if (!id || id === "null" || id === "undefined") return null;
     try {
       const formData = new FormData();
-      formData.append("status_pembayaran", status_pembayaran || "Lunas");
+      formData.append("jumlah_bayar", jumlah_bayar);
+      formData.append("request_id", request_id);
       if (tanggal_pembayaran) formData.append("tanggal_pembayaran", tanggal_pembayaran);
       if (metode_pembayaran_id) formData.append("metode_pembayaran_id", metode_pembayaran_id);
-      formData.append("kurang_bayar", kurang_bayar || 0);
       if (buktiFile) formData.append("bukti_transfer", buktiFile);
 
       const res = await apiClient.post(`/invoices/${id}/confirm`, formData, {
@@ -143,6 +138,16 @@ export const invoiceService = {
       console.error("Gagal konfirmasi pembayaran:", err);
       throw err;
     }
+  },
+
+  async getPayments(id) {
+    const res = await apiClient.get(`/invoices/${id}/payments`);
+    return res.data?.data || [];
+  },
+
+  async voidPayment(invoiceId, paymentId, reason) {
+    const res = await apiClient.post(`/invoices/${invoiceId}/payments/${paymentId}/void`, { reason });
+    return res.data;
   },
 
 
@@ -163,7 +168,7 @@ export const invoiceService = {
       const formData = new FormData();
       formData.append("bukti_transfer", file);
 
-      const res = await apiClient.post(`/invoices/${id}/upload`, formData, {
+      const res = await apiClient.put(`/invoices/${id}/upload`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -186,5 +191,3 @@ export const invoiceService = {
 
 
 };
-
-

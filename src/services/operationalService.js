@@ -3,8 +3,14 @@ import apiClient from "../utils/apiClient";
 const unwrap = (response, fallback = null) => response.data?.data ?? fallback;
 
 export const operationalService = {
-  async getDashboardSummary() {
-    return unwrap(await apiClient.get("/dashboard/summary"), {});
+  async getDashboardSummary(periode = "") {
+    return unwrap(await apiClient.get("/dashboard/summary", { params: periode ? { periode } : {} }), {});
+  },
+  async getInvoicePeriods() {
+    return unwrap(await apiClient.get("/reports/periods"), []);
+  },
+  async getReceivables(params = {}) {
+    return unwrap(await apiClient.get("/reports/receivables", { params }), {});
   },
   async getServicePlans(params = {}) {
     return unwrap(await apiClient.get("/service-plans", { params }), []);
@@ -33,7 +39,7 @@ export const operationalService = {
   async updateSystemRequest(id, payload) {
     return unwrap(await apiClient.put(`/system-requests/${id}`, payload));
   },
-  async getReportsOverview() {
-    return unwrap(await apiClient.get("/reports/overview"), {});
+  async getReportsOverview(periode = "") {
+    return unwrap(await apiClient.get("/reports/overview", { params: periode ? { periode } : {} }), {});
   },
 };

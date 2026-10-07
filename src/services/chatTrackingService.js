@@ -2,13 +2,16 @@ import apiClient from "../utils/apiClient";
 
 export const chatTrackingService = {
     async getAll(params = {}) {
-        try {
-            const res = await apiClient.get("/chat-tracking", { params });
-            return res.data?.data || [];
-        } catch (err) {
-            console.error("Gagal ambil data chat tracking:", err);
-            return [];
-        }
+        const res = await apiClient.get("/chat-tracking", { params });
+        return res.data?.data || [];
+    },
+
+    async getPage(params = {}) {
+        const res = await apiClient.get("/chat-tracking", { params });
+        return {
+            data: res.data?.data || [],
+            pagination: res.data?.pagination || { total: 0, page: params.page, pageSize: params.pageSize },
+        };
     },
 
     async create(data) {
@@ -21,14 +24,46 @@ export const chatTrackingService = {
         }
     },
 
-    async bulkCreate(data) {
+    async previewImport(data) {
         try {
-            const res = await apiClient.post("/chat-tracking/bulk", { data });
-            return res.data || null;
+            const res = await apiClient.post("/chat-tracking/import/preview", data);
+            return res.data?.data || null;
         } catch (err) {
-            console.error("Gagal import chat tracking:", err);
             throw err;
         }
+    },
+
+    async stageImport(data) {
+        try {
+            const res = await apiClient.post("/chat-tracking/import/stage", data);
+            return res.data || null;
+        } catch (err) {
+            throw err;
+        }
+    },
+
+    async listImportBatches(params = {}) {
+        const res = await apiClient.get("/chat-tracking/import/batches", { params });
+        return { data: res.data?.data || [], pagination: res.data?.pagination || { total: 0 } };
+    },
+
+    async listImportRows(batchId, params = {}) {
+        const res = await apiClient.get(`/chat-tracking/import/batches/${batchId}/rows`, { params });
+        return {
+            batch: res.data?.batch || null,
+            data: res.data?.data || [],
+            pagination: res.data?.pagination || { total: 0 },
+        };
+    },
+
+    async correctImportRow(batchId, rowId, data) {
+        const res = await apiClient.put(`/chat-tracking/import/batches/${batchId}/rows/${rowId}`, data);
+        return res.data?.data || null;
+    },
+
+    async getImportReconciliation(batchId) {
+        const res = await apiClient.get(`/chat-tracking/import/batches/${batchId}/reconciliation`);
+        return res.data?.data || null;
     },
 
     async update(id, data) {

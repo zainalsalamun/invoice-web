@@ -35,6 +35,9 @@ import {
 } from "@mui/icons-material";
 import { customerService } from "../services/customerService";
 import { invoiceService } from "../services/invoiceService";
+import { authService } from "../services/authService";
+import { createPaymentRequestId } from "../utils/paymentRequestId";
+import { getPaymentDue, isValidPaymentAmount } from "../utils/invoicePaymentBalance";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
@@ -101,6 +104,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const canRecordPayment = ["super_admin", "admin", "kasir"].includes(authService.getCurrentUser()?.role);
 
     // ── State dialog konfirmasi pembayaran ───────────────────────────────
     const [confirmDialog, setConfirmDialog] = useState(false);
@@ -109,6 +113,8 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
     const [metodeList, setMetodeList] = useState([]);
     const [selectedMetode, setSelectedMetode] = useState("");
     const [tanggalBayar, setTanggalBayar] = useState("");
+    const [jumlahBayar, setJumlahBayar] = useState("");
+    const [paymentRequestId, setPaymentRequestId] = useState("");
     const [confirmMsg, setConfirmMsg] = useState("");
     const [confirmStatus, setConfirmStatus] = useState("");
     const [buktiFile, setBuktiFile] = useState(null);       // file object
@@ -169,15 +175,19 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
         onClose();
     };
 
-    // Buka dialog konfirmasi tandai lunas
+    // Buka dialog pencatatan pembayaran
     const handleTandaiLunas = async (inv) => {
         setConfirmInvoice(inv);
+        setJumlahBayar("");
+        setPaymentRequestId(createPaymentRequestId());
         setSelectedMetode(inv.metode_pembayaran_id || "");
         setTanggalBayar(dayjs().format("YYYY-MM-DD"));
         setConfirmMsg("");
         setConfirmStatus("");
         setBuktiFile(null);
         setBuktiPreview(null);
+        const freshInvoice = await invoiceService.getById(inv.id);
+        if (freshInvoice) setConfirmInvoice(freshInvoice);
         try {
             const { metodePembayaranService } = await import("../services/metodePembayaranService");
             const data = await metodePembayaranService.getAll();
@@ -192,23 +202,36 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
         if (!file) return;
         setBuktiFile(file);
         setBuktiPreview(URL.createObjectURL(file));
+        setPaymentRequestId(createPaymentRequestId());
     };
 
-    // Eksekusi konfirmasi lunas ke backend (satu request, handle status + bukti)
+    // Server menghitung status dari nominal yang benar-benar diterima.
     const handleConfirmLunas = async () => {
         if (!confirmInvoice) return;
+        const due = getPaymentDue(confirmInvoice);
+        const amount = Number(jumlahBayar);
+        if (due === null || due <= 0) {
+            setConfirmStatus("error");
+            setConfirmMsg("Saldo invoice belum valid. Periksa total tagihan dan PPN sebelum mencatat pembayaran.");
+            return;
+        }
+        if (!isValidPaymentAmount(jumlahBayar, due)) {
+            setConfirmStatus("error");
+            setConfirmMsg(`Isi nominal lebih dari Rp0 dan paling banyak ${formatRupiah(due)}.`);
+            return;
+        }
         setLoadingLunas(true);
         try {
-            await invoiceService.confirmPayment(confirmInvoice.id, {
-                status_pembayaran: "Lunas",
+            const result = await invoiceService.confirmPayment(confirmInvoice.id, {
+                jumlah_bayar: amount,
+                request_id: paymentRequestId,
                 tanggal_pembayaran: tanggalBayar,
                 metode_pembayaran_id: selectedMetode || null,
-                kurang_bayar: 0,
                 buktiFile: buktiFile || null,
             });
 
             setConfirmStatus("success");
-            setConfirmMsg(`Invoice ${confirmInvoice.nomor_invoice} berhasil ditandai Lunas!`);
+            setConfirmMsg(result?.message || "Pembayaran berhasil dicatat.");
             await fetchCustomerInvoices();
             await fetchCustomerDetail();
             // Beritahu parent agar refresh tabel utama
@@ -220,10 +243,12 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                 setConfirmStatus("");
                 setBuktiFile(null);
                 setBuktiPreview(null);
+                setJumlahBayar("");
+                setPaymentRequestId("");
             }, 1200);
-        } catch {
+        } catch (error) {
             setConfirmStatus("error");
-            setConfirmMsg("Gagal mengkonfirmasi. Coba lagi.");
+            setConfirmMsg(error.response?.data?.message || "Gagal mencatat pembayaran. Coba lagi.");
         } finally {
             setLoadingLunas(false);
         }
@@ -245,7 +270,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
     // Total Tagihan = hanya yang BELUM LUNAS (piutang aktif, bukan semua riwayat)
     const totalTagihan = invoices
         .filter((i) => (i.status_pembayaran || "").toLowerCase() !== "lunas")
-        .reduce((s, i) => s + Number(i.total || 0), 0);
+        .reduce((s, i) => s + (getPaymentDue(i) ?? Number(i.total || 0)), 0);
 
 
     return (
@@ -650,9 +675,9 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                                             </TableCell>
                                                             <TableCell sx={{ py: 1.2, pr: 2 }}>
                                                                 <Stack direction="row" spacing={0.5} alignItems="center">
-                                                                    {/* Tombol Tandai Lunas — hanya muncul jika belum lunas */}
-                                                                    {!isL && (
-                                                                        <Tooltip title="Konfirmasi pembayaran pelanggan">
+                                                                    {/* Pembayaran dapat dicatat selama saldo masih tersisa. */}
+                                                                    {!isL && canRecordPayment && (
+                                                                        <Tooltip title="Catat nominal pembayaran pelanggan">
                                                                             <Button
                                                                                 size="small"
                                                                                 variant="contained"
@@ -669,7 +694,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                                                                     boxShadow: "none",
                                                                                 }}
                                                                             >
-                                                                                Tandai Lunas
+                                                                                Catat Bayar
                                                                             </Button>
                                                                         </Tooltip>
                                                                     )}
@@ -714,7 +739,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                     </Box>
                     <Box>
                         <Typography fontWeight={700} fontSize="1rem">Konfirmasi Pembayaran</Typography>
-                        <Typography variant="caption" color="text.secondary">Tandai tagihan ini sebagai sudah dibayar</Typography>
+                        <Typography variant="caption" color="text.secondary">Catat nominal yang benar-benar diterima</Typography>
                     </Box>
                 </DialogTitle>
 
@@ -729,6 +754,35 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                 <Typography variant="body2" color="text.secondary">
                                     {confirmInvoice.periode} · <strong>{formatRupiah(confirmInvoice.total)}</strong>
                                 </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Sudah dibayar: {formatRupiah(confirmInvoice.total_bayar || 0)} · PPh23: {formatRupiah(confirmInvoice.pph23 || 0)}
+                                </Typography>
+                                <Typography variant="body2" fontWeight={700} color="text.primary">
+                                    Sisa tagihan: {getPaymentDue(confirmInvoice) === null ? "Perlu diperiksa" : formatRupiah(getPaymentDue(confirmInvoice))}
+                                </Typography>
+                            </Box>
+
+                            <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                                <TextField
+                                    label="Nominal pembayaran"
+                                    type="number"
+                                    size="small"
+                                    fullWidth
+                                    required
+                                    value={jumlahBayar}
+                                    onChange={(e) => { setJumlahBayar(e.target.value); setPaymentRequestId(createPaymentRequestId()); setConfirmMsg(""); }}
+                                    inputProps={{ min: 0.01, step: 0.01, max: getPaymentDue(confirmInvoice) || undefined }}
+                                    helperText="Status Lunas hanya jika sisa tagihan menjadi Rp0."
+                                />
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    disabled={!getPaymentDue(confirmInvoice)}
+                                    onClick={() => { setJumlahBayar(String(getPaymentDue(confirmInvoice))); setPaymentRequestId(createPaymentRequestId()); }}
+                                    sx={{ whiteSpace: "nowrap", textTransform: "none", mt: 0.25 }}
+                                >
+                                    Isi sisa
+                                </Button>
                             </Box>
 
                             {/* Metode Pembayaran */}
@@ -738,7 +792,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                 size="small"
                                 fullWidth
                                 value={selectedMetode}
-                                onChange={(e) => setSelectedMetode(e.target.value)}
+                                onChange={(e) => { setSelectedMetode(e.target.value); setPaymentRequestId(createPaymentRequestId()); }}
                             >
                                 <MenuItem value=""><em>-- Tidak dipilih --</em></MenuItem>
                                 {metodeList.map((m) => (
@@ -754,7 +808,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                 fullWidth
                                 InputLabelProps={{ shrink: true }}
                                 value={tanggalBayar}
-                                onChange={(e) => setTanggalBayar(e.target.value)}
+                                onChange={(e) => { setTanggalBayar(e.target.value); setPaymentRequestId(createPaymentRequestId()); }}
                             />
 
                             {/* ── Upload Bukti Transfer ── */}
@@ -788,7 +842,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                             size="small"
                                             color="error"
                                             variant="text"
-                                            onClick={() => { setBuktiFile(null); setBuktiPreview(null); }}
+                                            onClick={() => { setBuktiFile(null); setBuktiPreview(null); setPaymentRequestId(createPaymentRequestId()); }}
                                             sx={{
                                                 position: "absolute",
                                                 top: 6,
@@ -834,12 +888,12 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                                             Klik untuk upload bukti transfer
                                         </Typography>
                                         <Typography variant="caption" color="text.disabled">
-                                            JPG, PNG, WEBP, PDF — maks. 5MB
+                                            JPG, PNG, PDF — maks. 3MB
                                         </Typography>
                                         <input
                                             id="bukti-upload-confirm"
                                             type="file"
-                                            accept="image/*,.pdf"
+                                            accept="image/jpeg,image/png,application/pdf"
                                             hidden
                                             onChange={handleBuktiChange}
                                         />
@@ -877,7 +931,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                         color="success"
                         size="small"
                         onClick={handleConfirmLunas}
-                        disabled={loadingLunas || confirmStatus === "success"}
+                        disabled={loadingLunas || confirmStatus === "success" || !jumlahBayar || !getPaymentDue(confirmInvoice)}
                         startIcon={
                             loadingLunas
                                 ? <CircularProgress size={14} color="inherit" />
@@ -885,7 +939,7 @@ const CustomerProfileDrawer = ({ customerId, open, onClose, onEdit, onPaymentCon
                         }
                         sx={{ textTransform: "none", borderRadius: 2, px: 2 }}
                     >
-                        {loadingLunas ? "Memproses..." : "Konfirmasi Lunas"}
+                        {loadingLunas ? "Memproses..." : "Catat Pembayaran"}
                     </Button>
                 </DialogActions>
             </Dialog>

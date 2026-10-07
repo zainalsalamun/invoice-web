@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableHead,
@@ -19,11 +19,15 @@ import {
 } from "@mui/material";
 import { FaWhatsapp } from "react-icons/fa";
 
-const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp, userRole, onDelete }) => {
+const InvoiceTable = ({ data, onView, onHistory, onPrint, onSendWhatsApp, userRole, onDelete }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, Math.max(0, Math.ceil(data.length / rowsPerPage) - 1)));
+  }, [data.length, rowsPerPage]);
 
   const handleChangePage = (_, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (e) => {
@@ -52,7 +56,7 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp, userRole, onDelet
     <>
       <Paper sx={{ boxShadow: 3, borderRadius: 2 }}>
         <TableContainer>
-          <Table>
+          <Table sx={{ minWidth: 900 }}>
             <TableHead>
               <TableRow>
                 <TableCell><b>Nomor Invoice</b></TableCell>
@@ -85,11 +89,11 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp, userRole, onDelet
                   <TableCell>{row.nomorInvoice}</TableCell>
                   <TableCell>{row.namaPelanggan}</TableCell>
                   <TableCell>{row.periode}</TableCell>
-                  <TableCell>Rp {row.total.toLocaleString("id-ID")}</TableCell>
+                  <TableCell>Rp {Number(row.total || 0).toLocaleString("id-ID")}</TableCell>
                   <TableCell>
-                    {row.kurangBayar > 0 ? (
+                    {Number(row.kurangBayar || 0) > 0 ? (
                       <span style={{ color: "red", fontWeight: "bold" }}>
-                        Rp {row.kurangBayar.toLocaleString("id-ID")}
+                        Rp {Number(row.kurangBayar).toLocaleString("id-ID")}
                       </span>
                     ) : (
                       "-"
@@ -128,6 +132,15 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp, userRole, onDelet
                         onClick={() => onView(row)}
                       >
                         Detail
+                      </Button>
+
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        sx={{ textTransform: "none", height: 32 }}
+                        onClick={() => onHistory(row)}
+                      >
+                        Riwayat
                       </Button>
 
                       {/*Cetak */}
@@ -179,7 +192,7 @@ const InvoiceTable = ({ data, onView, onPrint, onSendWhatsApp, userRole, onDelet
 
               {data.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                     Tidak ada data invoice.
                   </TableCell>
                 </TableRow>

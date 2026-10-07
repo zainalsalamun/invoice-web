@@ -54,7 +54,6 @@ const defaultForm = {
   metode_pembayaran_id: "",
   aktif: true,
   notes: "",
-  status_pembayaran: "BELUM LUNAS",
   tagihan_periode_bulan: "",
   bukti_transfer: null,
   items: [{ deskripsi: "Paket Internet", harga: "", qty: 1, jumlah: 0 }],
@@ -87,7 +86,6 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
         tanggal_jatuh_tempo: toInputDate(initialData.tanggal_jatuh_tempo),
         tanggal_tagihan: toInputDate(initialData.tanggal_tagihan || initialData.last_invoice_tanggal),
         notes: initialData.notes ?? "",
-        status_pembayaran: initialData.status_pembayaran ?? "BELUM LUNAS",
         tagihan_periode_bulan: initialData.tagihan_periode_bulan ?? "",
         bukti_transfer: null,
         items: initialData.items && initialData.items.length > 0
@@ -313,22 +311,6 @@ const CustomerForm = ({ onSubmit, initialData, onCancel }) => {
             InputLabelProps={{ shrink: true }}
             helperText="Tanggal invoice diterbitkan"
           />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="status-label">Status Pembayaran</InputLabel>
-            <Select
-              labelId="status-label"
-              name="status_pembayaran"
-              value={form.status_pembayaran}
-              label="Status Pembayaran"
-              onChange={handleChange}
-            >
-              <MenuItem value="LUNAS">Lunas</MenuItem>
-              <MenuItem value="BELUM LUNAS">Belum Lunas</MenuItem>
-            </Select>
-          </FormControl>
         </Grid>
 
         <Grid size={12}>

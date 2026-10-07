@@ -91,7 +91,6 @@ const InvoiceForm = () => {
 
   // Field yang bisa diubah admin
   const [periode, setPeriode] = useState(dayjs().format("YYYY-MM"));
-  const [statusPembayaran, setStatusPembayaran] = useState("Belum Lunas");
   const [tanggalJatuhTempo, setTanggalJatuhTempo] = useState(
     dayjs().add(30, "day").format("YYYY-MM-DD")
   );
@@ -172,13 +171,11 @@ const InvoiceForm = () => {
       layanan: items[0]?.deskripsi || "",
       harga_paket: subtotal,
       ppn: ppnValue,
-      total: subtotal,          // DPP saja yang disimpan (konsisten dgn InvoiceViewer)
+      total: totalTagihan,
       periode: dayjs(periode).locale("id").format("MMMM YYYY"),
-      status_pembayaran: statusPembayaran,
+      status_pembayaran: "Belum Lunas",
       tanggal_invoice: dayjs().format("YYYY-MM-DD"),
       tanggal_jatuh_tempo: tanggalJatuhTempo,
-      kurang_bayar: 0,
-      tanggal_pembayaran: statusPembayaran === "Lunas" ? dayjs().format("YYYY-MM-DD") : null,
       items: items.map((it) => ({
         deskripsi: it.deskripsi,
         harga: Number(it.harga || 0),
@@ -191,16 +188,6 @@ const InvoiceForm = () => {
     try {
       const result = await invoiceService.create(payload);
       if (result?.success && result.data) {
-        // Kalau langsung tandai lunas saat buat → update status customer juga via upload endpoint
-        if (statusPembayaran === "Lunas") {
-          const invId = result.data._id || result.data.id;
-          // Tandai lunas tanpa file (kita kirim PUT biasa)
-          await invoiceService.update(invId, {
-            ...payload,
-            status_pembayaran: "Lunas",
-            tanggal_pembayaran: dayjs().format("YYYY-MM-DD"),
-          });
-        }
         notifySuccess("Invoice berhasil dibuat!");
         navigate("/invoices");
       } else {
@@ -547,38 +534,11 @@ const InvoiceForm = () => {
               />
             </Grid>
 
-            {/* Status Pembayaran */}
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                select
-                label="Status Pembayaran"
-                size="small"
-                fullWidth
-                value={statusPembayaran}
-                onChange={(e) => setStatusPembayaran(e.target.value)}
-              >
-                <MenuItem value="Belum Lunas">Belum Lunas</MenuItem>
-                <MenuItem value="Lunas">Lunas</MenuItem>
-                <MenuItem value="Cicil">Cicil</MenuItem>
-              </TextField>
-            </Grid>
           </Grid>
 
-          {statusPembayaran === "Belum Lunas" && (
-            <Alert severity="info" sx={{ mt: 2, fontSize: "0.8rem" }}>
-              Invoice akan diterbitkan dengan status <b>Belum Lunas</b>. Admin bisa menandai Lunas nanti setelah pelanggan membayar.
-            </Alert>
-          )}
-          {statusPembayaran === "Lunas" && (
-            <Alert severity="success" sx={{ mt: 2, fontSize: "0.8rem" }}>
-              Invoice langsung ditandai <b>Lunas</b>. Status pelanggan akan diperbarui otomatis.
-            </Alert>
-          )}
-          {statusPembayaran === "Cicil" && (
-            <Alert severity="warning" sx={{ mt: 2, fontSize: "0.8rem" }}>
-              Invoice ditandai <b>Cicil</b>. Tandai Lunas nanti dari halaman daftar invoice.
-            </Alert>
-          )}
+          <Alert severity="info" sx={{ mt: 2, fontSize: "0.8rem" }}>
+            Invoice baru berstatus <b>Belum Lunas</b>. Pembayaran dicatat setelah invoice dibuat, dengan nominal yang benar-benar diterima.
+          </Alert>
         </Paper>
 
         {/* ── RINGKASAN FINAL sebelum simpan ── */}
@@ -607,7 +567,7 @@ const InvoiceForm = () => {
                 ["Periode", dayjs(periode).locale("id").format("MMMM YYYY")],
                 ["Jatuh Tempo", dayjs(tanggalJatuhTempo).format("D MMMM YYYY")],
                 ["Total Tagihan", formatRp(totalTagihan)],
-                ["Status", statusPembayaran],
+                ["Status", "Belum Lunas"],
               ].map(([k, v]) => (
                 <Grid size={{ xs: 6, sm: 4 }} key={k}>
                   <Typography variant="caption" color="text.secondary">{k}</Typography>

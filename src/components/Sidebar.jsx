@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   AccountBalanceWalletOutlined,
+  AccountBalanceOutlined,
   AssessmentOutlined,
   BuildOutlined,
   ChevronLeft,
@@ -57,6 +58,7 @@ const mainMenu = [
 
 const utilityMenu = [
   { label: "Keuangan", icon: AccountBalanceWalletOutlined, path: "/keuangan", roles: ["super_admin", "admin", "admin_junior", "kasir", "management"] },
+  { label: "Piutang", icon: AccountBalanceOutlined, path: "/receivables", roles: ["super_admin", "admin", "admin_junior", "kasir", "management"] },
   { label: "Metode Bayar", icon: DevicesOutlined, path: "/metode-pembayaran", roles: ["super_admin", "admin", "admin_junior"] },
   { label: "Pengguna", icon: ManageAccountsOutlined, path: "/users", roles: ["super_admin"] },
 ];

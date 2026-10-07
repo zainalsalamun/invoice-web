@@ -1,4 +1,5 @@
 import axios from "axios";
+import { shouldExpireSession } from "./sessionErrors";
 // Hapus import authService karena menyebabkan circular dependency
 // import { authService } from "../services/authService";
 
@@ -51,8 +52,8 @@ apiClient.interceptors.response.use(
     // Jangan redirect jika error terjadi di endpoint login atau register
     const isAuthEndpoint = error.config?.url?.includes("/auth/login") || error.config?.url?.includes("/auth/register");
 
-    if ((error.response?.status === 401 || error.response?.status === 403) && !isAuthEndpoint) {
-      console.warn("⚠️ Token invalid / expired, logout otomatis...");
+    if (shouldExpireSession(error) && !isAuthEndpoint) {
+      console.warn("Sesi tidak valid atau sudah berakhir; keluar otomatis.");
 
       // Hapus token dan user secara manual untuk menghindari circular dependency
       localStorage.removeItem("token");
